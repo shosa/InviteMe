@@ -1,6 +1,8 @@
 // Test end-to-end dell'API InviteMe contro un server già avviato e un PostgreSQL reale.
 // Uso: BASE_URL=http://localhost:4000 ADMIN_TOKEN=... SHOPIFY_WEBHOOK_SECRET=... npm run smoke
 import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:4000";
 const ADMIN = process.env.ADMIN_TOKEN ?? "";
@@ -85,6 +87,21 @@ check("prezzo negativo azzerato dalla validazione", customModel?.priceCents === 
 await call("/api/admin/catalog", { method: "PUT", headers: admin, body: { ...altered, addons: full.addons, models: full.models } });
 const restored = await json(await call("/api/catalog"));
 check("ripristino prezzi originali", restored.addons.find((a) => a.key === "map")?.cents === priceBefore);
+
+// ───── Temi: caricamento, validazione, protezione dei preimpostati ─────
+const themeFile = JSON.parse(fs.readFileSync(path.join(process.cwd(), "..", "docs", "examples", "tema-esempio.json"), "utf8"));
+const upTheme = await call("/api/admin/themes", { method: "POST", headers: admin, body: themeFile });
+check("tema a file singolo caricato", upTheme.status === 201, "status " + upTheme.status);
+const badTheme = await call("/api/admin/themes", { method: "POST", headers: admin, body: { ...themeFile, id: "x", css: "@import url(evil);" } });
+check("tema non valido rifiutato con errori", badTheme.status === 400 && (await badTheme.json()).errors?.length > 0);
+const builtinCopy = await call("/api/admin/themes", { method: "POST", headers: admin, body: { ...themeFile, id: "carta", css: themeFile.css.replace(/salvia-/g, "carta-") } });
+check("id di un tema preimpostato rifiutato (409)", builtinCopy.status === 409, "status " + builtinCopy.status);
+const off = await call("/api/admin/themes/salvia", { method: "PATCH", headers: admin, body: { enabled: false } });
+check("tema disattivato", off.status === 200);
+const delBuiltin = await call("/api/admin/themes/carta", { method: "DELETE", headers: admin });
+check("preimpostato non eliminabile (409)", delBuiltin.status === 409);
+const del = await call("/api/admin/themes/salvia", { method: "DELETE", headers: admin });
+check("tema caricato eliminato", del.status === 200);
 
 // ───── Libreria musicale ─────
 const audio = new Blob([crypto.randomBytes(4096)], { type: "audio/mpeg" });

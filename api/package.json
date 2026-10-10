@@ -8,7 +8,8 @@
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
-    "devdb": "node scripts/devdb.mjs"
+    "devdb": "node scripts/devdb.mjs",
+    "validate-theme": "tsx scripts/validate-theme.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

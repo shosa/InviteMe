@@ -5,6 +5,8 @@ import { Experience } from "@/components/Experience";
 import { activeFeatures, defaultConfig, formatPrice, getStyle, type AddonKey, type Catalog, type InviteConfig } from "@inviteme/shared";
 import { apiPublic } from "@/lib/api";
 import { Typing } from "@/components/Typing";
+import { HeroScene } from "@/components/HeroScene";
+import { dateParts } from "@/components/Invitation";
 
 export const dynamic = "force-dynamic";
 
@@ -45,15 +47,7 @@ export default async function Home() {
               </div>
               <p className="fine">Pagamento unico. Nessun abbonamento. Ospiti illimitati.</p>
             </div>
-            <div className="stage stage-enter"><span className="stage-arch" aria-hidden="true" /><div className="sheet float-a" aria-label="Esempio di invito">
-              <div className="sheet-paper">
-                <Experience title={hero.title} accent={style.accent} paper={style.bg} ink={style.ink} musicSrc={null} cover={false}>
-                  <Invitation config={hero} style={style} features={heroFeatures} />
-                </Experience>
-              </div>
-            </div>
-            <div className="stage-card float-b" aria-hidden="true"><img src="/stock/outdoor-table-angel-ayala.jpg" alt="" /></div>
-          </div>
+            <HeroScene names={hero.title} day={hero.eventDate.slice(8, 10)} month={dateParts(hero.eventDate, "it")?.month ?? ""} year={hero.eventDate.slice(0, 4)} target={`${hero.eventDate}T${hero.eventTime}`} photo="/stock/outdoor-table-angel-ayala.jpg" />
           </div>
         </section>
 

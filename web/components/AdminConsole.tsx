@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { AddonDef, Catalog, MusicTrack, ModelDef, StyleDef } from "@inviteme/shared";
 import { Switch } from "./ui/Switch";
 import { Accordion } from "./ui/Accordion";
+import { ThemesAdmin } from "./ThemesAdmin";
 import { toast } from "sonner";
 import { Plus, Trash2, Upload } from "lucide-react";
 
@@ -12,7 +13,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "panoramica", label: "Panoramica" },
   { id: "modelli", label: "Modelli" },
   { id: "funzioni", label: "Funzioni e prezzi" },
-  { id: "stili", label: "Stili" },
+  { id: "stili", label: "Temi" },
   { id: "musica", label: "Musica" },
   { id: "ordini", label: "Ordini" },
   { id: "utenti", label: "Utenti" },
@@ -75,7 +76,7 @@ export function AdminConsole() {
           {tab === "panoramica" && <Overview />}
           {tab === "modelli" && catalog && <ModelsEditor catalog={catalog} onSave={saveCatalog} />}
           {tab === "funzioni" && catalog && <AddonsEditor catalog={catalog} onSave={saveCatalog} />}
-          {tab === "stili" && catalog && <StylesEditor catalog={catalog} onSave={saveCatalog} />}
+          {tab === "stili" && catalog && <ThemesAdmin catalog={catalog} onChanged={reload} />}
           {tab === "musica" && <MusicLibrary tracks={catalog?.music ?? []} onChange={reload} />}
           {tab === "ordini" && <Orders />}
           {tab === "utenti" && <Users />}
@@ -205,38 +206,6 @@ function AddonsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
         </table>
       </div>
       <div className="actions"><button type="button" className="btn solid" onClick={save}>Salva funzioni e prezzi</button></div>
-    </div>
-  );
-}
-
-function StylesEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<Catalog, "models" | "addons" | "styles">) => void }) {
-  const [styles, setStyles] = useState<StyleDef[]>(catalog.styles);
-  const patch = (id: string, p: Partial<StyleDef>) => setStyles((list) => list.map((s) => (s.id === id ? { ...s, ...p } : s)));
-  return (
-    <div className="stack-lg">
-      <p className="hint">Colori e tipografia degli inviti. Gli stili disattivati non compaiono più nel sito.</p>
-      <div className="style-admin">
-        {styles.map((s) => (
-          <Accordion key={s.id} title={s.name} summary={s.enabled ? "Attivo" : "Disattivato"} className="style-acc">
-            <Switch checked={s.enabled} onChange={(v) => patch(s.id, { enabled: v })} label={s.enabled ? "Attivo" : "Disattivato"} />
-            <div className="form-grid">
-              <Field label="Nome"><input value={s.name} maxLength={40} onChange={(e) => patch(s.id, { name: e.target.value })} /></Field>
-              <Field label="Carattere">
-                <select value={s.font} onChange={(e) => patch(s.id, { font: e.target.value as "serif" | "sans" })}>
-                  <option value="serif">Classico (serif)</option>
-                  <option value="sans">Moderno (sans)</option>
-                </select>
-              </Field>
-              <Field label="Sfondo"><input type="color" value={s.bg} onChange={(e) => patch(s.id, { bg: e.target.value })} /></Field>
-              <Field label="Testo"><input type="color" value={s.ink} onChange={(e) => patch(s.id, { ink: e.target.value })} /></Field>
-              <Field label="Accento"><input type="color" value={s.accent} onChange={(e) => patch(s.id, { accent: e.target.value })} /></Field>
-            </div>
-          </Accordion>
-        ))}
-      </div>
-      <div className="actions">
-        <button type="button" className="btn solid" onClick={() => onSave({ models: catalog.models, addons: catalog.addons, styles })}>Salva stili</button>
-      </div>
     </div>
   );
 }

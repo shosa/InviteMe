@@ -20,8 +20,11 @@ import {
   type AddonKey,
   type Catalog,
   type InviteConfig,
+  type StyleDef,
+  validateTheme,
 } from "@inviteme/shared";
 import { pool, migrate, track } from "./db";
+import { BUILTIN_IDS, mergeThemes } from "./catalog";
 import { loadCatalog, loadFullCatalog, saveCatalog } from "./catalog";
 import {
   SESSION_COOKIE,
@@ -314,7 +317,7 @@ export async function buildApp() {
       config,
       style: getStyle(c, config.styleId),
       hasRsvp: hasRsvp(c, config),
-      musicSrc: track_?.url ?? config.musicUrl ?? null,
+      musicSrc: track_?.url ?? config.musicUrl ?? c.music.find((t) => t.id === getStyle(c, config.styleId).music?.defaultTrackId)?.url ?? getStyle(c, config.styleId).music?.file ?? null,
       features: [...activeFeatures(c, config.model, config.addons)],
     };
   });
@@ -501,15 +504,8 @@ export async function buildApp() {
       enabled: !!a.enabled,
     }));
     const keySet = new Set(addons.map((a) => a.key));
-    const styles = (b.styles ?? []).slice(0, 12).map((s) => ({
-      id: text(s.id, 30).replace(/[^a-z0-9-]/gi, "-").toLowerCase() || "stile",
-      name: text(s.name, 40),
-      bg: hex(s.bg, "#ffffff"),
-      ink: hex(s.ink, "#111111"),
-      accent: hex(s.accent, "#0a4560"),
-      font: (s.font === "sans" ? "sans" : "serif") as "sans" | "serif",
-      enabled: !!s.enabled,
-    }));
+    // I temi: preimpostati dal codice, caricati dall'admin validati uno per uno.
+    const styles = mergeThemes(Array.isArray(b.styles) ? (b.styles as StyleDef[]).slice(0, 40) : undefined);
     const models = (b.models ?? []).slice(0, 12).map((m, i) => ({
       id: text(m.id, 40).replace(/[^a-z0-9-]/gi, "-").toLowerCase() || `modello-${i}`,
       name: text(m.name, 80),
@@ -523,6 +519,40 @@ export async function buildApp() {
     }));
     if (models.length === 0 || styles.length === 0) return reply.code(400).send({ error: "Serve almeno un modello e uno stile" });
     await saveCatalog({ models, addons, styles });
+    return { ok: true };
+  });
+
+  // Carica un tema: un manifest JSON validato (vedi docs/THEMES.md). Sostituisce un tema caricato con lo stesso id.
+  app.post("/api/admin/themes", async (req, reply) => {
+    if (!(await requireAdmin(req, reply))) return;
+    const r = validateTheme(req.body);
+    if (!r.theme) return reply.code(400).send({ error: "Tema non valido", errors: r.errors });
+    if (BUILTIN_IDS.has(r.theme.id)) return reply.code(409).send({ error: "Un tema preimpostato non si sostituisce: scegli un altro id" });
+    const c = await loadFullCatalog();
+    const others = c.styles.filter((s) => s.id !== r.theme!.id);
+    await saveCatalog({ models: c.models, addons: c.addons, styles: [...others, r.theme] as StyleDef[] });
+    return reply.code(201).send({ id: r.theme.id, name: r.theme.name });
+  });
+
+  // Attiva o disattiva un tema (anche preimpostato).
+  app.patch<{ Params: { id: string } }>("/api/admin/themes/:id", async (req, reply) => {
+    if (!(await requireAdmin(req, reply))) return;
+    const c = await loadFullCatalog();
+    const found = c.styles.find((s) => s.id === req.params.id);
+    if (!found) return reply.code(404).send({ error: "Tema non trovato" });
+    const enabled = (req.body as { enabled?: boolean })?.enabled === true;
+    const styles = c.styles.map((s) => (s.id === found.id ? { ...s, enabled } : s));
+    if (!styles.some((s) => s.enabled)) return reply.code(400).send({ error: "Serve almeno un tema attivo" });
+    await saveCatalog({ models: c.models, addons: c.addons, styles });
+    return { ok: true };
+  });
+
+  // Elimina un tema caricato. I preimpostati non si eliminano, solo si disattivano.
+  app.delete<{ Params: { id: string } }>("/api/admin/themes/:id", async (req, reply) => {
+    if (!(await requireAdmin(req, reply))) return;
+    if (BUILTIN_IDS.has(req.params.id)) return reply.code(409).send({ error: "I temi preimpostati si disattivano, non si eliminano" });
+    const c = await loadFullCatalog();
+    await saveCatalog({ models: c.models, addons: c.addons, styles: c.styles.filter((s) => s.id !== req.params.id) });
     return { ok: true };
   });
 

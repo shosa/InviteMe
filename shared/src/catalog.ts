@@ -1,5 +1,7 @@
 // Catalogo condiviso tra API e frontend. I valori qui sono i DEFAULT: in produzione il catalogo
 // effettivo è letto dal database e modificabile dalla console admin (vedi api/src/catalog.ts).
+import { BUILTIN_THEMES, type StyleDef } from "./themes";
+
 export type ModelId = string;
 export type EventType = "wedding" | "birthday" | "baby" | "corporate" | "graduation";
 export type AddonKey = "rsvp" | "program" | "map" | "music" | "countdown" | "gallery" | "express";
@@ -18,7 +20,7 @@ export type ModelDef = {
 
 export type AddonDef = { key: AddonKey; label: string; description: string; cents: number; enabled: boolean };
 
-export type StyleDef = { id: string; name: string; bg: string; ink: string; accent: string; font: "serif" | "sans"; enabled: boolean };
+export type { StyleDef } from "./themes";
 
 export type MusicTrack = { id: string; title: string; artist: string; url: string; enabled: boolean; license: string };
 
@@ -56,7 +58,7 @@ export const DEFAULT_CATALOG: Catalog = {
       priceCents: 2900,
       included: [],
       options: ["rsvp", "program", "map", "music", "countdown", "gallery", "express"],
-      enabled: true,
+      enabled: false,
       sort: 3,
     },
   ],
@@ -69,11 +71,7 @@ export const DEFAULT_CATALOG: Catalog = {
     { key: "gallery", label: "Galleria foto", description: "Fino a 6 foto invece di 3", cents: 1000, enabled: true },
     { key: "express", label: "Consegna express 24–48 h", description: "Priorità nella messa online", cents: 2500, enabled: true },
   ],
-  styles: [
-    { id: "carta", name: "Carta", bg: "#F8F9F5", ink: "#17242A", accent: "#9A7433", font: "serif", enabled: true },
-    { id: "notte", name: "Notte", bg: "#17242A", ink: "#F3EFE6", accent: "#C9A46A", font: "serif", enabled: true },
-    { id: "rosa", name: "Rosa", bg: "#F3E4DE", ink: "#3A2328", accent: "#8A3B4A", font: "sans", enabled: true },
-  ],
+  styles: BUILTIN_THEMES,
 
   music: [],
 };

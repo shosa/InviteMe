@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { EVENT_TYPES, type AddonKey, type InviteConfig, type StyleDef } from "@inviteme/shared";
 import { Countdown } from "./Countdown";
+import { scopeThemeCss } from "@inviteme/shared";
 
 const MONTHS = {
   it: ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"],
@@ -45,7 +46,7 @@ export function Invitation({ config, style, features, children }: Props) {
     "--inv-bg": style.bg,
     "--inv-ink": style.ink,
     "--inv-accent": style.accent,
-    "--inv-face": style.font === "serif" ? "var(--font-display), Georgia, serif" : "var(--font-text), system-ui, sans-serif",
+    "--inv-face": style.typography?.display === "custom" && style.font ? `"th-${style.id}", Georgia, serif` : style.typography?.display === "georgia" ? "Georgia, \"Iowan Old Style\", serif" : style.fontKind === "serif" ? "var(--font-display), Georgia, serif" : "var(--font-text), system-ui, sans-serif",
   } as CSSProperties;
 
   const eventLabel = EVENT_TYPES.find((e) => e.id === config.eventType)?.label ?? "";
@@ -55,8 +56,14 @@ export function Invitation({ config, style, features, children }: Props) {
   const mapQuery = encodeURIComponent(`${config.venue} ${config.address}`);
   const saveTheDate = config.model === "save-the-date";
 
+  // Il CSS del tema vale solo dentro questo invito; il font incorporato è registrato con un nome riservato.
+  const fontFace = style.font ? `@font-face{font-family:"th-${style.id}";src:url(${style.font.src});}` : "";
+  const themeCss = style.css || fontFace ? fontFace + scopeThemeCss(style.css ?? "", `.theme-${style.id}`) : "";
+
   return (
-    <article className={`inv ${saveTheDate ? "inv--std" : "inv--full"}`} style={vars} aria-label={config.title} data-inv>
+    <div className={`theme-root theme-${style.id}`}>
+      {themeCss ? <style dangerouslySetInnerHTML={{ __html: themeCss }} /> : null}
+    <article className={`inv ${saveTheDate ? "inv--std" : "inv--full"}`} style={vars} aria-label={config.title} data-inv data-frame={style.shape?.frame ?? "arch"} data-layout={style.layout ?? "centered"}>
       <div className="inv-arch" data-reveal>
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -150,5 +157,6 @@ export function Invitation({ config, style, features, children }: Props) {
 
       {children}
     </article>
+    </div>
   );
 }

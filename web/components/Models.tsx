@@ -83,7 +83,7 @@ export function Models({ catalog }: { catalog: Catalog }) {
                 </ul>
               )}
 
-              <div className="swatches" role="radiogroup" aria-label={`Stile per ${m.name}`}>
+              <div className="swatches" role="radiogroup" aria-label={`Tema per ${m.name}`}>
                 {styles.map((s) => (
                   <label key={s.id} className="swatch" title={s.name} style={{ "--sw-bg": s.bg, "--sw-ink": s.accent } as CSSProperties}>
                     <input type="radio" name={`style-${m.id}`} value={s.id} checked={styleId === s.id} onChange={() => setStyleBy((p) => ({ ...p, [m.id]: s.id }))} />

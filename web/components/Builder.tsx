@@ -227,13 +227,13 @@ export function Builder({ initial }: { initial: Manage }) {
 
               {tab === "stile" && (
                 <div className="stack">
-                  <p className="hint">Lo stile cambia colori e tipografia. Il contenuto resta lo stesso.</p>
+                  <p className="hint">Il tema cambia grafica, forma e animazioni. Il contenuto resta lo stesso.</p>
                   <div className="style-grid" role="radiogroup" aria-label="Stile">
                     {catalog.styles.filter((s) => s.enabled).map((s) => (
                       <label key={s.id} className={`style-card${config.styleId === s.id ? " is-on" : ""}`} style={{ background: s.bg, color: s.ink }}>
                         <input type="radio" name="style" value={s.id} checked={config.styleId === s.id} onChange={() => patch({ styleId: s.id })} />
                         <span className="style-accent" style={{ background: s.accent }} aria-hidden />
-                        <span className={s.font === "serif" ? "style-name serif" : "style-name sans"}>{s.name}</span>
+                        <span className={s.fontKind === "serif" ? "style-name serif" : "style-name sans"}>{s.name}</span>
                       </label>
                     ))}
                   </div>

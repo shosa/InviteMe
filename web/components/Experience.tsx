@@ -11,13 +11,14 @@ type Props = {
   ink: string;
   musicSrc?: string | null;
   cover?: boolean; // false: nessuna busta (anteprime)
+  reveal?: "fade" | "rise" | "none";
   children: ReactNode;
 };
 
 const reduceMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // Busta: il tocco la apre, parte la musica e l'invito si rivela. È l'unico momento coreografato.
-export function Experience({ title, accent, paper, ink, musicSrc, cover = true, children }: Props) {
+export function Experience({ title, accent, paper, ink, musicSrc, cover = true, reveal = "fade", children }: Props) {
   const [stage, setStage] = useState<"sealed" | "opening" | "open">(cover ? "sealed" : "open");
   const [playing, setPlaying] = useState(false);
   const audio = useRef<HTMLAudioElement>(null);
@@ -81,7 +82,7 @@ export function Experience({ title, accent, paper, ink, musicSrc, cover = true, 
   const vars = { "--exp-accent": accent, "--exp-paper": paper, "--exp-ink": ink } as CSSProperties;
 
   return (
-    <div className={`experience stage-${stage}`} style={vars}>
+    <div className={`experience stage-${stage}`} style={vars} data-reveal-style={reveal}>
       {cover && stage !== "open" && (
         <div className="cover" role="button" tabIndex={0} aria-label={`Apri l'invito di ${title}`} onClick={open} onKeyDown={onKey}>
           <div className="env">
