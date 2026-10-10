@@ -6,9 +6,16 @@ import { defaultConfig, formatPrice, getStyle, activeFeatures, type Catalog, typ
 import { Invitation } from "./Invitation";
 
 // Esempio per l'anteprima: data fissa per evitare differenze tra server e browser.
+const SAMPLE_PHOTO: Record<string, string> = {
+  "save-the-date": "/stock/eucalyptus-banquet-lena-eggler.jpg",
+  "invitation-rsvp": "/stock/table-decor-caleb-oquendo.jpg",
+  custom: "/stock/outdoor-table-angel-ayala.jpg",
+};
+
 function sample(c: Catalog, model: ModelDef, styleId: string): InviteConfig {
   return {
     ...defaultConfig(c, model.id, "wedding"),
+    photos: SAMPLE_PHOTO[model.id] ? [SAMPLE_PHOTO[model.id]] : [],
     styleId,
     eventDate: "2027-06-12",
     eventTime: "18:00",

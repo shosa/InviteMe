@@ -124,15 +124,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: var(--paper-light); padding: clamp(14px, 2.4vw, 26px);
   box-shadow: 0 1px 1px rgba(23, 36, 42, .06), 0 40px 70px -40px rgba(23, 36, 42, .45);
 }
-.sheet-paper { height: clamp(520px, 62vh, 640px); overflow: hidden; }
-.sheet-paper .experience { min-height: 0; height: 100%; }
+.sheet-paper { height: auto; }
+.sheet-paper .experience { min-height: 0; }
 .sheet-paper .inv { box-shadow: none; max-width: none; }
 
 /* ───────────── Modelli (righe, non card) ───────────── */
 .models { display: grid; gap: 0; border-top: 1px solid var(--line); }
 .model { display: grid; grid-template-columns: minmax(260px, 0.8fr) 1fr; gap: clamp(32px, 5vw, 72px); align-items: center; padding: 56px 0; border-bottom: 1px solid var(--line); }
-.model-stage { position: relative; overflow: hidden; height: 500px; background: var(--paper-light); }
-.model-card { width: 100%; max-width: 320px; margin: 0 auto; }
+.model-stage { position: relative; padding: 48px 0; background: var(--paper-light); }
+.model-card { width: 440px; max-width: 100%; margin: 0 auto; zoom: 0.62; }
 .model-card .inv { box-shadow: 0 30px 50px -36px rgba(23, 36, 42, .5); }
 .model-body { display: flex; flex-direction: column; gap: 6px; }
 .model-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }

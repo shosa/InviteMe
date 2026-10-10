@@ -32,7 +32,6 @@ export function Nav({ current }: { current?: "home" | "account" | "admin" }) {
         <a href="/" className="logo-link" aria-label="InviteMe, home"><Logo /></a>
         <nav className="nav-links" aria-label="Principale">
           <a href="/#modelli" className={current === "home" ? "is-current" : undefined}>Modelli</a>
-          <a href="/#funzioni">Funzioni</a>
           <a href="/#come-funziona">Come funziona</a>
           <a href="/#faq">Domande</a>
         </nav>

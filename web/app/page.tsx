@@ -2,7 +2,6 @@ import { Nav } from "@/components/Nav";
 import { Models } from "@/components/Models";
 import { Invitation } from "@/components/Invitation";
 import { Experience } from "@/components/Experience";
-import { Glyph } from "@/components/Glyph";
 import { activeFeatures, defaultConfig, formatPrice, getStyle, type AddonKey, type Catalog, type InviteConfig } from "@inviteme/shared";
 import { apiPublic } from "@/lib/api";
 
@@ -12,7 +11,7 @@ export default async function Home() {
   const catalog = (await apiPublic<Catalog>("/api/catalog")) ?? { models: [], addons: [], styles: [], music: [] };
   const style = getStyle(catalog, "carta");
   const hero: InviteConfig = {
-    ...defaultConfig(catalog, "invitation-rsvp", "wedding"),
+    ...defaultConfig(catalog, "save-the-date", "wedding"),
     title: "Elena & Marco",
     hosts: "Elena e Marco",
     eventDate: "2027-06-12",
@@ -20,9 +19,10 @@ export default async function Home() {
     venue: "Villa dei Glicini",
     address: "Via dei Giardini 12, Firenze",
     message: "Con gioia vi invitiamo a festeggiare il nostro sì.",
-    addons: ["countdown", "map"],
+    photos: ["/stock/eucalyptus-banquet-lena-eggler.jpg"],
+    addons: ["countdown"],
   };
-  const heroFeatures = [...activeFeatures(catalog, "invitation-rsvp", hero.addons)] as AddonKey[];
+  const heroFeatures = [...activeFeatures(catalog, "save-the-date", hero.addons)] as AddonKey[];
 
   return (
     <>
@@ -58,28 +58,7 @@ export default async function Home() {
           </div>
         </section>
 
-        <section id="funzioni" className="section rule-top">
-          <div className="wrap split">
-            <div>
-              <h2 className="section-title">Ogni funzione ha il suo prezzo.</h2>
-              <p className="lede">Nel modello Su misura scegli una alla volta. Il totale è sempre visibile prima del pagamento.</p>
-            </div>
-            <ul className="price-list">
-              {catalog.addons.filter((a) => a.enabled).map((a) => (
-                <li key={a.key}>
-                  <Glyph name={a.key} />
-                  <div className="price-text">
-                    <span className="price-name">{a.label}</span>
-                    <span className="price-desc">{a.description}</span>
-                  </div>
-                  <span className="price-leader" aria-hidden />
-                  <b>+{formatPrice(a.cents)}</b>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
+        
         <section className="section rule-top">
           <div className="wrap">
             <h2 className="section-title">Gli ospiti aprono una busta, non un PDF.</h2>
@@ -171,7 +150,6 @@ export default async function Home() {
           <span className="logo-word">InviteMe</span>
           <nav aria-label="Footer">
             <a href="#modelli">Modelli</a>
-            <a href="#funzioni">Funzioni</a>
             <a href="#faq">Domande</a>
             <a href="/accedi">Accedi</a>
           </nav>
