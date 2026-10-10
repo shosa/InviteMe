@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 type Mode = "login" | "register" | "forgot";
 
 // Accesso, registrazione e recupero password in un solo componente.
-export function AuthForm({ initialMode, next }: { initialMode: Mode; next: string }) {
+export function AuthForm({ initialMode, next, google = false, googleError = false }: { initialMode: Mode; next: string; google?: boolean; googleError?: boolean }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [busy, setBusy] = useState(false);
@@ -57,6 +57,16 @@ export function AuthForm({ initialMode, next }: { initialMode: Mode; next: strin
         <button role="tab" aria-selected={mode === "register"} className={mode === "register" ? "is-on" : ""} onClick={() => setMode("register")}>Registrati</button>
       </div>
       <h1>{title}</h1>
+      {google && (
+        <>
+          <a className="btn outline wide google-btn" href={`/api/auth/google?next=${encodeURIComponent(next)}`}>
+            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6C12.3 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7-10 7-17.5z"/><path fill="#FBBC05" d="M10.4 28.8c-.5-1.4-.8-3-.8-4.8s.3-3.3.8-4.8l-7.8-6C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l7.8-6z"/><path fill="#34A853" d="M24 48c6.5 0 12-2.1 16-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.7-4.2-13.6-9.8l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>
+            Continua con Google
+          </a>
+          <div className="or" aria-hidden="true"><span>oppure</span></div>
+        </>
+      )}
+      {googleError && <p role="alert" className="form-error">Accesso con Google non riuscito. Riprova.</p>}
       <form onSubmit={submit} className="auth-form">
         {mode === "register" && (
           <label className="field">

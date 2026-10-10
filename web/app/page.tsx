@@ -4,8 +4,12 @@ import { Invitation } from "@/components/Invitation";
 import { Experience } from "@/components/Experience";
 import { activeFeatures, defaultConfig, formatPrice, getStyle, type AddonKey, type Catalog, type InviteConfig } from "@inviteme/shared";
 import { apiPublic } from "@/lib/api";
+import { Typing } from "@/components/Typing";
 
 export const dynamic = "force-dynamic";
+
+// Frasi che si scrivono a rotazione nel titolo della home.
+const HERO_PHRASES = ["Il vostro invito, pronto in un pomeriggio.", "Una data, un link, tutti gli ospiti.", "Sapete chi viene prima del giorno.", "Si paga una volta, senza abbonamenti."];
 
 export default async function Home() {
   const catalog = (await apiPublic<Catalog>("/api/catalog")) ?? { models: [], addons: [], styles: [], music: [] };
@@ -31,9 +35,9 @@ export default async function Home() {
         <section className="hero">
           <div className="wrap hero-grid">
             <div className="hero-copy">
-              <h1>Un invito che si apre al tocco.</h1>
+              <h1 className="hero-title"><Typing phrases={HERO_PHRASES} /></h1>
               <p className="lede">
-                Busta sigillata, musica che parte al primo tap, programma con gli orari, mappa e conferma di presenza. Un solo link per tutti gli ospiti.
+                Scegliete il modello, scrivete i dettagli, pagate una volta e mandate il link. Gli ospiti rispondono da lì, e voi vedete le risposte.
               </p>
               <div className="cta-row">
                 <a className="btn solid lg" href="#modelli">Scegli un modello</a>
@@ -41,13 +45,15 @@ export default async function Home() {
               </div>
               <p className="fine">Pagamento unico. Nessun abbonamento. Ospiti illimitati.</p>
             </div>
-            <div className="sheet" aria-label="Esempio di invito">
+            <div className="stage stage-enter"><span className="stage-arch" aria-hidden="true" /><div className="sheet float-a" aria-label="Esempio di invito">
               <div className="sheet-paper">
                 <Experience title={hero.title} accent={style.accent} paper={style.bg} ink={style.ink} musicSrc={null} cover={false}>
                   <Invitation config={hero} style={style} features={heroFeatures} />
                 </Experience>
               </div>
             </div>
+            <div className="stage-card float-b" aria-hidden="true"><img src="/stock/outdoor-table-angel-ayala.jpg" alt="" /></div>
+          </div>
           </div>
         </section>
 
@@ -61,19 +67,19 @@ export default async function Home() {
         
         <section className="section rule-top">
           <div className="wrap">
-            <h2 className="section-title">Gli ospiti aprono una busta, non un PDF.</h2>
+            <h2 className="section-title">Cosa vedono gli ospiti.</h2>
             <div className="columns">
               <div>
                 <h3>Copertina sigillata</h3>
-                <p>Il monogramma degli sposi sul sigillo. Il tocco apre la busta e l&apos;invito occupa la pagina.</p>
+                <p>Una busta con il sigillo, che si apre con un tap. Sotto trovano l&apos;invito.</p>
               </div>
               <div>
                 <h3>Musica al primo tap</h3>
-                <p>Un brano dalla libreria, o il vostro di cui avete i diritti. Parte con l&apos;apertura, si mette in pausa in un gesto.</p>
+                <p>Scegliete un brano dalla libreria o usate uno vostro. Parte quando aprono la busta, e possono fermarlo quando vogliono.</p>
               </div>
               <div>
-                <h3>Programma e conferma</h3>
-                <p>Orari in sequenza, conto alla rovescia, mappa e un modulo con le domande che scegliete voi.</p>
+                <h3>Programma e risposta</h3>
+                <p>Gli orari della giornata, la mappa per arrivare, e le domande a cui rispondere: presenza, persone, esigenze.</p>
               </div>
             </div>
           </div>

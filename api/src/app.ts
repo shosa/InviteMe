@@ -36,6 +36,7 @@ import {
   type SessionUser,
 } from "./auth";
 import { appUrl, inviteEmail, orderEmail, resetEmail, rsvpNoticeEmail, sendMail, type MailMessage } from "./mail";
+import { registerGoogle, googleEnabled } from "./google";
 import { createCheckout, invitationIdFromOrder, localCheckoutAllowed, shopifyConfigured, verifyShopifyWebhook } from "./shopify";
 
 const MEDIA_DIR = process.env.MEDIA_DIR ?? path.join(process.cwd(), "data", "media");
@@ -86,7 +87,7 @@ export async function buildApp() {
 
   app.get("/api/catalog", async () => {
     const c = await loadCatalog();
-    return { ...c, eventTypes: EVENT_TYPES, shopify: shopifyConfigured() };
+    return { ...c, eventTypes: EVENT_TYPES, shopify: shopifyConfigured(), google: googleEnabled() };
   });
 
   // ───────────── Autenticazione ─────────────
@@ -119,7 +120,7 @@ export async function buildApp() {
     const { rows } = await pool.query("SELECT id, email, name, role, password_hash FROM users WHERE email = $1", [email]);
     const user = rows[0];
     // Stessa risposta per email sconosciuta e password errata: nessun elenco di account.
-    const ok = !!user && (await verifyPassword(String(b.password ?? ""), user.password_hash));
+    const ok = !!user && !!user.password_hash && (await verifyPassword(String(b.password ?? ""), user.password_hash));
     if (!ok) return reply.code(401).send({ error: "Email o password non corretti" });
     await startSession(reply, user.id);
     return { id: user.id, email: user.email, name: user.name, role: user.role };
@@ -616,6 +617,7 @@ export async function buildApp() {
     return rows;
   });
 
+  registerGoogle(app);
   return app;
 }
 

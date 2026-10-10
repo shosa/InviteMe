@@ -33,6 +33,8 @@ services:
       SHOPIFY_VARIANT_ID: ${SHOPIFY_VARIANT_ID:-}
       SHOPIFY_WEBHOOK_SECRET: ${SHOPIFY_WEBHOOK_SECRET:-}
       ALLOW_LOCAL_CHECKOUT: ${ALLOW_LOCAL_CHECKOUT:-false}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     volumes:
       - media:/app/data/media
     depends_on:

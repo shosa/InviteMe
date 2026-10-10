@@ -53,6 +53,13 @@ check("il cliente non entra nella console (403)", notAdmin.status === 403, `stat
 const anonAdmin = await call("/api/admin/metrics");
 check("admin senza credenziali rifiutato (401/403)", anonAdmin.status === 401 || anonAdmin.status === 403);
 
+// ───── Accesso con Google ─────
+const gStart = await call("/api/auth/google");
+if (gStart.status === 503) check("Google non configurato: risposta 503", true, "credenziali non impostate");
+else check("avvio Google reindirizza a Google", gStart.status === 302 && (gStart.headers.get("location") || "").startsWith("https://accounts.google.com/"), "status " + gStart.status);
+const gBad = await call("/api/auth/google/callback?code=x&state=y");
+check("callback Google senza stato valido rifiutato", gBad.status === 302 && (gBad.headers.get("location") || "").includes("error=google"), "status " + gBad.status);
+
 // ───── Console: catalogo modificabile ─────
 const full = await json(await call("/api/admin/catalog", { headers: admin }));
 check("console legge il catalogo completo", Array.isArray(full.models) && full.models.length >= 3);

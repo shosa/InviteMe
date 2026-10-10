@@ -563,3 +563,29 @@ td a { color: var(--ink); }
 .acc-chev { flex: none; color: var(--ink-soft); transition: transform .25s cubic-bezier(.2,.7,.2,1); }
 .acc[open] > .acc-head .acc-chev { transform: rotate(180deg); }
 .acc-body { padding: 4px 2px 26px; display: grid; gap: 18px; }
+
+/* ───────────── Titolo animato e composizione dell hero ───────────── */
+.hero-title { min-height: 2.3em; }
+.typing { display: inline; }
+.caret { display: inline-block; width: 3px; height: 0.82em; margin-left: 4px; vertical-align: -0.06em; background: var(--brass); animation: caret-blink 1s steps(1) infinite; }
+@keyframes caret-blink { 50% { opacity: 0; } }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+.stage { position: relative; width: min(100%, 520px); margin-left: auto; padding: 44px 0 70px; }
+.stage-arch { position: absolute; top: 0; right: 0; bottom: 0; left: 10%; background: var(--ink); border-radius: 999px 999px 0 0; }
+.stage .sheet { position: relative; z-index: 1; width: 86%; margin-left: 0; }
+.stage-card { position: absolute; z-index: 2; left: 0; bottom: 0; width: 38%; aspect-ratio: 3 / 4; border-radius: 999px 999px 0 0; overflow: hidden; border: 8px solid var(--paper); box-shadow: 0 30px 50px -28px rgba(23, 36, 42, .6); }
+.stage-card img { width: 100%; height: 100%; object-fit: cover; }
+.float-a { animation: float-a 9s ease-in-out infinite; }
+.float-b { animation: float-b 11s ease-in-out infinite; }
+@keyframes float-a { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@keyframes float-b { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-16px) rotate(-1deg); } }
+.stage-enter { animation: rise-in 1.1s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@media (max-width: 1040px) { .stage { margin: 0 auto; } }
+@media (prefers-reduced-motion: reduce) { .float-a, .float-b, .stage-enter, .caret { animation: none; } }
+
+.google-btn { gap: 12px; margin-bottom: 18px; }
+.google-btn svg { flex: none; }
+.or { display: flex; align-items: center; gap: 14px; color: var(--ink-soft); font-size: 14px; margin: 4px 0 18px; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
