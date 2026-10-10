@@ -1,0 +1,87 @@
+import crypto from "crypto";
+
+// Integrazione Shopify headless.
+// - Con SHOPIFY_STORE_DOMAIN + SHOPIFY_STOREFRONT_TOKEN + SHOPIFY_VARIANT_ID: carrello reale e checkoutUrl Shopify.
+// - Senza chiavi: nessun checkout reale. Il checkout di prova esiste solo se ALLOW_LOCAL_CHECKOUT o fuori produzione.
+// Le conferme arrivano dal webhook orders/paid (firma HMAC verificata con SHOPIFY_WEBHOOK_SECRET).
+
+const API_VERSION = "2025-01";
+
+export const shopifyConfigured = () =>
+  Boolean(process.env.SHOPIFY_STORE_DOMAIN && process.env.SHOPIFY_STOREFRONT_TOKEN && process.env.SHOPIFY_VARIANT_ID);
+
+export const localCheckoutAllowed = () =>
+  process.env.NODE_ENV !== "production" || process.env.ALLOW_LOCAL_CHECKOUT === "true";
+
+export type CheckoutInput = { invitationId: string; slug: string; addons: string[]; totalCents: number; origin: string };
+
+export async function createCheckout(input: CheckoutInput): Promise<{ checkoutUrl: string; source: "shopify" | "local" }> {
+  if (!shopifyConfigured()) {
+    return { checkoutUrl: `${input.origin}/checkout/local?invitation=${input.invitationId}`, source: "local" };
+  }
+  const domain = process.env.SHOPIFY_STORE_DOMAIN!;
+  const token = process.env.SHOPIFY_STOREFRONT_TOKEN!;
+  const variantId = process.env.SHOPIFY_VARIANT_ID!;
+
+  const mutation = `
+    mutation cartCreate($input: CartInput!) {
+      cartCreate(input: $input) {
+        cart { id checkoutUrl }
+        userErrors { field message }
+      }
+    }`;
+  const attributes = [
+    { key: "invitationId", value: input.invitationId },
+    { key: "slug", value: input.slug },
+    { key: "addons", value: input.addons.join(",") || "none" },
+    { key: "totalCents", value: String(input.totalCents) },
+  ];
+  const res = await fetch(`https://${domain}/api/${API_VERSION}/graphql.json`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Shopify-Storefront-Access-Token": token },
+    body: JSON.stringify({
+      query: mutation,
+      variables: {
+        input: {
+          lines: [{ merchandiseId: variantId, quantity: 1, attributes }],
+          attributes: [{ key: "invitationId", value: input.invitationId }],
+          note: `InviteMe ${input.slug}`,
+        },
+      },
+    }),
+  });
+  const json = (await res.json()) as {
+    data?: { cartCreate?: { cart?: { checkoutUrl: string }; userErrors: { message: string }[] } };
+    errors?: { message: string }[];
+  };
+  const url = json.data?.cartCreate?.cart?.checkoutUrl;
+  if (!res.ok || !url) {
+    const msg = json.errors?.[0]?.message ?? json.data?.cartCreate?.userErrors?.[0]?.message ?? `HTTP ${res.status}`;
+    throw new Error(`Checkout Shopify non disponibile: ${msg}`);
+  }
+  return { checkoutUrl: url, source: "shopify" };
+}
+
+// Verifica X-Shopify-Hmac-Sha256 sul corpo grezzo, con confronto a tempo costante.
+export function verifyShopifyWebhook(rawBody: string, hmacHeader: string | undefined): boolean {
+  const secret = process.env.SHOPIFY_WEBHOOK_SECRET;
+  if (!secret || !hmacHeader) return false;
+  const digest = crypto.createHmac("sha256", secret).update(rawBody, "utf8").digest("base64");
+  const a = Buffer.from(digest);
+  const b = Buffer.from(hmacHeader);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+// Id invito dagli attributi dell'ordine (note_attributes o proprietà delle righe).
+export function invitationIdFromOrder(order: {
+  note_attributes?: { name: string; value: string }[];
+  line_items?: { properties?: { name: string; value: string }[] }[];
+}): string | undefined {
+  const fromNotes = order.note_attributes?.find((a) => a.name === "invitationId")?.value;
+  if (fromNotes) return fromNotes;
+  for (const item of order.line_items ?? []) {
+    const p = item.properties?.find((x) => x.name === "invitationId")?.value;
+    if (p) return p;
+  }
+  return undefined;
+}
