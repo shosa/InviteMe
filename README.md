@@ -1,63 +1,76 @@
 # InviteMe
 
-Inviti digitali per matrimoni ed eventi. Il cliente crea un account, sceglie uno dei due modelli, personalizza l'invito con anteprima in tempo reale, paga una sola volta e invia il link agli ospiti. Le conferme di presenza arrivano in un pannello e per email.
-
-## Avvio in sviluppo
-
-```bash
-npm install
-npm run dev
-```
-
-Apri http://localhost:3000, crea un account e scegli un modello. In sviluppo il pagamento è una simulazione, così l'intero flusso è testabile.
-
-## Test automatico
-
-```bash
-npm run build
-ALLOW_LOCAL_CHECKOUT=true ADMIN_TOKEN=test npm start -- -p 3300   # in un altro terminale
-BASE_URL=http://localhost:3300 ADMIN_TOKEN=test npm run smoke
-```
-
-Il test copre registrazione, sessioni, modifica, pagamento, pagina pubblica, invio agli ospiti, conferme, CSV, metriche e webhook Shopify (firma valida e firma errata).
-
-## Cosa fa
-
-- **Due modelli**: *Save the Date* (foto, nomi, data, conto alla rovescia) e *Invito con conferma presenza* (programma, mappa, musica, modulo di conferma personalizzabile).
-- **Tre stili** per modello: Avorio, Laguna, Corallo. Cambiano colori e tipografia, il contenuto resta lo stesso.
-- **Builder** con autosalvataggio e anteprima in tempo reale. Dopo il pagamento l'invito è bloccato, così il link condiviso non cambia.
-- **Account**: registrazione, accesso, recupero password via email, elenco dei propri inviti.
-- **Ospiti**: invio del link via email, conferme in tempo reale, esigenze alimentari, export CSV.
-- **Email**: invito agli ospiti, notifica di ogni conferma, conferma d'ordine, recupero password.
-- **Pagamenti**: checkout Shopify (carrello Storefront API). Il webhook `orders/paid`, con firma HMAC verificata, attiva l'invito e invia la conferma.
-- **Dashboard admin** su `/dashboard`: incassi, conversione, visite, email inviate. Protetta da `ADMIN_TOKEN`.
-
-## Cosa gestisce Shopify, e cosa no
-
-- **Shopify**: solo checkout, pagamento e registro dell'ordine.
-- **InviteMe**: account, sessioni, builder, inviti, conferme, email, dashboard e metriche. Sono applicazione propria, non Shopify.
-
-## Collegare Shopify
-
-1. Crea un prodotto "Invito digitale" con una variante. Il prezzo effettivo è calcolato dall'app: il prezzo della variante serve solo al carrello.
-2. Compila in `.env.local`: `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_STOREFRONT_TOKEN`, `SHOPIFY_VARIANT_ID`.
-3. Crea un webhook `Ordini pagati` (`orders/paid`) verso `https://<tuo-dominio>/api/webhooks/shopify` e imposta `SHOPIFY_WEBHOOK_SECRET`.
-
-## Collegare la posta
-
-Crea un account [Resend](https://resend.com), verifica il dominio e imposta `RESEND_API_KEY`, `MAIL_FROM` e `APP_URL`.
+Inviti digitali per matrimoni ed eventi: copertina sigillata, musica, programma, mappa e conferma di presenza in un solo link.
 
 ## Struttura
 
-- `app/` pagine (home, accedi, account, editor, invito pubblico, dashboard) e route API
-- `components/` builder, invito, modelli, moduli di accesso e conferma, conto alla rovescia
-- `lib/` catalogo e prezzi, autenticazione, posta, integrazione Shopify, archivio
-- `scripts/smoke.mjs` test end-to-end
+- `web/`: frontend Next.js (pagine, builder, console admin).
+- `api/`: API Fastify con PostgreSQL (account, inviti, pagamenti, email, console).
+- `shared/`: catalogo, prezzi e validazione, condivisi da API e frontend.
+- `docker-compose.yml`: tre servizi: `db` (PostgreSQL), `api`, `web`.
 
-## Limiti noti
+## Avvio con Docker
 
-- **Archivio locale**: `data/db.json`. Va bene per un avvio controllato, ma va sostituito con un database (es. Postgres) prima di gestire molti clienti. Le funzioni sono raccolte in `lib/store.ts`.
-- **Foto**: restano nel database come immagini compresse. Con molti clienti conviene uno storage di file dedicato.
-- **Spedizione express**: è un add-on a pagamento, ma la consegna rapida è un processo operativo da gestire a mano.
-- **Lingua**: l'interfaccia è in italiano. Il modello dati prevede già la lingua dell'invito, ma la traduzione dell'app non è ancora fatta.
-- **Più valute e mercati**: l'app calcola in EUR. I mercati esteri richiedono la configurazione dei mercati in Shopify.
+1. Copia `.env.example` in `.env` e compila almeno `POSTGRES_PASSWORD`, `ADMIN_TOKEN` e `ADMIN_EMAIL`.
+2. Avvia i servizi:
+
+```bash
+docker compose up --build -d
+```
+
+3. Apri http://localhost:3000.
+
+L'API crea da sola lo schema del database al primo avvio. I dati restano nei volumi `pgdata` (database) e `media` (brani caricati).
+
+Per fermare: `docker compose down`. Per cancellare anche i dati: `docker compose down -v`.
+
+## Sviluppo locale (senza Docker)
+
+Serve Node 24. Dalla cartella del progetto:
+
+```bash
+npm install
+npm run devdb -w @inviteme/api      # PostgreSQL locale sulla porta 5433
+```
+
+In un secondo terminale, l'API (porta 4000):
+
+```bash
+DATABASE_URL=postgres://inviteme:inviteme@localhost:5433/inviteme ADMIN_TOKEN=test npm run dev -w @inviteme/api
+```
+
+In un terzo terminale, il frontend (porta 3000):
+
+```bash
+npm run dev:web
+```
+
+## Test
+
+Con l'API in esecuzione:
+
+```bash
+BASE_URL=http://localhost:4000 ADMIN_TOKEN=test npm run smoke -w @inviteme/api
+```
+
+Il test copre account, ruoli, catalogo, libreria musicale, creazione e modifica degli inviti, pagamento, conferme, email, metriche e webhook Shopify.
+
+## Console admin
+
+Si apre su `/admin` con un account amministratore. Da lì si gestiscono modelli, funzioni e prezzi, stili, libreria musicale, ordini e utenti. Un account diventa amministratore se la sua email coincide con `ADMIN_EMAIL`.
+
+## Pagamenti (Shopify)
+
+- Compila `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_STOREFRONT_TOKEN` e `SHOPIFY_VARIANT_ID` per il checkout reale.
+- Crea nel pannello Shopify un webhook `Ordini pagati` verso `https://<tuo-dominio>/api/webhooks/shopify` e imposta `SHOPIFY_WEBHOOK_SECRET`.
+- Senza Shopify il pagamento non è possibile in produzione, salvo `ALLOW_LOCAL_CHECKOUT=true`, che va usato solo per prove.
+
+## Email
+
+Con `RESEND_API_KEY` le email partono davvero. Senza, restano nella tabella `outbox` del database e non vengono inviate.
+
+## Note di produzione
+
+- I cookie di sessione sono `secure` in produzione: serve HTTPS. In locale con `http://localhost` i browser li accettano.
+- Il servizio `web` è l'unico esposto. L'API e il database restano nella rete interna dei container.
+- I brani caricati sono nel volume `media`: fai backup di quel volume insieme a `pgdata`.
