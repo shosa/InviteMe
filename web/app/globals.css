@@ -470,7 +470,7 @@ td a { color: var(--ink); }
 
 /* ───────────── Responsive ───────────── */
 @media (max-width: 1040px) {
-  .hero-grid, .split, .builder, .admin-layout { grid-template-columns: 1fr; }
+  .hero-grid, .split, .builder, .admin-layout { grid-template-columns: minmax(0, 1fr); }
   .hero-visual, .sheet { order: -1; }
   .model { grid-template-columns: 1fr; gap: 28px; }
   .columns { grid-template-columns: 1fr; }
@@ -535,3 +535,18 @@ td a { color: var(--ink); }
 .addon-row strong { font: 400 1.2rem/1 var(--font-display), Georgia, serif; white-space: nowrap; }
 
 .toast { font-family: var(--font-text), sans-serif !important; border-radius: 2px !important; border: 1px solid var(--line) !important; background: var(--paper-light) !important; color: var(--ink) !important; box-shadow: 0 18px 40px -20px rgba(23,36,42,.4) !important; }
+
+/* Le colonne e i campi possono restringersi: niente scorrimento orizzontale su mobile */
+.hero-grid > *, .split > *, .builder > *, .admin-layout > *, .model > * { min-width: 0; }
+.field input, .field select, .field textarea, .card-edit input, .card-edit select, .card-edit textarea, .admin input, .admin select, .admin textarea { min-width: 0; max-width: 100%; }
+
+.checkout, .shared, .shared-link, .shared-link code { min-width: 0; }
+.shared-link .btn { flex: none; }
+
+@media (max-width: 600px) {
+  .nav-account { gap: 10px; min-width: 0; }
+  .nav-link { font-size: 14px; }
+  .nav-link svg, .nav-account .btn svg { display: none; }
+  .nav-account .btn.small { padding: 0 12px; }
+  .logo-word { font-size: 22px; }
+}
