@@ -6,6 +6,7 @@ import { Invitation } from "./Invitation";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Upload } from "lucide-react";
 import { Switch } from "./ui/Switch";
+import { Accordion } from "./ui/Accordion";
 
 type Tab = "testi" | "stile" | "foto" | "programma" | "conferma" | "musica" | "funzioni" | "ospiti";
 
@@ -196,19 +197,31 @@ export function Builder({ initial }: { initial: Manage }) {
           ) : (
             <fieldset disabled={locked} className="pane-fields">
               {tab === "testi" && (
-                <div className="grid">
-                  <Field label="Tipo di evento">
-                    <select value={config.eventType} onChange={(e) => patch({ eventType: e.target.value as EventType })}>
-                      {EVENT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="Titolo"><input value={config.title} maxLength={80} onChange={(e) => patch({ title: e.target.value })} /></Field>
-                  <Field label="Chi invita"><input value={config.hosts} maxLength={80} onChange={(e) => patch({ hosts: e.target.value })} /></Field>
-                  <Field label="Data"><input type="date" value={config.eventDate} onChange={(e) => patch({ eventDate: e.target.value })} /></Field>
-                  <Field label="Ora"><input type="time" value={config.eventTime} onChange={(e) => patch({ eventTime: e.target.value })} /></Field>
-                  <Field label="Luogo"><input value={config.venue} maxLength={120} onChange={(e) => patch({ venue: e.target.value })} /></Field>
-                  <Field label="Indirizzo" wide><input value={config.address} maxLength={200} onChange={(e) => patch({ address: e.target.value })} /></Field>
-                  <Field label="Messaggio" wide><textarea rows={3} maxLength={500} value={config.message} onChange={(e) => patch({ message: e.target.value })} /></Field>
+                <div className="stack-lg">
+                  <Accordion title="Evento" summary={config.title || undefined} defaultOpen>
+                    <div className="grid">
+                      <Field label="Tipo di evento">
+                        <select value={config.eventType} onChange={(e) => patch({ eventType: e.target.value as EventType })}>
+                          {EVENT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                        </select>
+                      </Field>
+                      <Field label="Titolo"><input value={config.title} maxLength={80} onChange={(e) => patch({ title: e.target.value })} /></Field>
+                      <Field label="Chi invita" wide><input value={config.hosts} maxLength={80} onChange={(e) => patch({ hosts: e.target.value })} /></Field>
+                    </div>
+                  </Accordion>
+                  <Accordion title="Data e luogo" summary={config.eventDate ? `${config.eventDate} · ${config.venue}` : undefined}>
+                    <div className="grid">
+                      <Field label="Data"><input type="date" value={config.eventDate} onChange={(e) => patch({ eventDate: e.target.value })} /></Field>
+                      <Field label="Ora"><input type="time" value={config.eventTime} onChange={(e) => patch({ eventTime: e.target.value })} /></Field>
+                      <Field label="Luogo"><input value={config.venue} maxLength={120} onChange={(e) => patch({ venue: e.target.value })} /></Field>
+                      <Field label="Indirizzo" wide><input value={config.address} maxLength={200} onChange={(e) => patch({ address: e.target.value })} /></Field>
+                    </div>
+                  </Accordion>
+                  <Accordion title="Messaggio" summary={config.message ? config.message.slice(0, 40) : undefined}>
+                    <Field label="Testo di apertura" wide>
+                      <textarea rows={3} maxLength={500} value={config.message} onChange={(e) => patch({ message: e.target.value })} />
+                    </Field>
+                  </Accordion>
                 </div>
               )}
 
@@ -252,11 +265,11 @@ export function Builder({ initial }: { initial: Manage }) {
                 <div className="stack">
                   <p className="hint">Per la timeline scrivi una riga per voce, nel formato <b>19:30 - Cerimonia</b>.</p>
                   {config.sections.map((s) => (
-                    <div key={s.id} className="card-edit">
+                    <Accordion key={s.id} title={s.title || "Voce"} summary={s.body.slice(0, 40)} className="card-edit-acc">
                       <input aria-label="Titolo sezione" value={s.title} maxLength={80} onChange={(e) => updateSection(s.id, "title", e.target.value)} />
                       <textarea aria-label="Testo sezione" rows={4} maxLength={600} value={s.body} onChange={(e) => updateSection(s.id, "body", e.target.value)} />
                       <button type="button" className="link" onClick={() => patch({ sections: config.sections.filter((x) => x.id !== s.id) })}>Rimuovi</button>
-                    </div>
+                    </Accordion>
                   ))}
                   <button type="button" className="btn outline" disabled={config.sections.length >= 5} onClick={() => patch({ sections: [...config.sections, { id: crypto.randomUUID(), title: "Nuova sezione", body: "19:00 - Inizio" }] })}>
                     Aggiungi sezione
@@ -268,7 +281,7 @@ export function Builder({ initial }: { initial: Manage }) {
                 <div className="stack">
                   <p className="hint">Le domande compaiono nel modulo di conferma. Per le scelte multiple inserisci le opzioni separate da virgola.</p>
                   {config.rsvpQuestions.map((q) => (
-                    <div key={q.id} className="card-edit">
+                    <Accordion key={q.id} title={q.label || "Domanda"} summary={q.type === "yes-no" ? "Sì / No" : q.type === "choice" ? "Scelta multipla" : q.type === "number" ? "Numero" : "Testo libero"} className="card-edit-acc">
                       <div className="row">
                         <input aria-label="Domanda" value={q.label} maxLength={160} onChange={(e) => updateQuestion(q.id, "label", e.target.value)} />
                         <select aria-label="Tipo di risposta" value={q.type} onChange={(e) => updateQuestion(q.id, "type", e.target.value)}>
@@ -282,7 +295,7 @@ export function Builder({ initial }: { initial: Manage }) {
                       {q.type === "choice" && (
                         <input aria-label="Opzioni" placeholder="Sì, No, Ti dirò più tardi" value={(q.options ?? []).join(", ")} onChange={(e) => patch({ rsvpQuestions: config.rsvpQuestions.map((x) => (x.id === q.id ? { ...x, options: e.target.value.split(",").map((o) => o.trim()).filter(Boolean) } : x)) })} />
                       )}
-                    </div>
+                    </Accordion>
                   ))}
                   <button type="button" className="btn outline" disabled={config.rsvpQuestions.length >= 8} onClick={() => patch({ rsvpQuestions: [...config.rsvpQuestions, { id: crypto.randomUUID(), label: "Nuova domanda", type: "text" }] })}>
                     Aggiungi domanda

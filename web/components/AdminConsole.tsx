@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { AddonDef, Catalog, MusicTrack, ModelDef, StyleDef } from "@inviteme/shared";
 import { Switch } from "./ui/Switch";
+import { Accordion } from "./ui/Accordion";
 import { toast } from "sonner";
 import { Plus, Trash2, Upload } from "lucide-react";
 
@@ -146,7 +147,7 @@ function ModelsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
     <div className="stack-lg">
       <p className="hint">Modelli visibili, prezzi base e funzioni incluse o acquistabili. Un modello disattivato sparisce dal sito ma resta nel database.</p>
       {models.map((m) => (
-        <article key={m.id} className="card editor">
+        <Accordion key={m.id} title={m.name} summary={`${m.enabled ? "Visibile" : "Nascosto"} · ${euros[m.id] ?? "0"} €`} className="editor">
           <div className="editor-head">
             <Switch checked={m.enabled} onChange={(v) => update(m.id, { enabled: v })} label={m.enabled ? "Visibile" : "Nascosto"} />
             <code>{m.id}</code>
@@ -170,7 +171,7 @@ function ModelsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
               <Switch key={a.key} disabled={m.included.includes(a.key)} checked={m.options.includes(a.key)} onChange={() => toggleIn(m, a.key, "options")} label={a.label} />
             ))}
           </fieldset>
-        </article>
+        </Accordion>
       ))}
       <div className="actions">
         <button type="button" className="btn outline" onClick={addModel}>Aggiungi modello</button>
@@ -216,9 +217,8 @@ function StylesEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
       <p className="hint">Colori e tipografia degli inviti. Gli stili disattivati non compaiono più nel sito.</p>
       <div className="style-admin">
         {styles.map((s) => (
-          <article key={s.id} className="card" style={{ background: s.bg, color: s.ink }}>
+          <Accordion key={s.id} title={s.name} summary={s.enabled ? "Attivo" : "Disattivato"} className="style-acc">
             <Switch checked={s.enabled} onChange={(v) => patch(s.id, { enabled: v })} label={s.enabled ? "Attivo" : "Disattivato"} />
-            <h3 className={s.font === "serif" ? "serif" : "sans"}>{s.name}</h3>
             <div className="form-grid">
               <Field label="Nome"><input value={s.name} maxLength={40} onChange={(e) => patch(s.id, { name: e.target.value })} /></Field>
               <Field label="Carattere">
@@ -231,7 +231,7 @@ function StylesEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
               <Field label="Testo"><input type="color" value={s.ink} onChange={(e) => patch(s.id, { ink: e.target.value })} /></Field>
               <Field label="Accento"><input type="color" value={s.accent} onChange={(e) => patch(s.id, { accent: e.target.value })} /></Field>
             </div>
-          </article>
+          </Accordion>
         ))}
       </div>
       <div className="actions">
@@ -279,8 +279,8 @@ function MusicLibrary({ tracks, onChange }: { tracks: MusicTrack[]; onChange: ()
 
   return (
     <div className="stack-lg">
-      <form className="card" onSubmit={upload}>
-        <h2>Carica un brano</h2>
+      <Accordion title="Carica un brano" summary="MP3, M4A o OGG, massimo 15 MB">
+      <form className="stack-lg" onSubmit={upload}>
         <p className="hint">MP3, M4A o OGG, massimo 15 MB. Carica solo brani di cui hai i diritti o che sono licenziati per questo uso.</p>
         <div className="form-grid">
           <Field label="File audio"><input type="file" name="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/ogg" required /></Field>
@@ -294,6 +294,7 @@ function MusicLibrary({ tracks, onChange }: { tracks: MusicTrack[]; onChange: ()
         </div>
         {msg && <p className={msg.kind === "ok" ? "form-notice" : "form-error"} role="status">{msg.text}</p>}
       </form>
+      </Accordion>
 
       <div className="card table-wrap">
         <h2>Libreria</h2>
