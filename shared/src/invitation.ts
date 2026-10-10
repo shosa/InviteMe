@@ -33,7 +33,7 @@ export function defaultConfig(c: Catalog, model: string, eventType: EventType = 
   const type = EVENT_TYPES.find((e) => e.id === eventType) ?? EVENT_TYPES[0];
   return {
     model,
-    styleId: enabledStyles(c)[0]?.id ?? "avorio",
+    styleId: enabledStyles(c)[0]?.id ?? "carta",
     eventType,
     title: type.sampleTitle,
     hosts: eventType === "wedding" ? "Sara e Luca" : "La famiglia",

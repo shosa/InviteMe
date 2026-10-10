@@ -2,9 +2,6 @@ import type { CSSProperties, ReactNode } from "react";
 import { EVENT_TYPES, type AddonKey, type InviteConfig, type StyleDef } from "@inviteme/shared";
 import { Countdown } from "./Countdown";
 
-const SERIF = 'Iowan Old Style, "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif';
-const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-
 const MONTHS = {
   it: ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"],
   en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -26,7 +23,7 @@ export function monogram(title: string): string {
   return words.slice(0, 2).map((w) => w[0].toUpperCase()).join("·") || "IM";
 }
 
-// Righe del programma nella forma "19:30 - Cerimonia": diventano una timeline.
+// Righe del programma nella forma "19:30 - Cerimonia": diventano una sequenza con orari.
 const TIME_LINE = /^(\d{1,2}[:.]\d{2})\s*(?:[-–—|:]\s*)?(.+)$/;
 export function parseTimeline(body: string) {
   const lines = body.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -39,7 +36,6 @@ type Props = {
   config: InviteConfig;
   style: StyleDef;
   features: AddonKey[];
-  musicSrc?: string | null;
   children?: ReactNode;
 };
 
@@ -49,10 +45,10 @@ export function Invitation({ config, style, features, children }: Props) {
     "--inv-bg": style.bg,
     "--inv-ink": style.ink,
     "--inv-accent": style.accent,
-    "--inv-font": style.font === "serif" ? SERIF : SANS,
+    "--inv-face": style.font === "serif" ? "var(--font-display), Georgia, serif" : "var(--font-text), system-ui, sans-serif",
   } as CSSProperties;
 
-  const eventLabel = EVENT_TYPES.find((e) => e.id === config.eventType)?.label ?? "Evento";
+  const eventLabel = EVENT_TYPES.find((e) => e.id === config.eventType)?.label ?? "";
   const date = dateParts(config.eventDate, config.locale);
   const target = `${config.eventDate}T${config.eventTime || "00:00"}`;
   const photo = config.photos[0];
@@ -61,22 +57,22 @@ export function Invitation({ config, style, features, children }: Props) {
 
   return (
     <article className={`inv ${saveTheDate ? "inv--std" : "inv--full"}`} style={vars} aria-label={config.title} data-inv>
-      <div className="inv-frame" aria-hidden />
-      <p className="inv-eyebrow" data-reveal>{saveTheDate ? "Save the date" : eventLabel}</p>
-
       <div className="inv-arch" data-reveal>
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photo} alt="" />
         ) : (
-          <div className="inv-arch-art">
+          <div className="inv-arch-art" aria-hidden>
             <span className="inv-monogram">{monogram(config.title)}</span>
           </div>
         )}
       </div>
 
-      <h1 className="inv-names" data-reveal>{config.title}</h1>
-      <p className="inv-hosts" data-reveal>{config.hosts}</p>
+      <div className="inv-title" data-reveal>
+        <h1 className="inv-names">{config.title}</h1>
+        <p className="inv-hosts">{config.hosts}</p>
+      </div>
+
       {config.message && <p className="inv-message" data-reveal>{config.message}</p>}
 
       {date && (
@@ -84,14 +80,13 @@ export function Invitation({ config, style, features, children }: Props) {
           <span className="inv-day">{date.day}</span>
           <span className="inv-month">
             <b>{date.month}</b>
-            <small>{date.year} · {date.weekday}</small>
+            <small>{date.year}, {date.weekday}</small>
           </span>
         </div>
       )}
 
       {has("countdown") && (
-        <div data-reveal>
-          <p className="inv-label">Mancano</p>
+        <div className="inv-block" data-reveal>
           <Countdown target={target} />
         </div>
       )}
@@ -99,29 +94,27 @@ export function Invitation({ config, style, features, children }: Props) {
       {!saveTheDate && (
         <dl className="inv-details" data-reveal>
           <div>
-            <dt>Quando</dt>
-            <dd>
-              {date ? `${date.weekday} ${date.day} ${date.month} ${date.year}` : config.eventDate}
-              {config.eventTime && <span className="inv-sub">alle {config.eventTime}</span>}
-            </dd>
-          </div>
-          <div>
             <dt>Dove</dt>
             <dd>
               {config.venue}
               {config.address && <span className="inv-sub">{config.address}</span>}
             </dd>
           </div>
+          {eventLabel && (
+            <div>
+              <dt>Occasione</dt>
+              <dd>{eventLabel}</dd>
+            </div>
+          )}
         </dl>
       )}
 
       {!saveTheDate && has("program") && config.sections.length > 0 && (
         <div className="inv-program" data-reveal>
-          <p className="inv-label">Programma</p>
           {config.sections.map((s) => {
             const timeline = parseTimeline(s.body);
             return (
-              <section key={s.id}>
+              <section key={s.id} className="inv-block">
                 <h2>{s.title}</h2>
                 {timeline ? (
                   <ol className="inv-timeline">
@@ -142,7 +135,7 @@ export function Invitation({ config, style, features, children }: Props) {
       )}
 
       {has("map") && config.address && (
-        <div className="inv-map" data-reveal>
+        <div className="inv-block inv-map" data-reveal>
           <iframe
             title={`Mappa: ${config.venue}`}
             loading="lazy"
@@ -150,7 +143,7 @@ export function Invitation({ config, style, features, children }: Props) {
             src={`https://maps.google.com/maps?q=${mapQuery}&output=embed`}
           />
           <a className="inv-link" href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`} target="_blank" rel="noreferrer">
-            Apri le indicazioni →
+            Indicazioni
           </a>
         </div>
       )}

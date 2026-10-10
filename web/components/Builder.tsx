@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { EVENT_TYPES, activeFeatures, formatPrice, getModel, getStyle, maxPhotos, totalCents, type AddonKey, type Catalog, type EventType, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
 import { Invitation } from "./Invitation";
+import { toast } from "sonner";
+import { ArrowLeft, Copy, Upload } from "lucide-react";
+import { Switch } from "./ui/Switch";
 
 type Tab = "testi" | "stile" | "foto" | "programma" | "conferma" | "musica" | "funzioni" | "ospiti";
 
@@ -170,13 +173,12 @@ export function Builder({ initial }: { initial: Manage }) {
     <div className="builder">
       <aside className="builder-panel" aria-label="Configuratore">
         <header className="builder-head">
-          <a href="/account" className="back-link">← I miei inviti</a>
+          <a href="/account" className="back-link"><ArrowLeft size={16} aria-hidden="true" />I miei inviti</a>
           <span className={`save save-${saveState}`} aria-live="polite">
             {locked ? "Pagato" : saveState === "saving" ? "Salvataggio…" : saveState === "error" ? "Non salvato" : "Salvato"}
           </span>
         </header>
         <div className="builder-title">
-          <p className="eyebrow">{model?.name ?? "Invito"}</p>
           <h1>{config.title || "Il tuo invito"}</h1>
         </div>
 
@@ -240,7 +242,7 @@ export function Builder({ initial }: { initial: Manage }) {
                   {config.photos.length < photosMax && (
                     <label className="upload">
                       <input type="file" accept="image/*" multiple onChange={addPhotos} />
-                      <span>Carica foto</span>
+                      <span className="upload-inner"><Upload size={18} aria-hidden="true" />Carica foto</span>
                     </label>
                   )}
                 </div>
@@ -318,10 +320,7 @@ export function Builder({ initial }: { initial: Manage }) {
                   {purchasable.map((a) => {
                     const on = config.addons.includes(a.key);
                     return (
-                      <button key={a.key} type="button" className={on ? "addon is-on" : "addon"} aria-pressed={on} onClick={() => toggleAddon(a.key)}>
-                        <span><b>{a.label}</b><small>{a.description}</small></span>
-                        <strong>+{formatPrice(a.cents)}</strong>
-                      </button>
+                      <div key={a.key} className={on ? "addon-row is-on" : "addon-row"}><div className="addon-text"><b>{a.label}</b><small>{a.description}</small></div><strong>+{formatPrice(a.cents)}</strong><Switch checked={on} onChange={() => toggleAddon(a.key)} ariaLabel={a.label} /></div>
                     );
                   })}
                   {model && model.included.length > 0 && (
@@ -341,7 +340,7 @@ export function Builder({ initial }: { initial: Manage }) {
               <p className="shared-label">Il tuo invito è attivo</p>
               <div className="shared-link">
                 <code>{shareUrl}</code>
-                <button type="button" className="btn outline small" onClick={() => navigator.clipboard?.writeText(shareUrl)}>Copia</button>
+                <button type="button" className="btn outline small" onClick={() => { navigator.clipboard?.writeText(shareUrl); toast.success("Link copiato"); }}><Copy size={16} aria-hidden="true" />Copia</button>
               </div>
               <a className="btn solid wide" href={`https://wa.me/?text=${encodeURIComponent(`Ti invitiamo! Trovi tutti i dettagli qui: ${shareUrl}`)}`} target="_blank" rel="noreferrer">
                 Condividi su WhatsApp

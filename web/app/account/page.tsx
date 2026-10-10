@@ -21,7 +21,6 @@ export default async function Account() {
       <main className="wrap account">
         <header className="account-head">
           <div>
-            <p className="eyebrow">Il tuo account</p>
             <h1>I tuoi inviti</h1>
           </div>
           <a className="btn solid" href="/#modelli">Nuovo invito</a>
@@ -38,7 +37,6 @@ export default async function Account() {
             {rows.map((r) => (
               <article key={r.id} className="invite-row">
                 <div className="invite-main">
-                  <p className="eyebrow">{r.model}</p>
                   <h2>{r.title}</h2>
                   <p className="hint">Data {r.eventDate}</p>
                 </div>

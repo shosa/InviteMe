@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LogOut, ShieldCheck, Ticket } from "lucide-react";
+import { Logo } from "./Logo";
 
 type Me = { id: string; name: string; email: string; role: "user" | "admin" } | null;
 
@@ -27,10 +29,7 @@ export function Nav({ current }: { current?: "home" | "account" | "admin" }) {
   return (
     <header className="nav">
       <div className="nav-inner">
-        <a href="/" className="logo" aria-label="InviteMe, home">
-          <span className="logo-mark">IM</span>
-          <span className="logo-word">InviteMe</span>
-        </a>
+        <a href="/" className="logo-link" aria-label="InviteMe, home"><Logo /></a>
         <nav className="nav-links" aria-label="Principale">
           <a href="/#modelli" className={current === "home" ? "is-current" : undefined}>Modelli</a>
           <a href="/#funzioni">Funzioni</a>
@@ -40,9 +39,9 @@ export function Nav({ current }: { current?: "home" | "account" | "admin" }) {
         <div className="nav-account">
           {me === undefined ? null : me ? (
             <>
-              {me.role === "admin" && <a href="/admin" className={`nav-link${current === "admin" ? " is-current" : ""}`}>Console</a>}
-              <a href="/account" className={`nav-link${current === "account" ? " is-current" : ""}`}>I miei inviti</a>
-              <button type="button" className="btn ghost small" onClick={logout}>Esci</button>
+              {me.role === "admin" && <a href="/admin" className={`nav-link${current === "admin" ? " is-current" : ""}`}><ShieldCheck size={16} aria-hidden="true" />Console</a>}
+              <a href="/account" className={`nav-link${current === "account" ? " is-current" : ""}`}><Ticket size={16} aria-hidden="true" />I miei inviti</a>
+              <button type="button" className="btn ghost small" onClick={logout}><LogOut size={16} aria-hidden="true" />Esci</button>
             </>
           ) : (
             <>

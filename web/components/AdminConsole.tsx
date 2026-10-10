@@ -2,6 +2,9 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import type { AddonDef, Catalog, MusicTrack, ModelDef, StyleDef } from "@inviteme/shared";
+import { Switch } from "./ui/Switch";
+import { toast } from "sonner";
+import { Plus, Trash2, Upload } from "lucide-react";
 
 type Tab = "panoramica" | "modelli" | "funzioni" | "stili" | "musica" | "ordini" | "utenti";
 const TABS: { id: Tab; label: string }[] = [
@@ -44,8 +47,8 @@ export function AdminConsole() {
     setNotice(null);
     const res = await fetch("/api/admin/catalog", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
     const data = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) return setNotice({ kind: "err", text: data.error ?? "Salvataggio non riuscito" });
-    setNotice({ kind: "ok", text: "Modifiche salvate. Sono già visibili sul sito." });
+    if (!res.ok) return toast.error(data.error ?? "Salvataggio non riuscito");
+    toast.success("Modifiche salvate. Sono già visibili sul sito.");
     reload();
   }
 
@@ -53,8 +56,7 @@ export function AdminConsole() {
     <main className="admin">
       <header className="admin-head">
         <div>
-          <p className="eyebrow">Console amministrativa</p>
-          <h1>InviteMe</h1>
+          <h1>{TABS.find((t) => t.id === tab)?.label}</h1>
         </div>
         {notice && <p className={notice.kind === "ok" ? "form-notice admin-notice" : "form-error admin-notice"} role="status">{notice.text}</p>}
       </header>
@@ -146,7 +148,7 @@ function ModelsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
       {models.map((m) => (
         <article key={m.id} className="card editor">
           <div className="editor-head">
-            <label className="switch"><input type="checkbox" checked={m.enabled} onChange={(e) => update(m.id, { enabled: e.target.checked })} /><span>{m.enabled ? "Visibile" : "Nascosto"}</span></label>
+            <Switch checked={m.enabled} onChange={(v) => update(m.id, { enabled: v })} label={m.enabled ? "Visibile" : "Nascosto"} />
             <code>{m.id}</code>
           </div>
           <div className="form-grid">
@@ -159,13 +161,13 @@ function ModelsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
           <fieldset className="checks">
             <legend>Incluse nel prezzo base</legend>
             {catalog.addons.map((a) => (
-              <label key={a.key} className="check"><input type="checkbox" checked={m.included.includes(a.key)} onChange={() => toggleIn(m, a.key, "included")} /> {a.label}</label>
+              <Switch key={a.key} checked={m.included.includes(a.key)} onChange={() => toggleIn(m, a.key, "included")} label={a.label} />
             ))}
           </fieldset>
           <fieldset className="checks">
             <legend>Acquistabili a parte</legend>
             {catalog.addons.map((a) => (
-              <label key={a.key} className="check"><input type="checkbox" disabled={m.included.includes(a.key)} checked={m.options.includes(a.key)} onChange={() => toggleIn(m, a.key, "options")} /> {a.label}</label>
+              <Switch key={a.key} disabled={m.included.includes(a.key)} checked={m.options.includes(a.key)} onChange={() => toggleIn(m, a.key, "options")} label={a.label} />
             ))}
           </fieldset>
         </article>
@@ -192,7 +194,7 @@ function AddonsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
           <tbody>
             {addons.map((a) => (
               <tr key={a.key}>
-                <td><input type="checkbox" checked={a.enabled} onChange={(e) => patch(a.key, { enabled: e.target.checked })} aria-label={`Attiva ${a.label}`} /></td>
+                <td><Switch checked={a.enabled} onChange={(v) => patch(a.key, { enabled: v })} label={`Attiva ${a.label}`} /></td>
                 <td><input value={a.label} maxLength={80} onChange={(e) => patch(a.key, { label: e.target.value })} /></td>
                 <td><input value={a.description} maxLength={160} onChange={(e) => patch(a.key, { description: e.target.value })} /></td>
                 <td><input inputMode="decimal" className="price-in" value={euros[a.key] ?? ""} onChange={(e) => setEuros((x) => ({ ...x, [a.key]: e.target.value }))} /></td>
@@ -215,7 +217,7 @@ function StylesEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
       <div className="style-admin">
         {styles.map((s) => (
           <article key={s.id} className="card" style={{ background: s.bg, color: s.ink }}>
-            <label className="switch"><input type="checkbox" checked={s.enabled} onChange={(e) => patch(s.id, { enabled: e.target.checked })} /><span>{s.enabled ? "Attivo" : "Disattivato"}</span></label>
+            <Switch checked={s.enabled} onChange={(v) => patch(s.id, { enabled: v })} label={s.enabled ? "Attivo" : "Disattivato"} />
             <h3 className={s.font === "serif" ? "serif" : "sans"}>{s.name}</h3>
             <div className="form-grid">
               <Field label="Nome"><input value={s.name} maxLength={40} onChange={(e) => patch(s.id, { name: e.target.value })} /></Field>
@@ -306,7 +308,7 @@ function MusicLibrary({ tracks, onChange }: { tracks: MusicTrack[]; onChange: ()
                   <td><b>{t.title}</b><small className="block-hint">{t.artist}</small></td>
                   <td><audio controls preload="none" src={t.url} /></td>
                   <td className="small">{t.license || "–"}</td>
-                  <td><input type="checkbox" checked={t.enabled} onChange={(e) => toggle(t.id, e.target.checked)} aria-label={`Visibile: ${t.title}`} /></td>
+                  <td><Switch checked={t.enabled} onChange={(v) => toggle(t.id, v)} label={`Visibile: ${t.title}`} /></td>
                   <td><button type="button" className="link danger" onClick={() => remove(t.id)}>Elimina</button></td>
                 </tr>
               ))}

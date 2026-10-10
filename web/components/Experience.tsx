@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { monogram } from "./Invitation";
+import { Glyph } from "./Glyph";
 
 type Props = {
   title: string;
@@ -9,13 +10,13 @@ type Props = {
   paper: string;
   ink: string;
   musicSrc?: string | null;
-  cover?: boolean; // false: nessuna busta, l'invito è subito visibile (anteprime)
+  cover?: boolean; // false: nessuna busta (anteprime)
   children: ReactNode;
 };
 
 const reduceMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// Busta sigillata: il tocco la apre, parte la musica e l'invito si rivela.
+// Busta: il tocco la apre, parte la musica e l'invito si rivela. È l'unico momento coreografato.
 export function Experience({ title, accent, paper, ink, musicSrc, cover = true, children }: Props) {
   const [stage, setStage] = useState<"sealed" | "opening" | "open">(cover ? "sealed" : "open");
   const [playing, setPlaying] = useState(false);
@@ -28,7 +29,7 @@ export function Experience({ title, accent, paper, ink, musicSrc, cover = true, 
     return () => document.body.classList.remove("is-sealed");
   }, [stage, cover]);
 
-  // Rivelazione allo scroll: ogni blocco entra con un leggero movimento.
+  // Rivelazione dei blocchi allo scroll: una sola dissolvenza breve, nessun effetto per sezione.
   useEffect(() => {
     if (stage !== "open") return;
     const els = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
@@ -45,7 +46,7 @@ export function Experience({ title, accent, paper, ink, musicSrc, cover = true, 
           }
         }
       },
-      { threshold: 0.12 },
+      { threshold: 0.1 },
     );
     els.forEach((e) => io.observe(e));
     return () => io.disconnect();
@@ -58,7 +59,7 @@ export function Experience({ title, accent, paper, ink, musicSrc, cover = true, 
       audio.current.volume = 0.7;
       audio.current.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     }
-    window.setTimeout(() => setStage("open"), reduceMotion() ? 0 : 1100);
+    window.setTimeout(() => setStage("open"), reduceMotion() ? 0 : 1000);
   }
 
   function toggleMusic() {
@@ -81,8 +82,6 @@ export function Experience({ title, accent, paper, ink, musicSrc, cover = true, 
 
   return (
     <div className={`experience stage-${stage}`} style={vars}>
-      <Petals color={accent} active={stage !== "sealed"} />
-
       {cover && stage !== "open" && (
         <div className="cover" role="button" tabIndex={0} aria-label={`Apri l'invito di ${title}`} onClick={open} onKeyDown={onKey}>
           <div className="env">
@@ -91,7 +90,6 @@ export function Experience({ title, accent, paper, ink, musicSrc, cover = true, 
             <div className="env-seal" aria-hidden>
               <span>{monogram(title)}</span>
             </div>
-            <div className="env-lines" aria-hidden />
           </div>
           <p className="cover-hint">Tocca per aprire</p>
         </div>
@@ -102,8 +100,8 @@ export function Experience({ title, accent, paper, ink, musicSrc, cover = true, 
           <audio ref={audio} src={musicSrc} loop preload="auto" onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} />
           {stage === "open" && (
             <button type="button" className="music-toggle" onClick={toggleMusic} aria-pressed={playing} aria-label={playing ? "Metti in pausa la musica" : "Riproduci la musica"}>
-              <span className={playing ? "bars is-on" : "bars"} aria-hidden><i /><i /><i /></span>
-              {playing ? "Pausa" : "Musica"}
+              <Glyph name="music" />
+              <span>{playing ? "In pausa" : "Musica"}</span>
             </button>
           )}
         </>
@@ -112,65 +110,4 @@ export function Experience({ title, accent, paper, ink, musicSrc, cover = true, 
       <div className="experience-body">{children}</div>
     </div>
   );
-}
-
-// Petali sul fondo: pochi, lenti, nel colore dell'accento. Si fermano con la riduzione del movimento.
-function Petals({ color, active }: { color: string; active: boolean }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas || !active || reduceMotion()) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    let raf = 0;
-    let w = 0;
-    let h = 0;
-    const resize = () => {
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      w = window.innerWidth;
-      h = window.innerHeight;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    resize();
-    const count = w < 600 ? 14 : 24;
-    const parts = Array.from({ length: count }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      r: 4 + Math.random() * 5,
-      vy: 0.25 + Math.random() * 0.45,
-      sway: 0.4 + Math.random() * 0.8,
-      phase: Math.random() * Math.PI * 2,
-      rot: Math.random() * Math.PI,
-    }));
-    const draw = (t: number) => {
-      ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = color;
-      for (const p of parts) {
-        p.y += p.vy;
-        p.phase += 0.01;
-        const x = p.x + Math.sin(p.phase) * 18 * p.sway;
-        if (p.y > h + 12) {
-          p.y = -12;
-          p.x = Math.random() * w;
-        }
-        ctx.globalAlpha = 0.16 + 0.12 * Math.sin(t / 1500 + p.phase);
-        ctx.beginPath();
-        ctx.ellipse(x, p.y, p.r, p.r * 0.55, p.rot + Math.sin(p.phase) * 0.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      raf = requestAnimationFrame(draw);
-    };
-    raf = requestAnimationFrame(draw);
-    window.addEventListener("resize", resize);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-    };
-  }, [color, active]);
-  return <canvas ref={ref} className="petals" aria-hidden />;
 }

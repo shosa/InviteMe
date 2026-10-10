@@ -70,10 +70,11 @@ export const DEFAULT_CATALOG: Catalog = {
     { key: "express", label: "Consegna express 24–48 h", description: "Priorità nella messa online", cents: 2500, enabled: true },
   ],
   styles: [
-    { id: "avorio", name: "Avorio", bg: "#f7f3ec", ink: "#1d1b18", accent: "#0a4560", font: "serif", enabled: true },
-    { id: "laguna", name: "Laguna", bg: "#0a4560", ink: "#f4fbfc", accent: "#8fdbe6", font: "serif", enabled: true },
-    { id: "corallo", name: "Corallo", bg: "#fdeee8", ink: "#3a2622", accent: "#d9573f", font: "sans", enabled: true },
+    { id: "carta", name: "Carta", bg: "#F8F9F5", ink: "#17242A", accent: "#9A7433", font: "serif", enabled: true },
+    { id: "notte", name: "Notte", bg: "#17242A", ink: "#F3EFE6", accent: "#C9A46A", font: "serif", enabled: true },
+    { id: "rosa", name: "Rosa", bg: "#F3E4DE", ink: "#3A2328", accent: "#8A3B4A", font: "sans", enabled: true },
   ],
+
   music: [],
 };
 
