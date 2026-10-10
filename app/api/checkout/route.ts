@@ -1,20 +1,26 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
-import { createCheckout } from "@/lib/shopify";
+import { createCheckout, localCheckoutAllowed, shopifyConfigured } from "@/lib/shopify";
 import { PRICING, type AddonKey } from "@/lib/catalog";
 import { totalCents } from "@/lib/pricing";
+import { ownsInvitation } from "@/lib/auth";
 import { query, update, track, type Order } from "@/lib/store";
 
-// Avvia il checkout: carrello Shopify reale se configurato, altrimenti checkout locale.
+export const dynamic = "force-dynamic";
+
+// Avvia il checkout: carrello Shopify reale se configurato, altrimenti checkout di prova (solo se abilitato).
 export async function POST(req: Request) {
-  const { invitationId } = (await req.json()) as { invitationId?: string };
-  const inv = invitationId
-    ? await query((db) => db.invitations.find((i) => i.id === invitationId))
-    : undefined;
+  const body = (await req.json().catch(() => ({}))) as { invitationId?: string };
+  const inv = body.invitationId ? await query((db) => db.invitations.find((i) => i.id === body.invitationId)) : undefined;
   if (!inv) return NextResponse.json({ error: "Invito non trovato" }, { status: 404 });
+  if (!(await ownsInvitation(inv))) return NextResponse.json({ error: "Non autorizzato" }, { status: 403 });
+  if (inv.status === "paid") return NextResponse.json({ error: "Invito già pagato" }, { status: 409 });
+  if (!shopifyConfigured() && !localCheckoutAllowed()) {
+    return NextResponse.json({ error: "I pagamenti non sono ancora attivi su questo server" }, { status: 503 });
+  }
 
   const addons = inv.config.addons.filter((a): a is AddonKey => a in PRICING.addons);
-  const amount = totalCents(addons);
-  const origin = new URL(req.url).origin;
+  const amount = totalCents(inv.config.model, addons);
 
   try {
     const checkout = await createCheckout({
@@ -22,7 +28,7 @@ export async function POST(req: Request) {
       slug: inv.slug,
       addons,
       totalCents: amount,
-      origin,
+      origin: new URL(req.url).origin,
     });
     const order: Order = {
       id: crypto.randomUUID(),
@@ -40,7 +46,6 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ checkoutUrl: checkout.checkoutUrl, orderId: order.id });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Errore checkout";
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Errore checkout" }, { status: 502 });
   }
 }

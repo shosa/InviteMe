@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Invitation } from "@/components/Invitation";
 import { RsvpForm } from "@/components/RsvpForm";
+import { MODELS } from "@/lib/catalog";
 import { query, update, track } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function PublicInvitation({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const inv = await query((db) => db.invitations.find((i) => i.slug === slug));
-  if (!inv) notFound();
+  if (!inv || inv.status !== "paid") notFound(); // gli inviti non pagati non sono pubblici
 
   // Conta la visualizzazione (metrica) senza bloccare il rendering.
   update((db) => {
@@ -19,10 +20,12 @@ export default async function PublicInvitation({ params }: { params: Promise<{ s
     }
   }).catch(() => undefined);
 
+  const hasRsvp = MODELS.find((m) => m.id === inv.config.model)?.hasRsvp ?? false;
+
   return (
     <main className="public">
       <Invitation config={inv.config}>
-        <RsvpForm slug={slug} questions={inv.config.rsvpQuestions} />
+        {hasRsvp && <RsvpForm slug={slug} questions={inv.config.rsvpQuestions} />}
       </Invitation>
       <p className="public-foot">Creato con InviteMe</p>
     </main>

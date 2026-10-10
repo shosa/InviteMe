@@ -1,28 +1,35 @@
 import { NextResponse } from "next/server";
-import type { InviteConfig } from "@/lib/invitation";
+import { sanitizeConfig } from "@/lib/invitation";
+import { ownsInvitation } from "@/lib/auth";
 import { query, update } from "@/lib/store";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const dynamic = "force-dynamic";
+
+type Params = { params: Promise<{ id: string }> };
+
+// Dati pubblici: l'utente proprietario e i dati ospiti non escono mai.
+export async function GET(_req: Request, { params }: Params) {
   const { id } = await params;
-  const invitation = await query((db) => db.invitations.find((i) => i.id === id));
-  if (!invitation) return NextResponse.json({ error: "Non trovato" }, { status: 404 });
-  return NextResponse.json(invitation);
+  const inv = await query((db) => db.invitations.find((i) => i.id === id));
+  if (!inv) return NextResponse.json({ error: "Non trovato" }, { status: 404 });
+  const { userId: _u, guests: _g, ...publicInvite } = inv;
+  return NextResponse.json(publicInvite);
 }
 
-// Salva la configurazione del builder (testi, colori, foto, sezioni, RSVP, add-on).
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+// Salva la configurazione. Solo il proprietario, e solo finché l'invito non è pagato.
+export async function PUT(req: Request, { params }: Params) {
   const { id } = await params;
-  const config = (await req.json()) as InviteConfig;
-  if (!config || typeof config.title !== "string") {
-    return NextResponse.json({ error: "Configurazione non valida" }, { status: 400 });
-  }
-  const ok = await update((db) => {
-    const inv = db.invitations.find((i) => i.id === id);
-    if (!inv) return false;
-    if (inv.status === "paid") return false; // l'invito pagato è bloccato
-    inv.config = config;
-    return true;
+  const inv = await query((db) => db.invitations.find((i) => i.id === id));
+  if (!inv) return NextResponse.json({ error: "Non trovato" }, { status: 404 });
+  if (!(await ownsInvitation(inv))) return NextResponse.json({ error: "Non autorizzato" }, { status: 403 });
+  if (inv.status === "paid") return NextResponse.json({ error: "Invito già pagato: non è più modificabile" }, { status: 409 });
+
+  const config = sanitizeConfig(await req.json().catch(() => null));
+  if (!config) return NextResponse.json({ error: "Configurazione non valida" }, { status: 400 });
+
+  await update((db) => {
+    const row = db.invitations.find((i) => i.id === id);
+    if (row && row.status === "draft") row.config = config;
   });
-  if (!ok) return NextResponse.json({ error: "Non modificabile" }, { status: 409 });
   return NextResponse.json({ ok: true });
 }

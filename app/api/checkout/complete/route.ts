@@ -1,25 +1,38 @@
 import { NextResponse } from "next/server";
-import { update, track } from "@/lib/store";
+import { localCheckoutAllowed, shopifyConfigured } from "@/lib/shopify";
+import { ownsInvitation } from "@/lib/auth";
+import { orderEmail, sendMail } from "@/lib/mail";
+import { PRICING, formatPrice } from "@/lib/catalog";
+import { totalCents } from "@/lib/pricing";
+import { query, update, track } from "@/lib/store";
 
-// Solo per il checkout locale (senza Shopify configurato): segna l'ordine come pagato.
-// Con Shopify attivo questo endpoint rifiuta: il pagamento è confermato dal webhook.
+export const dynamic = "force-dynamic";
+
+// Solo checkout di prova: segna l'invito come pagato. Disattivato con Shopify e in produzione
+// (salvo ALLOW_LOCAL_CHECKOUT=true). Con Shopify il pagamento è confermato dal webhook.
 export async function POST(req: Request) {
-  if (process.env.SHOPIFY_STORE_DOMAIN) {
-    return NextResponse.json({ error: "Usa il checkout Shopify" }, { status: 403 });
+  if (shopifyConfigured() || !localCheckoutAllowed()) {
+    return NextResponse.json({ error: "Checkout di prova non disponibile" }, { status: 403 });
   }
-  const { invitationId } = (await req.json()) as { invitationId?: string };
-  if (!invitationId) return NextResponse.json({ error: "invitationId mancante" }, { status: 400 });
+  const body = (await req.json().catch(() => ({}))) as { invitationId?: string };
+  const inv = body.invitationId ? await query((db) => db.invitations.find((i) => i.id === body.invitationId)) : undefined;
+  if (!inv) return NextResponse.json({ error: "Invito non trovato" }, { status: 404 });
+  if (!(await ownsInvitation(inv))) return NextResponse.json({ error: "Non autorizzato" }, { status: 403 });
 
-  const ok = await update((db) => {
-    const inv = db.invitations.find((i) => i.id === invitationId);
-    if (!inv) return false;
-    inv.status = "paid";
-    inv.orderRef = `LOCAL-${Date.now()}`;
-    const order = db.orders.find((o) => o.invitationId === invitationId && o.status === "pending");
+  const owner = await query((db) => db.users.find((u) => u.id === inv.userId));
+  const amount = totalCents(inv.config.model, inv.config.addons.filter((a) => a in PRICING.addons));
+
+  await update((db) => {
+    const row = db.invitations.find((i) => i.id === inv.id);
+    if (!row) return;
+    row.status = "paid";
+    row.orderRef = `TEST-${Date.now()}`;
+    const order = db.orders.find((o) => o.invitationId === inv.id && o.status === "pending");
     if (order) order.status = "paid";
-    track(db, "order_paid", invitationId);
-    return true;
+    track(db, "order_paid", inv.id);
   });
-  if (!ok) return NextResponse.json({ error: "Invito non trovato" }, { status: 404 });
+  if (owner) {
+    await sendMail(orderEmail({ to: owner.email, title: inv.config.title, amount: formatPrice(amount), slug: inv.slug })).catch(() => undefined);
+  }
   return NextResponse.json({ ok: true });
 }

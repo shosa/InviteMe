@@ -16,6 +16,11 @@ export function shopifyConfigured(): boolean {
   );
 }
 
+// Il checkout di prova non incassa nulla: in produzione è spento a meno che non sia abilitato esplicitamente.
+export function localCheckoutAllowed(): boolean {
+  return process.env.NODE_ENV !== "production" || process.env.ALLOW_LOCAL_CHECKOUT === "true";
+}
+
 export type CheckoutInput = {
   invitationId: string;
   slug: string;

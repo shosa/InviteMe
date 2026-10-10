@@ -1,60 +1,87 @@
 import type { CSSProperties, ReactNode } from "react";
+import { EVENT_TYPES, STYLES } from "@/lib/catalog";
 import type { InviteConfig } from "@/lib/invitation";
 import { Countdown } from "./Countdown";
 
-const FONTS: Record<InviteConfig["font"], string> = {
-  serif: 'Georgia, "Iowan Old Style", "Palatino Linotype", serif',
-  script: '"Brush Script MT", "Segoe Script", cursive',
-  sans: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-};
+const SERIF = 'Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif';
+const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
-function formatDate(iso: string, locale: "it" | "en") {
-  if (!iso) return "";
-  const d = new Date(`${iso}T00:00:00`);
-  return new Intl.DateTimeFormat(locale === "it" ? "it-IT" : "en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(d);
+const MONTHS_IT = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+const WEEKDAYS_IT = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
+const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const WEEKDAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+// Data scomposta in parti: su Save the Date diventa un blocco tipografico, non una riga di testo.
+function dateParts(iso: string, locale: "it" | "en") {
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  const months = locale === "it" ? MONTHS_IT : MONTHS_EN;
+  const weekdays = locale === "it" ? WEEKDAYS_IT : WEEKDAYS_EN;
+  return { day: d.getDate(), month: months[d.getMonth()], year: d.getFullYear(), weekday: weekdays[d.getDay()] };
 }
 
-// Rendering puro dell'invito: usato dall'anteprima del builder e dalla pagina pubblica.
 export function Invitation({ config, children }: { config: InviteConfig; children?: ReactNode }) {
-  const style = {
-    "--inv-bg": config.colors.bg,
-    "--inv-ink": config.colors.ink,
-    "--inv-accent": config.colors.accent,
-    "--inv-font": FONTS[config.font],
+  const style = STYLES.find((s) => s.id === config.styleId) ?? STYLES[0];
+  const vars = {
+    "--inv-bg": style.bg,
+    "--inv-ink": style.ink,
+    "--inv-accent": style.accent,
+    "--inv-font": style.font === "serif" ? SERIF : SANS,
   } as CSSProperties;
 
-  const hasPhotos = config.photos.length > 0;
+  const eventLabel = EVENT_TYPES.find((e) => e.id === config.eventType)?.label ?? "Evento";
+  const date = dateParts(config.eventDate, config.locale);
+  const target = `${config.eventDate}T${config.eventTime || "00:00"}`;
+  const photo = config.photos[0];
+  const place = `${config.venue}${config.address ? `, ${config.address}` : ""}`;
+  const mapQuery = encodeURIComponent(`${config.venue} ${config.address}`);
+  const showCountdown = config.addons.includes("countdown");
+
+  if (config.model === "save-the-date") {
+    return (
+      <article className="inv inv-std" style={vars} aria-label={config.title}>
+        <p className="inv-eyebrow">Save the date</p>
+        {photo && (
+          <div className="inv-arch">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={photo} alt="" />
+          </div>
+        )}
+        <h1 className="inv-names">{config.title}</h1>
+        {date && (
+          <div className="inv-datebox" aria-label={`${date.weekday} ${date.day} ${date.month} ${date.year}`}>
+            <span className="inv-day">{date.day}</span>
+            <span className="inv-month">{date.month}</span>
+            <span className="inv-year">{date.year}</span>
+          </div>
+        )}
+        <p className="inv-place">{place}</p>
+        {config.message && <p className="inv-message">{config.message}</p>}
+        {showCountdown && <Countdown target={target} />}
+        <p className="inv-hosts">{config.hosts}</p>
+      </article>
+    );
+  }
 
   return (
-    <article className="inv" style={style} aria-label={config.title}>
-      <div className="inv-glow" aria-hidden />
-      <header className="inv-head">
-        <p className="inv-kicker">{config.hosts}</p>
-        <h1 className="inv-title">{config.title}</h1>
-        <div className="inv-rule" aria-hidden />
-        <p className="inv-message">{config.message}</p>
-      </header>
-
-      {hasPhotos && (
-        <div className="inv-photos" data-count={Math.min(config.photos.length, 3)}>
-          {config.photos.slice(0, 3).map((src, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={src} alt="" />
-          ))}
+    <article className="inv inv-full" style={vars} aria-label={config.title}>
+      <p className="inv-eyebrow">{eventLabel}</p>
+      {photo && (
+        <div className="inv-arch">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photo} alt="" />
         </div>
       )}
+      <h1 className="inv-names">{config.title}</h1>
+      <p className="inv-hosts">{config.hosts}</p>
+      {config.message && <p className="inv-message">{config.message}</p>}
 
       <dl className="inv-details">
         <div>
           <dt>Quando</dt>
           <dd>
-            {formatDate(config.eventDate, config.locale)}
-            {config.eventTime && ` · ${config.eventTime}`}
+            {date ? `${date.weekday} ${date.day} ${date.month} ${date.year}` : config.eventDate}
+            {config.eventTime && <span className="inv-sub">alle {config.eventTime}</span>}
           </dd>
         </div>
         <div>
@@ -66,15 +93,40 @@ export function Invitation({ config, children }: { config: InviteConfig; childre
         </div>
       </dl>
 
-      {config.sections.map((s) => (
-        <section key={s.id} className="inv-section">
-          <h2>{s.title}</h2>
-          <p>{s.body}</p>
-        </section>
-      ))}
+      {config.sections.length > 0 && (
+        <div className="inv-program">
+          {config.sections.map((s) => (
+            <section key={s.id}>
+              <h2>{s.title}</h2>
+              <p>{s.body}</p>
+            </section>
+          ))}
+        </div>
+      )}
 
-      {config.addons.includes("countdown") && (
-        <Countdown target={`${config.eventDate}T${config.eventTime || "00:00"}`} />
+      {showCountdown && <Countdown target={target} />}
+
+      {config.addons.includes("map") && config.address && (
+        <div className="inv-map">
+          <iframe
+            title={`Mappa: ${config.venue}`}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            src={`https://maps.google.com/maps?q=${mapQuery}&output=embed`}
+          />
+          <a className="inv-link" href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`} target="_blank" rel="noreferrer">
+            Apri le indicazioni
+          </a>
+        </div>
+      )}
+
+      {config.addons.includes("music") && config.musicUrl && (
+        <div className="inv-music">
+          <p>Musica per la serata</p>
+          <audio controls preload="none" src={config.musicUrl}>
+            Il tuo browser non supporta l&apos;audio.
+          </audio>
+        </div>
       )}
 
       {children}

@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 import { invitationIdFromOrder, verifyShopifyWebhook } from "@/lib/shopify";
-import { track, update } from "@/lib/store";
+import { orderEmail, sendMail } from "@/lib/mail";
+import { formatPrice } from "@/lib/catalog";
+import { query, track, update } from "@/lib/store";
 
-// Webhook Shopify orders/paid: firma verificata, poi attiva l'invito e registra la metrica.
+export const dynamic = "force-dynamic";
+
+// Webhook Shopify orders/paid: firma verificata, poi attiva l'invito, registra l'ordine e avvisa il cliente.
 export async function POST(req: Request) {
   const raw = await req.text();
   if (!verifyShopifyWebhook(raw, req.headers.get("x-shopify-hmac-sha256"))) {
     return NextResponse.json({ error: "Firma non valida" }, { status: 401 });
   }
+  if (req.headers.get("x-shopify-topic") !== "orders/paid") return NextResponse.json({ ok: true, ignored: true });
 
-  const topic = req.headers.get("x-shopify-topic");
   const order = JSON.parse(raw) as {
     id: number;
     name: string;
@@ -18,13 +22,11 @@ export async function POST(req: Request) {
     note_attributes?: { name: string; value: string }[];
     line_items?: { properties?: { name: string; value: string }[] }[];
   };
-
-  if (topic !== "orders/paid") return NextResponse.json({ ok: true, ignored: topic });
-
   const invitationId = invitationIdFromOrder(order);
-  await update((db) => {
+
+  const result = await update((db) => {
     const inv = invitationId ? db.invitations.find((i) => i.id === invitationId) : undefined;
-    if (inv) {
+    if (inv && inv.status !== "paid") {
       inv.status = "paid";
       inv.orderRef = order.name;
     }
@@ -38,6 +40,21 @@ export async function POST(req: Request) {
       status: "paid",
     });
     track(db, "order_paid", invitationId);
+    return inv ? { inv, userId: inv.userId, slug: inv.slug, title: inv.config.title } : null;
   });
+
+  if (result) {
+    const owner = await query((db) => db.users.find((u) => u.id === result.userId));
+    if (owner) {
+      await sendMail(
+        orderEmail({
+          to: owner.email,
+          title: result.title,
+          amount: formatPrice(Math.round(Number(order.total_price) * 100)),
+          slug: result.slug,
+        }),
+      ).catch(() => undefined);
+    }
+  }
   return NextResponse.json({ ok: true });
 }

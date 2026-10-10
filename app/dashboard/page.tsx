@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { TEMPLATES, formatPrice } from "@/lib/catalog";
+import { useEffect, useState, type FormEvent } from "react";
+import { MODELS, formatPrice } from "@/lib/catalog";
 
 type Metrics = {
+  users: number;
   invitations: number;
   drafts: number;
   paid: number;
@@ -11,86 +12,118 @@ type Metrics = {
   revenueCents: number;
   views: number;
   rsvps: number;
+  guestEmailsSent: number;
   conversionRate: number;
   checkoutsStarted: number;
-  byTemplate: Record<string, number>;
-  recent: { id: string; slug: string; title: string; status: string; views: number; rsvps: number; createdAt: string }[];
+  byModel: Record<string, number>;
+  recent: { id: string; slug: string; title: string; model: string; status: string; views: number; rsvps: number; createdAt: string }[];
 };
 
-// Numero che scorre da 0 al valore: dà la sensazione di dati vivi senza librerie.
-function CountUp({ value, format = (n: number) => Math.round(n).toLocaleString("it-IT") }: { value: number; format?: (n: number) => string }) {
-  const [shown, setShown] = useState(0);
-  useEffect(() => {
-    const start = performance.now();
-    const from = 0;
-    let frame = 0;
-    const step = (t: number) => {
-      const p = Math.min(1, (t - start) / 900);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setShown(from + (value - from) * eased);
-      if (p < 1) frame = requestAnimationFrame(step);
-    };
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
-  }, [value]);
-  return <>{format(shown)}</>;
-}
+const KEY = "inviteme-admin";
 
+// Pannello interno: metriche aggregate di tutto il servizio. Richiede ADMIN_TOKEN in produzione.
 export default function Dashboard() {
   const [m, setM] = useState<Metrics | null>(null);
-  const [err, setErr] = useState(false);
+  const [needsKey, setNeedsKey] = useState(false);
+  const [key, setKey] = useState("");
+  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
+    let stored = "";
+    try {
+      stored = sessionStorage.getItem(KEY) ?? "";
+    } catch {
+      /* storage non disponibile */
+    }
     const load = () =>
-      fetch("/api/metrics")
-        .then((r) => r.json())
-        .then((d: Metrics) => alive && setM(d))
-        .catch(() => alive && setErr(true));
+      fetch("/api/metrics", { headers: stored ? { Authorization: `Bearer ${stored}` } : {} })
+        .then((r) => {
+          if (r.status === 401) {
+            if (alive) setNeedsKey(true);
+            return null;
+          }
+          if (!r.ok) throw new Error("Metriche non disponibili");
+          return r.json();
+        })
+        .then((d: Metrics | null) => {
+          if (alive && d) {
+            setM(d);
+            setNeedsKey(false);
+          }
+        })
+        .catch((e: Error) => alive && setErr(e.message));
     load();
-    const id = setInterval(load, 5000);
+    const id = setInterval(load, 10_000);
     return () => {
       alive = false;
       clearInterval(id);
     };
   }, []);
 
-  const maxTpl = Math.max(1, ...Object.values(m?.byTemplate ?? { x: 1 }));
+  function unlock(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    try {
+      sessionStorage.setItem(KEY, key);
+    } catch {
+      /* ignorato */
+    }
+    window.location.reload();
+  }
+
+  if (needsKey) {
+    return (
+      <main className="admin">
+        <form className="admin-gate" onSubmit={unlock}>
+          <p className="eyebrow">Area riservata</p>
+          <h1>Chiave admin</h1>
+          <label className="field">
+            <span>ADMIN_TOKEN</span>
+            <input type="password" value={key} onChange={(e) => setKey(e.target.value)} autoComplete="off" />
+          </label>
+          <button className="btn solid wide" type="submit" disabled={!key}>Apri il pannello</button>
+        </form>
+      </main>
+    );
+  }
 
   return (
-    <main className="dash">
-      <header className="dash-head">
+    <main className="admin">
+      <header className="admin-head">
         <div>
-          <p className="kicker">InviteMe · Metriche</p>
-          <h1>Dashboard</h1>
+          <p className="eyebrow">InviteMe · Amministrazione</p>
+          <h1>Panoramica</h1>
         </div>
-        <span className="live"><i /> Live · aggiornamento ogni 5 s</span>
+        <span className="live"><i aria-hidden /> Aggiornato ogni 10 secondi</span>
       </header>
 
-      {err && <p role="alert" className="error">Impossibile caricare le metriche.</p>}
+      {err && <p role="alert" className="form-error">{err}</p>}
       {!m && !err && <p className="hint">Caricamento…</p>}
 
       {m && (
         <>
           <section className="kpis">
-            <Kpi label="Incasso" value={m.revenueCents / 100} format={(n) => formatPrice(Math.round(n * 100))} accent />
-            <Kpi label="Inviti creati" value={m.invitations} />
-            <Kpi label="Inviti pagati" value={m.paid} />
-            <Kpi label="Conversione" value={m.conversionRate * 100} format={(n) => `${n.toFixed(1)}%`} />
-            <Kpi label="Visualizzazioni" value={m.views} />
-            <Kpi label="Risposte RSVP" value={m.rsvps} />
+            <Kpi label="Incasso" value={formatPrice(m.revenueCents)} />
+            <Kpi label="Ordini pagati" value={String(m.orders)} />
+            <Kpi label="Conversione" value={`${(m.conversionRate * 100).toFixed(1)}%`} />
+            <Kpi label="Account" value={String(m.users)} />
+            <Kpi label="Visite agli inviti" value={String(m.views)} />
+            <Kpi label="Risposte RSVP" value={String(m.rsvps)} />
+            <Kpi label="Email agli ospiti" value={String(m.guestEmailsSent)} />
+            <Kpi label="Checkout avviati" value={String(m.checkoutsStarted)} />
           </section>
 
-          <section className="dash-grid">
+          <section className="admin-grid">
             <div className="card">
-              <h2>Per template</h2>
+              <h2>Per modello</h2>
               <ul className="bars">
-                {TEMPLATES.map((t) => {
-                  const n = m.byTemplate[t.id] ?? 0;
+                {MODELS.map((mod) => {
+                  const n = m.byModel[mod.id] ?? 0;
+                  const max = Math.max(1, ...Object.values(m.byModel));
                   return (
-                    <li key={t.id}>
-                      <span>{t.name}</span>
-                      <div className="bar"><i style={{ width: `${(n / maxTpl) * 100}%` }} /></div>
+                    <li key={mod.id}>
+                      <span>{mod.name}</span>
+                      <div className="bar"><i style={{ width: `${(n / max) * 100}%` }} /></div>
                       <b>{n}</b>
                     </li>
                   );
@@ -101,23 +134,23 @@ export default function Dashboard() {
             <div className="card">
               <h2>Ultimi inviti</h2>
               {m.recent.length === 0 ? (
-                <p className="hint">Nessun invito ancora. Creane uno dalla home.</p>
+                <p className="hint">Nessun invito ancora.</p>
               ) : (
-                <table>
-                  <thead>
-                    <tr><th>Titolo</th><th>Stato</th><th>Viste</th><th>RSVP</th></tr>
-                  </thead>
-                  <tbody>
-                    {m.recent.map((r) => (
-                      <tr key={r.id}>
-                        <td><a href={`/i/${r.slug}`}>{r.title}</a></td>
-                        <td><span className={`pill ${r.status}`}>{r.status === "paid" ? "Pagato" : "Bozza"}</span></td>
-                        <td>{r.views}</td>
-                        <td>{r.rsvps}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="table-wrap">
+                  <table>
+                    <thead><tr><th>Titolo</th><th>Stato</th><th>Visite</th><th>RSVP</th></tr></thead>
+                    <tbody>
+                      {m.recent.map((r) => (
+                        <tr key={r.id}>
+                          <td>{r.status === "paid" ? <a href={`/i/${r.slug}`}>{r.title}</a> : r.title}</td>
+                          <td><span className={`pill ${r.status === "paid" ? "yes" : "draft"}`}>{r.status === "paid" ? "Attivo" : "Bozza"}</span></td>
+                          <td>{r.views}</td>
+                          <td>{r.rsvps}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </section>
@@ -127,11 +160,11 @@ export default function Dashboard() {
   );
 }
 
-function Kpi({ label, value, format, accent }: { label: string; value: number; format?: (n: number) => string; accent?: boolean }) {
+function Kpi({ label, value }: { label: string; value: string }) {
   return (
-    <div className={accent ? "kpi accent" : "kpi"}>
+    <div className="kpi">
       <span>{label}</span>
-      <strong><CountUp value={value} format={format} /></strong>
+      <strong>{value}</strong>
     </div>
   );
 }
