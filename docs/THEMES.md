@@ -24,7 +24,7 @@ Un file tema è un oggetto JSON con questi campi. Ogni campo sconosciuto fa fall
 | `typography` | no | `display`: `"bodoni"`, `"georgia"` oppure `"custom"` (richiede `font`). `text`: `"grotesk"` oppure `"georgia"`. Default: `bodoni` e `grotesk` |
 | `shape` | no | `frame`: `"arch"`, `"rect"` oppure `"oval"`. `radius`: numero da 0 a 60. Default: `arch`, `0` |
 | `layout` | no | `"centered"` oppure `"editorial"` (testo allineato a sinistra). Default: `centered` |
-| `motion` | no | `cover`: `"envelope"` (busta sigillata che si apre al tocco) oppure `"none"`. `reveal`: `"fade"`, `"rise"` (sale dal basso) oppure `"none"`. Default: `envelope`, `fade` |
+| `motion` | no | `cover`: `"envelope"` (busta sigillata che si apre al tocco), `"curtain"` (sipario: due metà che si aprono ai lati) oppure `"none"`. `reveal`: `"fade"`, `"rise"` (sale dal basso) oppure `"none"`. Default: `envelope`, `fade` |
 | `css` | no | CSS dell'invito, massimo 20.000 caratteri. Vedi la sezione dedicata |
 | `font` | no | `{ "family": "Nome", "src": "data:font/woff2;base64,..." }`, massimo circa 400 KB in base64. Obbligatorio se `typography.display` è `"custom"` |
 | `music` | no | `defaultTrackId`: id di un brano della libreria, oppure `null`. `file`: audio incorporato come `data:audio/mpeg;base64,...` (oppure mp4 o ogg), massimo circa 2 MB |
@@ -87,7 +87,7 @@ Un tema caricato con lo stesso `id` di un altro tema caricato lo sostituisce. Un
 ## Limiti
 
 - Dimensione del file: il CSS è limitato a 20.000 caratteri, il font a circa 400 KB, l'audio a circa 2 MB.
-- Il catalogo, con i temi, viene letto dal database a ogni richiesta. Per questo i temi devono restare leggeri: evita font e audio più grandi del necessario.
+- Il catalogo, temi compresi, è tenuto in memoria per 15 secondi al massimo e si aggiorna subito a ogni salvataggio nella console. Le dimensioni massime sono regole di qualità: un tema più leggero si carica più in fretta.
 
 ## Come far generare un tema a un agente
 

@@ -16,7 +16,7 @@ export default async function PublicInvitation({ params }: { params: Promise<{ s
 
   return (
     <main className="public">
-      <Experience title={inv.config.title} accent={inv.style.accent} paper={inv.style.bg} ink={inv.style.ink} musicSrc={inv.musicSrc} cover={inv.style.motion?.cover !== "none"} reveal={inv.style.motion?.reveal ?? "fade"}>
+      <Experience title={inv.config.title} accent={inv.style.accent} paper={inv.style.bg} ink={inv.style.ink} musicSrc={inv.musicSrc} cover={inv.style.motion?.cover !== "none"} coverStyle={inv.style.motion?.cover === "curtain" ? "curtain" : "envelope"} reveal={inv.style.motion?.reveal ?? "fade"}>
         <Invitation config={inv.config} style={inv.style} features={inv.features}>
           {inv.hasRsvp && <RsvpForm slug={slug} questions={inv.config.rsvpQuestions} />}
         </Invitation>

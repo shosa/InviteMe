@@ -10,7 +10,7 @@ const DISPLAY_FONTS = ["bodoni", "georgia", "custom"] as const;
 const TEXT_FONTS = ["grotesk", "georgia"] as const;
 const FRAMES = ["arch", "rect", "oval"] as const;
 const LAYOUTS = ["centered", "editorial"] as const;
-const COVERS = ["envelope", "none"] as const;
+const COVERS = ["envelope", "curtain", "none"] as const;
 const REVEALS = ["fade", "rise", "none"] as const;
 
 const MAX_CSS = 20_000;
@@ -191,13 +191,13 @@ const BUILTIN_SOURCES: Record<string, unknown>[] = [
     schema: THEME_SCHEMA,
     id: "notte",
     name: "Notte",
-    description: "Fondo inchiostro, cornice a filo, busta e rivelazione dal basso. Per serate formali.",
+    description: "Fondo inchiostro, cornice a filo, sipario che si apre e rivelazione dal basso. Per serate formali.",
     models: ["save-the-date", "invitation-rsvp"],
     palette: { paper: "#17242A", ink: "#F3EFE6", accent: "#C9A46A", muted: "#A7B1B5", line: "#33434A" },
     typography: { display: "bodoni", text: "grotesk" },
     shape: { frame: "rect", radius: 2 },
     layout: "editorial",
-    motion: { cover: "envelope", reveal: "rise" },
+    motion: { cover: "curtain", reveal: "rise" },
   },
   {
     schema: THEME_SCHEMA,

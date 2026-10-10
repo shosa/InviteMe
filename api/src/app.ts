@@ -24,7 +24,7 @@ import {
   validateTheme,
 } from "@inviteme/shared";
 import { pool, migrate, track } from "./db";
-import { BUILTIN_IDS, mergeThemes } from "./catalog";
+import { BUILTIN_IDS, invalidateCatalog, mergeThemes } from "./catalog";
 import { loadCatalog, loadFullCatalog, saveCatalog } from "./catalog";
 import {
   SESSION_COOKIE,
@@ -564,6 +564,7 @@ export async function buildApp() {
 
   // Carica un brano (MP3, M4A, OGG) nella libreria. Serve la conferma dei diritti: è una responsabilità dell'admin.
   app.post("/api/admin/music", async (req, reply) => {
+    invalidateCatalog();
     if (!(await requireAdmin(req, reply))) return;
     const file = await req.file();
     if (!file) return reply.code(400).send({ error: "Nessun file ricevuto" });
@@ -593,6 +594,7 @@ export async function buildApp() {
   });
 
   app.post<{ Params: { id: string } }>("/api/admin/music/:id", async (req, reply) => {
+    invalidateCatalog();
     if (!(await requireAdmin(req, reply))) return;
     if (!UUID.test(req.params.id)) return reply.code(404).send({ error: "Brano non trovato" });
     const b = (req.body ?? {}) as { title?: string; artist?: string; license?: string; enabled?: boolean };
@@ -605,6 +607,7 @@ export async function buildApp() {
   });
 
   app.delete<{ Params: { id: string } }>("/api/admin/music/:id", async (req, reply) => {
+    invalidateCatalog();
     if (!(await requireAdmin(req, reply))) return;
     if (!UUID.test(req.params.id)) return reply.code(404).send({ error: "Brano non trovato" });
     const { rows } = await pool.query("DELETE FROM music_tracks WHERE id = $1 RETURNING url", [req.params.id]);

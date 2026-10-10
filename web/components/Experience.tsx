@@ -10,7 +10,8 @@ type Props = {
   paper: string;
   ink: string;
   musicSrc?: string | null;
-  cover?: boolean; // false: nessuna busta (anteprime)
+  cover?: boolean; // false: nessuna copertina (anteprime)
+  coverStyle?: "envelope" | "curtain";
   reveal?: "fade" | "rise" | "none";
   children: ReactNode;
 };
@@ -18,7 +19,7 @@ type Props = {
 const reduceMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // Busta: il tocco la apre, parte la musica e l'invito si rivela. È l'unico momento coreografato.
-export function Experience({ title, accent, paper, ink, musicSrc, cover = true, reveal = "fade", children }: Props) {
+export function Experience({ title, accent, paper, ink, musicSrc, cover = true, coverStyle = "envelope", reveal = "fade", children }: Props) {
   const [stage, setStage] = useState<"sealed" | "opening" | "open">(cover ? "sealed" : "open");
   const [playing, setPlaying] = useState(false);
   const audio = useRef<HTMLAudioElement>(null);
@@ -83,7 +84,18 @@ export function Experience({ title, accent, paper, ink, musicSrc, cover = true, 
 
   return (
     <div className={`experience stage-${stage}`} style={vars} data-reveal-style={reveal}>
-      {cover && stage !== "open" && (
+      {cover && stage !== "open" && coverStyle === "curtain" && (
+        <div className="cover cover-curtain" role="button" tabIndex={0} aria-label={`Apri l'invito di ${title}`} onClick={open} onKeyDown={onKey}>
+          <div className="curtain-half curtain-l" aria-hidden="true" />
+          <div className="curtain-half curtain-r" aria-hidden="true" />
+          <div className="curtain-center" aria-hidden="true">
+            <span>{monogram(title)}</span>
+          </div>
+          <p className="cover-hint">Tocca per aprire</p>
+        </div>
+      )}
+
+      {cover && stage !== "open" && coverStyle === "envelope" && (
         <div className="cover" role="button" tabIndex={0} aria-label={`Apri l'invito di ${title}`} onClick={open} onKeyDown={onKey}>
           <div className="env">
             <div className="env-body" />

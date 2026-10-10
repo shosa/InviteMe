@@ -26,19 +26,37 @@ export function mergeThemes(stored: StyleDef[] | undefined): StyleDef[] {
   return [...builtin, ...uploaded];
 }
 
-export async function loadCatalog(opts: { includeDisabled?: boolean } = {}): Promise<Catalog> {
+// Cache in memoria del catalogo completo: i temi con font e audio incorporati non si rileggono a ogni richiesta.
+// Si invalida a ogni salvataggio e dopo 15 secondi al massimo (per le modifiche alla libreria musicale).
+const TTL_MS = 15_000;
+let cache: { at: number; full: Catalog } | null = null;
+
+export function invalidateCatalog() {
+  cache = null;
+}
+
+async function readFull(): Promise<Catalog> {
+  if (cache && Date.now() - cache.at < TTL_MS) return cache.full;
   const [{ rows: s }, { rows: t }] = await Promise.all([
     pool.query("SELECT value FROM settings WHERE key = 'catalog'"),
     pool.query("SELECT id, title, artist, url, license, enabled FROM music_tracks ORDER BY created_at DESC"),
   ]);
   const stored = s[0]?.value as Partial<Stored> | undefined;
-  const models: ModelDef[] = stored?.models ?? DEFAULT_CATALOG.models;
-  const addons: AddonDef[] = stored?.addons ?? DEFAULT_CATALOG.addons;
-  const styles: StyleDef[] = mergeThemes(stored?.styles);
-  const music: MusicTrack[] = t.map((r) => ({ id: r.id, title: r.title, artist: r.artist, url: r.url, license: r.license, enabled: r.enabled }));
+  const full: Catalog = {
+    models: stored?.models ?? DEFAULT_CATALOG.models,
+    addons: stored?.addons ?? DEFAULT_CATALOG.addons,
+    styles: mergeThemes(stored?.styles),
+    music: t.map((r) => ({ id: r.id, title: r.title, artist: r.artist, url: r.url, license: r.license, enabled: r.enabled })),
+  };
+  cache = { at: Date.now(), full };
+  return full;
+}
 
-  const filter = <T extends { enabled: boolean }>(list: T[]) => (opts.includeDisabled ? list : list.filter((x) => x.enabled));
-  return { models: filter(models), addons: filter(addons), styles: filter(styles), music: filter(music) };
+export async function loadCatalog(opts: { includeDisabled?: boolean } = {}): Promise<Catalog> {
+  const full = await readFull();
+  if (opts.includeDisabled) return full;
+  const on = <T extends { enabled: boolean }>(list: T[]) => list.filter((x) => x.enabled);
+  return { models: on(full.models), addons: on(full.addons), styles: on(full.styles), music: on(full.music) };
 }
 
 // Salva il catalogo completo (solo i campi gestiti dalla console).
@@ -48,6 +66,7 @@ export async function saveCatalog(next: Stored): Promise<void> {
      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
     [JSON.stringify(next)],
   );
+  invalidateCatalog();
 }
 
 // Versione completa, per la console: include anche gli elementi disabilitati.

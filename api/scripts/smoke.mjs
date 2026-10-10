@@ -2,7 +2,6 @@
 // Uso: BASE_URL=http://localhost:4000 ADMIN_TOKEN=... SHOPIFY_WEBHOOK_SECRET=... npm run smoke
 import crypto from "node:crypto";
 import fs from "node:fs";
-import path from "node:path";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:4000";
 const ADMIN = process.env.ADMIN_TOKEN ?? "";
@@ -89,7 +88,7 @@ const restored = await json(await call("/api/catalog"));
 check("ripristino prezzi originali", restored.addons.find((a) => a.key === "map")?.cents === priceBefore);
 
 // ───── Temi: caricamento, validazione, protezione dei preimpostati ─────
-const themeFile = JSON.parse(fs.readFileSync(path.join(process.cwd(), "..", "docs", "examples", "tema-esempio.json"), "utf8"));
+const themeFile = JSON.parse(fs.readFileSync(new URL("../../docs/examples/tema-esempio.json", import.meta.url), "utf8"));
 const upTheme = await call("/api/admin/themes", { method: "POST", headers: admin, body: themeFile });
 check("tema a file singolo caricato", upTheme.status === 201, "status " + upTheme.status);
 const badTheme = await call("/api/admin/themes", { method: "POST", headers: admin, body: { ...themeFile, id: "x", css: "@import url(evil);" } });
