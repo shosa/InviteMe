@@ -7,3 +7,7 @@ data/*.json
 *.tsbuildinfo
 .impeccable/
 data/
+
+.env
+.env.*
+!.env.example
