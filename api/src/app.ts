@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import cookie from "@fastify/cookie";
-import multipart from "@fastify/multipart";
+import multipart, { type MultipartFile } from "@fastify/multipart";
 import staticFiles from "@fastify/static";
 import {
   ADDON_KEYS,
@@ -644,18 +644,30 @@ export async function buildApp() {
   app.post("/api/admin/music", async (req, reply) => {
     invalidateCatalog();
     if (!(await requireAdmin(req, reply))) return;
-    const file = await req.file();
-    if (!file) return reply.code(400).send({ error: "Nessun file ricevuto" });
+    // Il form può arrivare con i campi prima o dopo il file: li leggiamo tutti prima di decidere.
+    let file: MultipartFile | undefined;
+    let buffer: Buffer | undefined;
+    const fields: Record<string, string> = {};
+    for await (const part of req.parts()) {
+      if (part.type === "file") {
+        if (part.fieldname === "file" && !file) {
+          file = part;
+          buffer = await part.toBuffer();
+        } else {
+          await part.toBuffer();
+        }
+      } else {
+        fields[part.fieldname] = String(part.value);
+      }
+    }
+    if (!file || !buffer) return reply.code(400).send({ error: "Nessun file ricevuto" });
     const ext = INPUT_TYPES.audio[file.mimetype];
     if (!ext) return reply.code(400).send({ error: "Formato non supportato: usa MP3, M4A, OGG o WAV" });
-    const fields = file.fields as Record<string, { value?: string } | undefined>;
-    const title = String(fields.title?.value ?? file.filename).slice(0, 120).trim();
-    const artist = String(fields.artist?.value ?? "").slice(0, 120);
-    const license = String(fields.license?.value ?? "").slice(0, 300);
-    if (fields.rights?.value !== "true") return reply.code(400).send({ error: "Conferma di avere i diritti del brano" });
+    const title = String(fields.title || file.filename).slice(0, 120).trim();
+    const artist = String(fields.artist ?? "").slice(0, 120);
+    const license = String(fields.license ?? "").slice(0, 300);
+    if (fields.rights !== "true") return reply.code(400).send({ error: "Conferma di avere i diritti del brano" });
     if (!title) return reply.code(400).send({ error: "Inserisci il titolo" });
-
-    const buffer = await file.toBuffer();
     if (file.file.truncated) return reply.code(413).send({ error: "File troppo grande" });
     try {
       const saved = await convertMedia("audio", buffer, ext);
