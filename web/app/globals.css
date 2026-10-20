@@ -1197,3 +1197,25 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .tpl-filters button small { font-size: 12px; font-weight: 600; color: var(--ink-soft); }
 .tpl-filters button.is-on { background: var(--ink); color: #fff; border-color: var(--ink); }
 .tpl-filters button.is-on small { color: #C9CED6; }
+
+/* Confronto modelli e blocchi: larghezza piena, senza margini laterali eccessivi, senza trattini delle liste globali. */
+#modelli > .wrap { max-width: 1440px; padding: 0 24px; }
+.home-showcase { gap: 40px; }
+.compare { gap: 36px; }
+.compare-head { grid-template-columns: auto minmax(0, 1fr); }
+.compare .model-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.compare .model-card { padding: 34px; }
+.compare .model-card .model-desc { font-size: 17px; }
+.compare .model-card .model-tagline { font-size: 1.2rem; }
+.model-blocks li, .model-blocks li::before { font-size: 16px; }
+.model-blocks li::before, .blocks-grid li::before { content: none !important; display: none !important; }
+.model-sub { font-size: 12px; }
+.blocks-showcase h2 { font-size: clamp(1.8rem, 2.6vw, 2.3rem); }
+.blocks-showcase .lede { font-size: 17px; max-width: 70ch; }
+.blocks-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.block-tile { padding: 22px; gap: 8px; }
+.block-tile strong { font-size: 1.2rem; }
+.block-tile-desc { font-size: 15px; }
+.block-tile-state { font-size: 12px; margin-bottom: 4px; }
+@media (max-width: 1100px) { .compare .model-grid, .blocks-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px) { .compare .model-grid, .blocks-grid { grid-template-columns: minmax(0, 1fr); } .compare-head { grid-template-columns: 1fr; } }

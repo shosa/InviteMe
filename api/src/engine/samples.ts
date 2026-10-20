@@ -10,9 +10,10 @@ type Sample = { eventType: Kind; title: string; hosts: string; message: string; 
 
 const pick = <T>(list: T[], rnd: Rnd): T => list[Math.floor(rnd() * list.length)];
 
-const NAMES: Record<Lang, string[]> = {
-  it: ["Marta", "Giulia", "Chiara", "Sofia", "Alessia", "Elena", "Francesca", "Valentina", "Luca", "Marco", "Davide", "Paolo", "Andrea", "Matteo", "Nicola", "Simone"],
-  en: ["Emma", "Olivia", "Sophie", "Amelia", "Grace", "Lily", "Ruby", "James", "Oliver", "Harry", "Charlie", "Tom", "Noah", "Jack", "Henry", "Daniel"],
+// Nomi per genere: le coppie prendono sempre un nome femminile e uno maschile.
+const NAMES: Record<Lang, { f: string[]; m: string[] }> = {
+  it: { f: ["Marta", "Giulia", "Chiara", "Sofia", "Alessia", "Elena", "Francesca", "Valentina"], m: ["Luca", "Marco", "Davide", "Paolo", "Andrea", "Matteo", "Nicola", "Simone"] },
+  en: { f: ["Emma", "Olivia", "Sophie", "Amelia", "Grace", "Lily", "Ruby", "Hannah"], m: ["James", "Oliver", "Harry", "Charlie", "Tom", "Noah", "Jack", "Henry"] },
 };
 const VENUES: Record<Lang, [string, string][]> = {
   it: [["Villa dei Glicini", "Via dei Giardini 12, Firenze"], ["Tenuta del Lago", "Strada Provinciale 8, Como"], ["Terrazza sul Porto", "Molo Sud 3, Genova"], ["Giardino Botanico", "Viale delle Rose 21, Padova"], ["Sala Ferrara", "Corso Ferrara 4, Torino"], ["Casale degli Ulivi", "Località Colle 9, Siena"]],
@@ -51,9 +52,10 @@ export function sampleSample(themeId: string, lang: Lang, rnd: Rnd): Sample {
   // Il tipo di festa segue le categorie del template: un template di laurea non mostra un matrimonio.
   const eventType: Kind = pick(themeCategories(themeId), rnd);
   const k = KIND[eventType][lang];
-  const a = pick(NAMES[lang], rnd);
-  let b = pick(NAMES[lang], rnd);
-  if (b === a) b = NAMES[lang][(NAMES[lang].indexOf(a) + 3) % NAMES[lang].length];
+  // Una coppia è sempre un nome femminile con uno maschile, in ordine casuale.
+  const fem = pick(NAMES[lang].f, rnd);
+  const male = pick(NAMES[lang].m, rnd);
+  const [a, b] = rnd() < 0.5 ? [fem, male] : [male, fem];
   const n = eventType === "birthday" ? pick([18, 30, 40, 50, 60], rnd) : eventType === "anniversary" ? pick([10, 15, 25, 30, 50], rnd) : eventType === "corporate" ? 2027 : 7;
   const [venue, address] = pick(VENUES[lang], rnd);
   const days = 30 + Math.floor(rnd() * 330);
