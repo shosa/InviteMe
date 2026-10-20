@@ -32,7 +32,6 @@ type Props = {
 // Colonna destra: le proprietà del blocco selezionato, oppure i dati generali dell'invito.
 export function Inspector(p: Props) {
   const L = ui(p.lang ?? "it").builder;
-  const hasRsvp = p.config.blocks.some((b) => b.type === "rsvp");
   if (p.block) {
     const def = blockDef(p.block.type);
     if (!def) return null;
@@ -148,12 +147,6 @@ export function Inspector(p: Props) {
         <TemplateSwitch themes={themes} currentId={p.config.themeId} locked={!!p.locked} onConfirm={p.onSetTheme} lang={p.lang} />
       </section>
 
-      {hasRsvp && (
-        <section className="bl-group" aria-labelledby="bl-q">
-          <h3 id="bl-q">{L.questions}</h3>
-          <QuestionsEditor questions={p.config.rsvpQuestions} onChange={p.onSetQuestions} L={L} />
-        </section>
-      )}
     </div>
   );
 }

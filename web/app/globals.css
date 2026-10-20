@@ -1431,3 +1431,12 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-question .check { font-size: 14px; }
 .bl-fields input, .bl-fields select, .bl-fields textarea { max-width: 100%; box-sizing: border-box; }
 .bl-back { white-space: nowrap; }
+
+/* Domande RSVP: stessa forma dei campi del pannello proprietà, con i separatori. */
+.bl-questions { gap: 0; }
+.bl-question { background: none; border: 0; padding: 0; gap: 8px; }
+.bl-questions > .bl-question + .bl-question { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
+.bl-question > .check { margin: 0; }
+.bl-question .row input, .bl-question .row select { background: #fff; border: 1px solid #C9CED6; border-radius: 12px; padding: 11px 14px; font-size: 15px; }
+.bl-question > .link { justify-self: start; }
+.bl-questions > .btn { margin-top: 14px; }
