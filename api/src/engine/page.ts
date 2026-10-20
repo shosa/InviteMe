@@ -85,8 +85,9 @@ export function renderInvitePage(input: PageInput): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
 <meta name="robots" content="noindex,nofollow">
-<link rel="icon" href="data:,">
+
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(description.slice(0, 160))}">
 <meta name="theme-color" content="${escapeHtml(m.themeColor)}">

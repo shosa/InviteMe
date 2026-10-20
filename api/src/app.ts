@@ -25,6 +25,7 @@ import {
 } from "@inviteme/shared";
 import { pool, migrate, track } from "./db";
 import { invalidateCatalog, loadCatalog, loadFullCatalog, saveCatalog, themes } from "./catalog";
+import { previewShell } from "./engine/previewShell";
 import { renderInvitePage } from "./engine/page";
 import { RUNTIME_PATH, sampleConfig } from "./engine/themes";
 import { MEDIA_DIR, MediaError, convertMedia, ensureMediaDirs, INPUT_TYPES, type MediaKind } from "./media";
@@ -390,6 +391,16 @@ export async function buildApp() {
   });
 
   // Pagina dimostrativa di un tema, con dati d'esempio: la usano la home e la scheda dei modelli.
+  // Anteprima dedicata di uno stile: telefono o desktop contenuto; a schermo intero da telefono.
+  app.get<{ Params: { id: string } }>("/api/themes/:id/anteprima", async (req, reply) => {
+    const theme = themes().find((t) => t.manifest.id === req.params.id);
+    if (!theme) return reply.code(404).type("text/plain; charset=utf-8").send("Tema non trovato");
+    const q = req.query as { lang?: string; s?: string };
+    const lang = q.lang === "en" ? "en" : "it";
+    const seed = /^[a-z0-9]{1,12}$/i.test(q.s ?? "") ? (q.s as string) : "x";
+    return reply.type("text/html; charset=utf-8").header("Cache-Control", "no-store").send(previewShell(theme.manifest.id, theme.manifest.name, lang, seed));
+  });
+
   app.get<{ Params: { id: string } }>("/api/themes/:id/demo", async (req, reply) => {
     const theme = themes().find((t) => t.manifest.id === req.params.id);
     if (!theme) return reply.code(404).type("text/plain; charset=utf-8").send("Tema non trovato");

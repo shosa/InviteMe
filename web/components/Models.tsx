@@ -47,6 +47,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   const [error, setError] = useState<string | null>(null);
   const gallery = useRef<HTMLElement>(null);
   const modelsSection = useRef<HTMLElement>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const styleManifest = themes.find((t) => t.id === themeId);
   const styleName = styleManifest ? themeCopy(themeId, styleManifest.name, lang) : "";
   const model = models.find((m) => m.id === modelId);
@@ -127,7 +128,8 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
           <span className="hm-tag">{styleManifest ? categoryLabel(themeCategories(styleManifest.id)[0], lang) : ""}</span>
           <div className="hm-actions">
             <button type="button" className="btn outline" onClick={() => gallery.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{H.changeTemplate}</button>
-            <a className="btn solid" href={`/api/themes/${themeId}/demo?lang=${lang}&s=${seed}`} target="_blank" rel="noreferrer">{H.stylePreview}</a>
+            <button type="button" className="btn outline" onClick={() => setPreviewOpen(true)}>{H.stylePreview}</button>
+            <button type="button" className="btn solid" onClick={() => modelsSection.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{en ? "Choose model" : "Scegli modello"}</button>
           </div>
           <ul className="hm-pills" aria-label={T.blocks}>
             {BLOCKS.map((b) => {
@@ -192,6 +194,15 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
           </details>
         )}
       </section>
+
+      {previewOpen && (
+        <div className="sp-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setPreviewOpen(false); }}>
+          <div className="sp-dialog" role="dialog" aria-modal="true" aria-label={H.stylePreview}>
+            <button type="button" className="sp-close" onClick={() => setPreviewOpen(false)} aria-label={L.close}>×</button>
+            <iframe title={styleName} src={`/api/themes/${themeId}/anteprima?lang=${lang}&s=${seed}`} />
+          </div>
+        </div>
+      )}
 
       {error && <p role="alert" className="form-error models-error">{error}</p>}
 

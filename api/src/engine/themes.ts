@@ -149,8 +149,9 @@ export function sampleConfig(manifest: ThemeManifest, lang: "it" | "en" = "it", 
   config.event = { ...config.event, ...sampleEventFields(sample) };
   // Alcuni template mostrano la data in chiaro al posto di quella da grattare: il manifest dichiara lo scambio.
   const swap: Record<string, string> = (manifest.demo as { blockSwap?: Record<string, string> }).blockSwap ?? {};
-  const targets = new Set(Object.values(swap));
-  config.blocks = BLOCKS.filter((def) => !targets.has(def.type)).map((def) => {
+  // Il blocco Data compare solo dove il template lo sceglie con lo scambio: mai insieme alla data da grattare.
+  const dropped = new Set<string>(["date", ...Object.values(swap)]);
+  config.blocks = BLOCKS.filter((def) => !dropped.has(def.type)).map((def) => {
     const type = (swap[def.type] ?? def.type) as BlockType;
     const generated = sampleProps(type, sample, lang) ?? {};
     return {
