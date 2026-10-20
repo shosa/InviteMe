@@ -1113,3 +1113,38 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .pl-pay .pl-btn { text-decoration: none; display: inline-block; justify-self: start; }
 .home-showcase { grid-template-columns: minmax(0, 1fr); }
 .home-showcase > * { min-width: 0; }
+
+/* Confronto modelli: grande, con il template scelto accanto e il pulsante per tornare alla vetrina. */
+.compare { display: grid; gap: 28px; scroll-margin-top: 90px; }
+.compare-head { display: grid; grid-template-columns: auto 1fr; gap: 36px; align-items: center; }
+.pick { display: flex; gap: 22px; align-items: center; }
+.pick-phone { width: 150px; height: 310px; border-radius: 34px; overflow: hidden; border: 7px solid #0E1116; background: #fff; flex: none; position: relative; box-shadow: 0 22px 40px -26px rgba(0,0,0,0.5); }
+.pick-phone iframe { position: absolute; top: 0; left: 0; width: 390px; height: 1040px; border: 0; transform: scale(0.3); transform-origin: 0 0; pointer-events: none; }
+.pick h2 { margin: 6px 0 12px; font-size: 1.9rem; }
+.compare-title { margin: 0 0 8px; font-size: 2rem; }
+.compare .model-grid { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 26px; }
+.compare .model-card { padding: 38px; gap: 14px; cursor: pointer; border: 2px solid transparent; transition: border-color .2s ease, transform .2s ease; }
+.compare .model-card:hover { transform: translateY(-3px); }
+.compare .model-card.is-on { border-color: var(--brass); box-shadow: 0 20px 40px -28px rgba(0,0,0,0.35); }
+.compare .model-card h3 { font-size: 2.1rem; }
+.compare .model-card .model-price b { font-family: var(--font-display), sans-serif; font-size: 2.2rem; color: var(--ink); }
+.compare .model-card .model-tagline { font-size: 1.15rem; }
+.compare .model-card .model-desc { font-size: 16px; line-height: 1.6; }
+.model-options { margin: 0; font-size: 14px; color: var(--ink-soft); }
+.home-showcase { padding-bottom: 120px; }
+
+/* Barra riepilogo in basso, stile carrello. */
+.order-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -14px 34px -20px rgba(0,0,0,0.35); display: flex; align-items: center; gap: 28px; padding: 16px clamp(16px, 4vw, 56px); }
+.order-bar-item { display: grid; gap: 2px; min-width: 0; }
+.order-bar-item strong { font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.order-bar-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
+.order-bar-price strong { font-family: var(--font-display), sans-serif; font-size: 1.6rem; }
+.order-bar > .btn { margin-left: auto; }
+@media (max-width: 720px) {
+  .compare-head { grid-template-columns: 1fr; }
+  .pick-phone { width: 110px; height: 230px; }
+  .pick-phone iframe { transform: scale(0.22); height: 1050px; }
+  .order-bar { gap: 12px; flex-wrap: wrap; }
+  .order-bar > .btn { margin-left: 0; width: 100%; }
+  .order-bar-item:nth-child(2) { display: none; }
+}
