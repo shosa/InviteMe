@@ -45,6 +45,7 @@ export const BLOCK_COPY_EN: Record<string, string> = {
   cover: "Envelope",
   hero: "Header",
   scratchdate: "Scratch date",
+  date: "Date",
   countdown: "Countdown",
   message: "Message",
   gallery: "Gallery",

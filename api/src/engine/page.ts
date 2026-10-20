@@ -222,6 +222,11 @@ const LOOK_CSS = `
 .bk[data-shape="round"] [data-scratch]{border-radius:50%!important}
 .bk[data-shape="pill"] [data-scratch]{border-radius:999px!important}
 [data-cover]{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dt-sec{text-align:center}
+.dt-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+.dt-cell{display:grid;gap:6px;min-width:96px;padding:16px 20px;border:1px solid currentColor;border-radius:14px;opacity:.95}
+.dt-num{font-size:40px;line-height:1;font-weight:600}
+.dt-lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.75}
 [data-cover] .env-card{perspective:900px;transition:transform .9s cubic-bezier(.3,.7,.3,1)}
 [data-cover] .env-flap{transform-origin:50% 0;transition:transform .9s cubic-bezier(.3,.7,.3,1)}
 [data-cover] .env-seal{transition:opacity .4s ease,transform .6s ease}
