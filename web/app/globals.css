@@ -1471,3 +1471,7 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-item.is-anchored { background: #F1ECFB; border-color: #5B3FA6; }
 .bl-anchor { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #5B3FA6; background: #FFFFFF; border: 1px solid #5B3FA6; border-radius: 999px; padding: 2px 8px; margin-left: 8px; }
 .bl-item.is-anchored .bl-tools button:disabled { opacity: .35; }
+
+/* Campi data e ora nel pannello: restano nella colonna, senza sforare. */
+.bl-right .field, .bl-fields > * { min-width: 0; max-width: 100%; }
+.bl-fields input[type="date"], .bl-fields input[type="time"], .bl-right input[type="date"], .bl-right input[type="time"] { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; display: block; }

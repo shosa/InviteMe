@@ -250,7 +250,13 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   function removeBlock(id: string) {
     const target = config.blocks.find((b) => b.id === id);
     if (target && blockDef(target.type)?.locked) return;
-    edit((c) => ({ ...c, blocks: c.blocks.filter((b) => b.id !== id) }));
+    // Un blocco a pagamento tolto porta via anche la sua funzione, se nessun altro blocco la usa: il prezzo scende.
+    const feature = target ? blockDef(target.type)?.feature : undefined;
+    edit((c) => {
+      const blocks = c.blocks.filter((b) => b.id !== id);
+      const stillUsed = !!feature && blocks.some((b) => blockDef(b.type)?.feature === feature);
+      return { ...c, blocks, addons: feature && !stillUsed ? c.addons.filter((a) => a !== feature) : c.addons };
+    });
     if (selected === id) setSelected(null);
   }
   function setProp(id: string, key: string, value: unknown, group?: string) {

@@ -1,10 +1,8 @@
-{{#body}}
 <section class="sec shuttle-sec">
   <div class="card">
     {{#heading}}<h2 class="title" data-anim="fadeinup">{{heading}}</h2>{{/heading}}
-    <div class="shuttle-box" data-anim="fadeinup" style="--d:.15s">
+    {{#body}}<div class="shuttle-box" data-anim="fadeinup" style="--d:.15s">
       <p class="body">{{body | lines}}</p>
-    </div>
+    </div>{{/body}}
   </div>
 </section>
-{{/body}}

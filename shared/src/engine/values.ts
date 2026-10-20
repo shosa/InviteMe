@@ -16,6 +16,7 @@ const LIST_MAX = 12;
 export function emptyValue(f: FieldDef): unknown {
   if (f.type === "list" || f.type === "photos") return [];
   if (f.type === "number") return typeof f.default === "number" ? f.default : 0;
+  if (f.type === "toggle") return typeof f.default === "boolean" ? f.default : false;
   if (f.type === "text" || f.type === "longtext" || f.type === "date" || f.type === "time") return typeof f.default === "string" ? f.default : "";
   return "";
 }
@@ -33,6 +34,8 @@ export function sanitizeValues(fields: FieldDef[], input: unknown, active: Reado
 
 function sanitizeField(f: FieldDef, v: unknown): unknown {
   switch (f.type) {
+    case "toggle":
+      return typeof v === "boolean" ? v : emptyValue(f);
     case "text":
       return text(v, f.max ?? TEXT_MAX, f);
     case "longtext":

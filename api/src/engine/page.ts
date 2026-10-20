@@ -66,6 +66,10 @@ export function renderInvitePage(input: PageInput): string {
     if (!template) continue;
     // Un campo vuoto non cancella il valore dell'evento quando la proprietà esiste anche tra i dati dell'evento (nomi, riga sotto i nomi).
     const merged: Record<string, unknown> = { ...globals, ...listFlags(block.props) };
+    // Gli interruttori mancanti (inviti salvati prima del campo) prendono il valore predefinito.
+    for (const f of blockDef(block.type)?.fields ?? []) {
+      if (f.type === "toggle" && merged[f.key] === undefined) merged[f.key] = f.default ?? false;
+    }
     for (const [k, v] of Object.entries(block.props)) {
       if (v === "" && k in globals) continue;
       merged[k] = v;
@@ -258,14 +262,15 @@ const LOOK_CSS = `
 [data-cover]{display:flex;flex-direction:column;align-items:center;justify-content:center}
 .dt-sec{text-align:center}
 .dt-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+.dt-col{display:grid;justify-items:center;gap:8px;flex:none}
 .dt-cell{display:grid;gap:6px;min-width:96px;padding:16px 20px;border:1px solid currentColor;border-radius:14px;opacity:.95}
 .dt-num{font-size:40px;line-height:1;font-weight:600}
-.dt-row[data-shape="round"] .dt-cell{border-radius:50%;aspect-ratio:1;min-width:112px;align-content:center;justify-items:center}
-.dt-row[data-shape="pill"] .dt-cell{border-radius:999px}
+.dt-row[data-shape="round"] .dt-cell,.bk[data-cell-shape="round"] .dt-cell{width:96px;height:96px;min-width:0;padding:0;border-radius:50%;align-content:center;justify-items:center}
+.dt-row[data-shape="pill"] .dt-cell,.bk[data-cell-shape="pill"] .dt-cell{width:108px;height:64px;min-width:0;padding:0;border-radius:999px;align-content:center;justify-items:center}
 .dt-row[data-shape="plain"] .dt-cell{border:0;padding:6px 12px}
 .dt-lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.75}
 .scratch,.dt-cell{container-type:inline-size}
-.scratch:nth-child(2) .sc-val,.dt-cell:nth-child(2) .dt-num{font-size:clamp(12px,17cqi,28px)!important;white-space:nowrap}
+.scratch:nth-child(2) .sc-val,.dt-col:nth-child(2) .dt-num{font-size:clamp(12px,17cqi,28px)!important;white-space:nowrap}
 [data-cover] .env-card{perspective:900px;transition:transform .9s cubic-bezier(.3,.7,.3,1)}
 [data-cover] .env-flap{transform-origin:50% 0;transition:transform .9s cubic-bezier(.3,.7,.3,1)}
 [data-cover] .env-seal{transition:opacity .4s ease,transform .6s ease}
@@ -287,8 +292,8 @@ const LOOK_CSS = `
 .bk[data-gallery="grid"] :has(> figure) > figure img{aspect-ratio:1/1}
 @media (max-width:600px){.bk[data-gallery="mosaic"] :has(> figure),.bk[data-gallery="grid"] :has(> figure){grid-template-columns:repeat(2,minmax(0,1fr))!important}.bk[data-gallery="mosaic"] :has(> figure) > figure:first-child{grid-column:span 2;grid-row:span 1}}
 /* Forma dei campi della data: vale anche per i template con una data propria (campi .scratch). */
-.bk[data-cell-shape="round"] :is(.dt-cell,.scratch){border-radius:50%!important;aspect-ratio:1/1;display:grid;place-items:center;min-width:0}
-.bk[data-cell-shape="pill"] :is(.dt-cell,.scratch){border-radius:999px!important}
+.bk[data-cell-shape="round"] .scratch{border-radius:50%!important;aspect-ratio:1/1;display:grid;place-items:center;min-width:0}
+.bk[data-cell-shape="pill"] .scratch{border-radius:999px!important}
 .bk[data-cell-shape="plain"] :is(.dt-cell,.scratch){background:none!important;border:0!important;box-shadow:none!important}
 /* Scorrimenti dell'invito senza barra di sistema: il bordo sfumato indica che c'è altro. */
 main.invite *{scrollbar-width:none}

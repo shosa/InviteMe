@@ -6,7 +6,7 @@ import { ADDON_KEYS, isAddonKey, type AddonKey } from "../addons";
 
 export const ENGINE_VERSION = 2;
 
-export const FIELD_TYPES = ["text", "longtext", "date", "time", "number", "url", "photo", "photos", "video", "audio", "list", "color", "choice"] as const;
+export const FIELD_TYPES = ["text", "longtext", "date", "time", "number", "url", "photo", "photos", "video", "audio", "list", "color", "choice", "toggle"] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export type FieldDef = {
@@ -17,7 +17,7 @@ export type FieldDef = {
   help?: string;
   required?: boolean;
   max?: number; // caratteri per i testi, numero di elementi per photos e list, valore massimo per number
-  default?: string | number;
+  default?: string | number | boolean;
   feature?: AddonKey; // il campo esiste solo se l'invito ha questa funzione
   item?: FieldDef[]; // solo per list: campi di ogni voce (niente liste dentro liste)
   options?: { value: string; label: string }[]; // solo per choice

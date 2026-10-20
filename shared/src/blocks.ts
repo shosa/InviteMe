@@ -119,8 +119,9 @@ export const BLOCKS: BlockDef[] = [
           { value: "plain", label: "Solo testo" },
         ],
       },
+      { key: "showLabels", label: "Mostra le etichette", type: "toggle", group: "Data", default: true },
     ],
-    defaults: {},
+    defaults: { showLabels: true },
   },
   {
     type: "countdown",
@@ -355,7 +356,7 @@ const DATE_LABELS: LabelDef[] = [
 export const BLOCK_LABELS: Partial<Record<BlockType, LabelDef[]>> = {
   cover: [{ key: "tapLabel", tKey: "tapToOpen", label: "Testo per aprire la busta", it: "Tocca per aprire", en: "Tap to open" }],
   hero: [{ key: "scrollLabel", tKey: "scrollDown", label: "Testo per scorrere", it: "Scorri", en: "Scroll" }],
-  date: DATE_LABELS,
+  date: DATE_LABELS.filter((l) => l.key === "dateTitle"),
   scratchdate: [...DATE_LABELS, { key: "revealLabel", tKey: "revealAll", label: "Testo per scoprire la data", it: "Scopri la data", en: "Reveal the date" }],
   rsvp: [
     { key: "openLabel", tKey: "rsvpOpen", label: "Testo per aprire la conferma", it: "Clicca per aprire", en: "Click to open" },

@@ -72,6 +72,15 @@ export function FieldEditor({
       return <Field label={label}><input type="number" min={0} max={max ?? 1000} value={typeof value === "number" ? value : 0} onChange={(e) => onChange(Number(e.target.value))} /></Field>;
     case "url":
       return <Field label={label} wide><input type="url" value={text} onChange={(e) => onChange(e.target.value.trim())} /></Field>;
+    case "toggle":
+      return (
+        <Field label={label}>
+          <label className={`bl-switch${value === true ? " is-on" : ""}`}>
+            <input type="checkbox" role="switch" checked={value === true} onChange={(e) => onChange(e.target.checked)} />
+            <span className="bl-switch-track" aria-hidden="true"><span className="bl-switch-knob" /></span>
+          </label>
+        </Field>
+      );
     case "photo":
       return <MediaSlot label={label} help={field.help} kind="photo" url={text} busy={busy} onUpload={onUpload} onChange={onChange} />;
     case "video":
