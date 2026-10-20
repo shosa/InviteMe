@@ -49,7 +49,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
 
   const [selected, setSelected] = useState<string | null>(null);
   const [panel, setPanel] = useState<"proprieta" | "ospiti">("proprieta");
-  const [device, setDevice] = useState<Device>("desktop");
+  const [device, setDevice] = useState<Device>("mobile");
   const [mobileTab, setMobileTab] = useState<MobileTab>("anteprima");
   const [save, setSave] = useState<Save>("saved");
   const [preview, setPreview] = useState("");
