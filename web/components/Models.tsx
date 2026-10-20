@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BLOCKS, formatPrice, enabledThemes, themeCategories, type BlockDef, type Catalog, type ModelDef, type ThemeCategory } from "@inviteme/shared";
 import { CATEGORY_LIST, allLabel, categoryLabel } from "@/lib/categoryCopy";
@@ -45,8 +45,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   const [modelId, setModelId] = useState(models[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const showcase = useRef<HTMLDivElement>(null);
-  const compare = useRef<HTMLDivElement>(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const styleManifest = themes.find((t) => t.id === themeId);
   const styleName = styleManifest ? themeCopy(themeId, styleManifest.name, lang) : "";
   const model = models.find((m) => m.id === modelId);
@@ -66,10 +65,10 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   }
   const addonPrice = (key: string) => catalog.addons.find((a) => a.key === key);
 
-  // Scelto un template, la pagina scorre al confronto dei modelli.
+  // Scelto un template dalla galleria: si chiude la finestra.
   function pickTheme(id: string) {
     setThemeId(id);
-    requestAnimationFrame(() => compare.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    setGalleryOpen(false);
   }
 
   async function order() {
@@ -95,103 +94,116 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
     }
   }
 
+  const blockCount = BLOCKS.filter((b) => blockState(b, model) !== "na").length;
+  const optionCount = BLOCKS.filter((b) => blockState(b, model) === "option").length;
   return (
     <div className="home-showcase">
-      <div ref={showcase} className="showcase-head">
-        <h2>{H.themesTitle}</h2>
-        <p className="lede">{H.themesLede}</p>
-      </div>
-      <div className="tpl-filters" role="group" aria-label={H.themesTitle}>
-        <button type="button" className={filter === "all" ? "is-on" : ""} aria-pressed={filter === "all"} onClick={() => changeFilter("all")}>{allLabel(lang)} <small>{shuffled.length}</small></button>
-        {CATEGORY_LIST.filter((c) => countOf(c) > 0).map((c) => (
-          <button key={c} type="button" className={filter === c ? "is-on" : ""} aria-pressed={filter === c} onClick={() => changeFilter(c)}>{categoryLabel(c, lang)} <small>{countOf(c)}</small></button>
-        ))}
-      </div>
-      <TemplateCarousel templates={visible} selectedId={themeId} onSelect={pickTheme} label={H.themesTitle} lang={lang} size="lg" />
-
-      <div ref={compare} className="models-compare">
-        <div className="pick-summary">
-          <div className="pick">
-            {styleManifest && (
-              <div className="pick-phone" aria-hidden="true">
-                <iframe title={styleName} src={`/api/themes/${themeId}/demo?lang=${lang}&s=${seed}`} scrolling="no" tabIndex={-1} />
-              </div>
-            )}
-            <div className="pick-text">
-              <p className="kicker">{H.compareKicker}</p>
-              <h2>{styleName}</h2>
-              <button type="button" className="btn outline small" onClick={() => showcase.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{H.changeTemplate}</button>
-            </div>
+      <section className="hm-style">
+        {styleManifest && (
+          <div className="pick-phone" aria-hidden="true">
+            <iframe title={styleName} src={`/api/themes/${themeId}/demo?lang=${lang}&s=${seed}`} scrolling="no" tabIndex={-1} />
           </div>
-          <div className="pick-blocks">
-            <h3>{T.blocks}</h3>
-            <p className="pick-blocks-text">{T.blocksText}</p>
-            <ul className="blocks-grid">
-              {BLOCKS.map((b) => {
-                const st = blockState(b, model);
-                return (
-                  <li key={b.type} className={`block-tile is-${st}`}>
-                    <span className="block-tile-name"><BlockIcon type={b.type} size={16} /><strong>{blockCopy(b.type, b.label, lang)}</strong></span>
-                    <span className="block-tile-state">{st === "base" || st === "included" ? T.inc : st === "option" ? `${T.add} +${formatPrice(addonPrice(b.feature!)?.cents ?? 0)}` : T.unavailable}</span>
-                  </li>
-                );
-              })}
-            </ul>
+        )}
+        <div className="hm-style-text">
+          <span className="hm-kicker">{H.compareKicker}</span>
+          <h2>{styleName}</h2>
+          <span className="hm-tag">{styleManifest ? categoryLabel(themeCategories(styleManifest.id)[0], lang) : ""}</span>
+          <div className="hm-actions">
+            <button type="button" className="btn outline" onClick={() => setGalleryOpen(true)}>{H.changeTemplate}</button>
+            <a className="btn solid" href={`/api/themes/${themeId}/demo?lang=${lang}&s=${seed}`} target="_blank" rel="noreferrer">{H.stylePreview}</a>
           </div>
         </div>
+      </section>
 
-        <h2 className="models-compare-title">{H.modelsHead}</h2>
+      <details className="hm-acc">
+        <summary>
+          <span>{T.blocks}</span>
+          <small>{blockCount} · {optionCount} {en ? "addable" : "aggiungibili"}</small>
+        </summary>
+        <p className="hm-acc-text">{T.blocksText}</p>
+        <ul className="blocks-grid">
+          {BLOCKS.map((b) => {
+            const st = blockState(b, model);
+            return (
+              <li key={b.type} className={`block-tile is-${st}`}>
+                <span className="block-tile-name"><BlockIcon type={b.type} size={16} /><strong>{blockCopy(b.type, b.label, lang)}</strong></span>
+                <span className="block-tile-state">{st === "base" || st === "included" ? T.inc : st === "option" ? `${T.add} +${formatPrice(addonPrice(b.feature!)?.cents ?? 0)}` : T.unavailable}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </details>
+
+      <section className="hm-models">
+        <h2>{H.modelsHead}</h2>
         <p className="lede">{H.modelsLede}</p>
-
-        <div className="plan-grid">
+        <div className="plan-options" role="radiogroup" aria-label={H.modelsHead}>
           {models.map((m) => {
             const copy = modelCopy(m.id, m.name, m.tagline, m.description, lang);
             const on = m.id === modelId;
-            const baseBlocks = BLOCKS.filter((b) => blockState(b, m) === "included" || blockState(b, m) === "base");
-            const ok = enabledThemes(catalog, m.id).some((t) => t.id === themeId);
             return (
-              <article key={m.id} className={`plan-card${on ? " is-on" : ""}`} onClick={() => setModelId(m.id)}>
-                {m.id === "invitation-rsvp" && <span className="plan-badge">{T.popular}</span>}
-                <h3>{copy.name}</h3>
-                <p className="plan-tagline">{copy.tagline}</p>
-                <p className="plan-desc">{copy.description}</p>
-                <p className="plan-perks">{T.perks}</p>
-                <div className="plan-split">
-                  <div>
-                    <h4 className="plan-sub">{T.included}</h4>
-                    <ul className="plan-blocks">
-                      {baseBlocks.map((b) => (
-                        <li key={b.type}><BlockIcon type={b.type} />{blockCopy(b.type, b.label, lang)}</li>
-                      ))}
-                      {m.included.filter((k) => !BLOCKS.some((b) => b.feature === k)).map((k) => {
-                        const a = addonPrice(k);
-                        return a ? <li key={k}><Check size={17} aria-hidden="true" />{addonCopy(a.key, a.label, a.description, lang).label}</li> : null;
-                      })}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="plan-sub">{T.optional}</h4>
-                    <ul className="plan-blocks is-option">
-                      {m.options.filter((k) => !m.included.includes(k)).map((k) => {
-                        const a = addonPrice(k);
-                        if (!a) return null;
-                        return <li key={k}><Plus size={17} aria-hidden="true" /><span>{addonCopy(a.key, a.label, a.description, lang).label}</span><em>+ {formatPrice(a.cents)}</em></li>;
-                      })}
-                    </ul>
-                  </div>
-                </div>
-                {!ok && <p className="hint">{H.noStyleForModel}</p>}
-                <p className="plan-price">{formatPrice(m.priceCents)}</p>
-                <button type="button" className={on ? "btn solid" : "btn outline"} aria-pressed={on} onClick={(e) => { e.stopPropagation(); setModelId(m.id); }}>
-                  {on ? T.chosen : T.ask}
-                </button>
-              </article>
+              <button key={m.id} type="button" role="radio" aria-checked={on} className={`plan-option${on ? " is-on" : ""}`} onClick={() => setModelId(m.id)}>
+                {m.id === "invitation-rsvp" && <span className="plan-option-tag">{T.popular}</span>}
+                <strong>{copy.name}</strong>
+                <span className="plan-option-tagline">{copy.tagline}</span>
+                <span className="plan-option-price">{formatPrice(m.priceCents)}</span>
+              </button>
             );
           })}
         </div>
-      </div>
+        {model && (
+          <details className="plan-details" open>
+            <summary>{en ? "What's included in" : "Cosa include"} {modelCopy(model.id, model.name, model.tagline, model.description, lang).name}</summary>
+            <p className="plan-desc">{modelCopy(model.id, model.name, model.tagline, model.description, lang).description}</p>
+            <div className="plan-split">
+              <div>
+                <h4 className="plan-sub">{T.included}</h4>
+                <ul className="plan-blocks">
+                  {BLOCKS.filter((b) => blockState(b, model) === "included" || blockState(b, model) === "base").map((b) => (
+                    <li key={b.type}><BlockIcon type={b.type} />{blockCopy(b.type, b.label, lang)}</li>
+                  ))}
+                  {model.included.filter((k) => !BLOCKS.some((b) => b.feature === k)).map((k) => {
+                    const a = addonPrice(k);
+                    return a ? <li key={k}><Check size={17} aria-hidden="true" />{addonCopy(a.key, a.label, a.description, lang).label}</li> : null;
+                  })}
+                </ul>
+              </div>
+              <div>
+                <h4 className="plan-sub">{T.optional}</h4>
+                <ul className="plan-blocks is-option">
+                  {model.options.filter((k) => !model.included.includes(k)).map((k) => {
+                    const a = addonPrice(k);
+                    if (!a) return null;
+                    return <li key={k}><Plus size={17} aria-hidden="true" /><span>{addonCopy(a.key, a.label, a.description, lang).label}</span><em>+ {formatPrice(a.cents)}</em></li>;
+                  })}
+                </ul>
+              </div>
+            </div>
+            {!compatible && <p className="hint">{H.noStyleForModel}</p>}
+          </details>
+        )}
+      </section>
 
       {error && <p role="alert" className="form-error models-error">{error}</p>}
+
+      {galleryOpen && (
+        <div className="welcome-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setGalleryOpen(false); }}>
+          <div className="welcome tpl-gallery" role="dialog" aria-modal="true" aria-labelledby="gallery-title">
+            <h2 id="gallery-title">{H.themesTitle}</h2>
+            <p className="hint">{H.themesLede}</p>
+            <div className="tpl-filters" role="group" aria-label={H.themesTitle}>
+              <button type="button" className={filter === "all" ? "is-on" : ""} aria-pressed={filter === "all"} onClick={() => changeFilter("all")}>{allLabel(lang)} <small>{shuffled.length}</small></button>
+              {CATEGORY_LIST.filter((c) => countOf(c) > 0).map((c) => (
+                <button key={c} type="button" className={filter === c ? "is-on" : ""} aria-pressed={filter === c} onClick={() => changeFilter(c)}>{categoryLabel(c, lang)} <small>{countOf(c)}</small></button>
+              ))}
+            </div>
+            <TemplateCarousel templates={visible} selectedId={themeId} onSelect={pickTheme} label={H.themesTitle} lang={lang} size="lg" />
+            <div className="welcome-actions">
+              <button type="button" className="btn ghost" onClick={() => setGalleryOpen(false)}>{L.close}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {model && (
         <div className="order-bar" role="region" aria-label={H.orderBarLabel}>
