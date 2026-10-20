@@ -17,6 +17,8 @@ export function TemplateCarousel({ templates, selectedId, onSelect, label, lang 
   // Anteprime da caricare: la scelta e le vicine subito, le altre quando entrano nel carosello.
   // Il caricamento nativo (loading="lazy") nel carosello orizzontale non le caricava affatto.
   const [ready, setReady] = useState<Set<string>>(() => new Set());
+  // Ogni montaggio della vetrina mostra esempi nuovi: il seme cambia la versione del demo.
+  const [seed] = useState(() => Math.random().toString(36).slice(2, 8));
   // Stato di pausa letto dal timer: tenuto in un ref, così il timer non si riavvia a ogni passaggio del mouse.
   const pause = useRef({ hover: false, focus: false, until: 0 });
 
@@ -114,7 +116,7 @@ export function TemplateCarousel({ templates, selectedId, onSelect, label, lang 
             <article key={t.id} data-id={t.id} className={`tpl-card${on ? " is-on" : ""}`} aria-roledescription="diapositiva" aria-label={`${i + 1} / ${templates.length}: ${name}`}>
               <div className="tpl-phone">
                 <div className="tpl-screen">
-                  <iframe title={name} src={ready.has(t.id) ? `/api/themes/${t.id}/demo` : undefined} scrolling="no" sandbox="allow-scripts" tabIndex={-1} aria-hidden="true" />
+                  <iframe title={name} src={ready.has(t.id) ? `/api/themes/${t.id}/demo?lang=${lang}&s=${seed}` : undefined} scrolling="no" sandbox="allow-scripts" tabIndex={-1} aria-hidden="true" />
                 </div>
                 <button type="button" className="tpl-hit" aria-pressed={on} aria-label={`${name}: ${L.tplUse}`} title={on ? L.tplChosen : L.tplUse} onClick={() => onSelect(t.id)} />
               </div>

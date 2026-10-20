@@ -12,8 +12,10 @@ import {
   type InviteConfig,
   type TemplateNode,
   type ThemeManifest,
+  defaultRsvp,
 } from "@inviteme/shared";
 import { renderInvitePage, themeAssetsBase, type StyleFiles } from "./page";
+import { sampleEventFields, sampleProps, sampleSample } from "./samples";
 import { blockPartials } from "./blocks";
 
 // Stili in cartelle (themes/<id>/): theme.json (manifest), theme.css, assets/. Il motore li legge all'avvio e li valida:
@@ -138,17 +140,23 @@ function checkCss(css: string, name: string, errors: string[]) {
 }
 
 // Config di esempio per la demo e le anteprime: tutti i blocchi, tutte le funzioni, i file dello stile come esempio.
-export function sampleConfig(manifest: ThemeManifest): InviteConfig {
-  const config = defaultConfig(manifest, "invitation-rsvp", "wedding", new Set(ADDON_KEYS));
-  // Ogni stile ha il suo evento d'esempio (nomi, data, luogo): nella vetrina i template non sembrano copie.
-  config.event = { ...config.event, title: "Sara & Luca", hosts: "Con gioia, le famiglie", eventDate: "2027-02-14", eventTime: "16:00", venue: "Villa dei Glicini", address: "Via dei Giardini 12, Firenze", ...(manifest.demo.event ?? {}) };
-  config.blocks = BLOCKS.map((def) => ({
-    id: `demo-${def.type}`,
-    type: def.type,
-    hidden: false,
-    props: { ...JSON.parse(JSON.stringify(def.defaults)), ...(manifest.demo[def.type] ?? {}) },
-  }));
-  config.rsvpQuestions = config.rsvpQuestions.length ? config.rsvpQuestions : [];
+// Vetrina: ogni caricamento genera contenuti nuovi (nomi, date, luoghi, programma) nella lingua richiesta.
+export function sampleConfig(manifest: ThemeManifest, lang: "it" | "en" = "it", rnd: () => number = Math.random): InviteConfig {
+  const sample = sampleSample(manifest.id, lang, rnd);
+  const config = defaultConfig(manifest, "invitation-rsvp", sample.eventType === "anniversary" ? "wedding" : sample.eventType, new Set(ADDON_KEYS));
+  config.locale = lang;
+  config.rsvpQuestions = defaultRsvp(lang);
+  config.event = { ...config.event, ...sampleEventFields(sample) };
+  config.blocks = BLOCKS.map((def) => {
+    const generated = sampleProps(def.type, sample, lang) ?? {};
+    return {
+      id: `demo-${def.type}`,
+      type: def.type,
+      hidden: false,
+      // I valori dello stile (immagini, filmati) restano quelli del template; i testi cambiano a ogni caricamento.
+      props: { ...JSON.parse(JSON.stringify(def.defaults)), ...(manifest.demo[def.type] ?? {}), ...generated },
+    };
+  });
   return config;
 }
 

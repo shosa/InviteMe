@@ -1,7 +1,7 @@
 {
   "engine": 2,
   "id": "redazione",
-  "name": "Redazione",
+  "name": "Pagina d'autore",
   "description": "Impaginazione da rivista: copertina con il numero dell'edizione, colonne, filetti sottili e sezioni numerate come pagine.",
   "models": [],
   "themeColor": "#f3efe6",

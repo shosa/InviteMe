@@ -32,6 +32,8 @@ export type Manage = {
   status: "draft" | "paid";
   config: InviteConfig;
   guests: { email: string; sentAt: string }[];
+  editCount: number;
+  editSession: string | null;
   catalog: Catalog;
 };
 
@@ -45,7 +47,16 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   const catalog = initial.catalog;
   const history = useHistory<InviteConfig>(initial.config);
   const config = history.present;
-  const locked = initial.status === "paid";
+  // Dopo l'acquisto l'invito si modifica una sola volta: la sessione di questa scheda decide se la modifica è ancora aperta.
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  useEffect(() => {
+    const key = `invito-edit-${initial.id}`;
+    let s = null;
+    try { s = sessionStorage.getItem(key); if (!s) { s = crypto.randomUUID(); sessionStorage.setItem(key, s); } } catch { s = crypto.randomUUID(); }
+    setSessionId(s);
+  }, [initial.id]);
+  const editable = initial.status !== "paid" || (sessionId !== null && (initial.editCount === 0 || initial.editSession === sessionId));
+  const locked = !editable;
 
   const [selected, setSelected] = useState<string | null>(null);
   const [panel, setPanel] = useState<"proprieta" | "ospiti">("proprieta");
@@ -82,7 +93,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   async function persist(c: InviteConfig) {
     setSave("saving");
     try {
-      const res = await fetch(`/api/invitations/${initial.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(c) });
+      const res = await fetch(`/api/invitations/${initial.id}`, { method: "PUT", headers: { "Content-Type": "application/json", "X-Edit-Session": sessionId ?? "" }, body: JSON.stringify(c) });
       if (res.ok) {
         setSave("saved");
         setError(null);
@@ -232,8 +243,19 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   function setEvent(key: string, value: unknown, group?: string) {
     edit((c) => ({ ...c, event: { ...c.event, [key]: value } }), group);
   }
+  // Cambio di template: contenuto e blocchi restano; tornano al template solo i colori personalizzati.
   function setTheme(id: string) {
-    edit((c) => ({ ...c, themeId: id }));
+    edit((c) => ({
+      ...c,
+      themeId: id,
+      blocks: c.blocks.map((b) => {
+        const props = { ...b.props };
+        delete props.lookBg;
+        delete props.lookInk;
+        delete props.lookCover;
+        return { ...b, props };
+      }),
+    }));
   }
 
   async function upload(kind: "photo" | "video" | "audio", file: File): Promise<string | null> {
@@ -367,6 +389,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
             onSetProp={setProp}
             onSetEvent={setEvent}
             onSetTheme={setTheme}
+            locked={locked}
             onSetLocale={(locale) => edit((c) => ({ ...c, locale }))}
             onSetEventType={(eventType: EventType) => edit((c) => ({ ...c, eventType }))}
             onSetQuestions={(rsvpQuestions: RsvpQuestion[]) => edit((c) => ({ ...c, rsvpQuestions }), "questions")}

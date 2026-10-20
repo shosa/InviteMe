@@ -7,7 +7,7 @@ import { CopyLink } from "../CopyLink";
 import { ui, type Lang } from "@/lib/ui";
 
 export type PlannerData = {
-  manage: { id: string; slug: string; status: "draft" | "paid"; config: InviteConfig; guests: { email: string; sentAt: string }[]; planner: { notes: string; countdownNote: string }; catalog?: Catalog };
+  manage: { id: string; slug: string; status: "draft" | "paid"; config: InviteConfig; guests: { email: string; sentAt: string }[]; planner: { notes: string; countdownNote: string }; editCount?: number; catalog?: Catalog };
   summary: { total: number; attending: number; declined: number; guests: number; questions: RsvpQuestion[]; rsvps: { id: string; createdAt: string; answers: Record<string, string | number | boolean> }[] };
 };
 
@@ -76,6 +76,15 @@ export function PlannerPanel({ data, lang = "it" }: { data: PlannerData; lang?: 
 
   return (
     <div className="pl">
+      {manage.status === "paid" && (
+        <div className="pl-edits">
+          <strong>{lang === "en" ? "Edits after purchase" : "Modifiche dopo l'acquisto"}</strong>
+          <span className={`pl-edits-count${(manage.editCount ?? 0) >= 1 ? " is-used" : ""}`}>
+            {(manage.editCount ?? 0) >= 1 ? (lang === "en" ? "1 of 1 used" : "1 di 1 usata") : (lang === "en" ? "0 of 1 available" : "0 di 1 disponibile")}
+          </span>
+          <small>{lang === "en" ? "You can change texts, photos and colours once. The template is fixed after purchase." : "Puoi modificare testi, foto e colori una sola volta. Il template è fissato dopo l'acquisto."}</small>
+        </div>
+      )}
       <div className="pl-quick" role="group" aria-label={T.quick}>
         <a className="pl-chip" href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noreferrer"><Share2 size={16} aria-hidden="true" />{T.whatsapp}</a>
         <CopyLink path={shareHref} lang={lang} />

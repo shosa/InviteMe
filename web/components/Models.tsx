@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatPrice, enabledThemes, type Catalog, type ModelDef } from "@inviteme/shared";
+import { BLOCKS, formatPrice, enabledThemes, themeCategories, type BlockDef, type Catalog, type ModelDef, type ThemeCategory } from "@inviteme/shared";
+import { CATEGORY_LIST, allLabel, categoryLabel } from "@/lib/categoryCopy";
+import { Check, Plus } from "lucide-react";
 import { TemplateCarousel } from "./TemplateCarousel";
 import { ui, type Lang } from "@/lib/ui";
-import { addonCopy, modelCopy, themeCopy } from "@/lib/catalogCopy";
+import { addonCopy, blockCopy, modelCopy, themeCopy } from "@/lib/catalogCopy";
 
-// Home in tre passi: scegli lo stile (vetrina), poi il modello (confronto), poi personalizza.
+// Home in tre passi: scegli lo stile (vetrina), confronta i modelli con i blocchi inclusi e aggiungibili, poi personalizza.
 // La barra in basso riepiloga la scelta come un carrello e porta al builder.
 export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang }) {
   const router = useRouter();
@@ -16,6 +18,29 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   const themes = catalog.themes.filter((t) => t.enabled).map((t) => t.manifest);
   const models = catalog.models.filter((m) => m.enabled);
   const [themeId, setThemeId] = useState(themes[0]?.id ?? "");
+  // Vetrina: template raggruppati per categoria, ordine casuale dentro ogni gruppo a ogni navigazione.
+  const [shuffled, setShuffled] = useState(themes);
+  const [filter, setFilter] = useState<"all" | ThemeCategory>("all");
+  const [seed] = useState(() => Math.random().toString(36).slice(2, 8));
+  useEffect(() => {
+    const copy = [...themes];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    setShuffled(copy);
+    setThemeId(copy[0]?.id ?? "");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Gruppo "Tutti": prima i matrimoni, poi le altre categorie; nel gruppo l'ordine è casuale.
+  const visible = filter === "all"
+    ? CATEGORY_LIST.flatMap((c) => shuffled.filter((t) => themeCategories(t.id)[0] === c))
+    : shuffled.filter((t) => themeCategories(t.id).includes(filter));
+  const countOf = (c: ThemeCategory) => shuffled.filter((t) => themeCategories(t.id).includes(c)).length;
+  function changeFilter(f: "all" | ThemeCategory) {
+    setFilter(f);
+    const next = f === "all" ? shuffled : shuffled.filter((t) => themeCategories(t.id).includes(f));
+    if (!next.some((t) => t.id === themeId)) setThemeId(next[0]?.id ?? "");
+  }
   const [modelId, setModelId] = useState(models[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +50,20 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   const styleName = styleManifest ? themeCopy(themeId, styleManifest.name, lang) : "";
   const model = models.find((m) => m.id === modelId);
   const compatible = model ? enabledThemes(catalog, model.id).some((t) => t.id === themeId) : false;
+  const en = lang === "en";
+  const T = en
+    ? { included: "Included in the price", optional: "Add when you need it", blocks: "What goes in your invitation", blocksText: "Every block you can place on the page. Included blocks are ready; the others unlock with the feature.", base: "Included", add: "Add", unavailable: "Not with this model", popular: "Most chosen", inc: "Included", ask: "Choose this model", chosen: "Chosen", perks: "Pay once, no subscription", free: "Free" }
+    : { included: "Incluso nel prezzo", optional: "Aggiungibile quando serve", blocks: "Cosa va nel vostro invito", blocksText: "Tutti i blocchi che puoi mettere nella pagina. Quelli inclusi sono pronti; gli altri si sbloccano con la funzione.", base: "Incluso", add: "Aggiungi", unavailable: "Non con questo modello", popular: "Il più scelto", inc: "Incluso", ask: "Scegli questo modello", chosen: "Modello scelto", perks: "Si paga una volta, senza abbonamenti", free: "Gratis" };
+
+  // Stato di un blocco per il modello: sempre incluso, aggiungibile con una funzione, o non disponibile.
+  function blockState(b: BlockDef, m: ModelDef | undefined): "base" | "included" | "option" | "na" {
+    if (!b.feature) return "base";
+    if (!m) return "na";
+    if (m.included.includes(b.feature)) return "included";
+    if (m.options.includes(b.feature)) return "option";
+    return "na";
+  }
+  const addonPrice = (key: string) => catalog.addons.find((a) => a.key === key);
 
   // Scelto un template, la pagina scorre al confronto dei modelli.
   function pickTheme(id: string) {
@@ -61,14 +100,20 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
         <h2>{H.themesTitle}</h2>
         <p className="lede">{H.themesLede}</p>
       </div>
-      <TemplateCarousel templates={themes} selectedId={themeId} onSelect={pickTheme} label={H.themesTitle} lang={lang} size="lg" />
+      <div className="tpl-filters" role="group" aria-label={H.themesTitle}>
+        <button type="button" className={filter === "all" ? "is-on" : ""} aria-pressed={filter === "all"} onClick={() => changeFilter("all")}>{allLabel(lang)} <small>{shuffled.length}</small></button>
+        {CATEGORY_LIST.filter((c) => countOf(c) > 0).map((c) => (
+          <button key={c} type="button" className={filter === c ? "is-on" : ""} aria-pressed={filter === c} onClick={() => changeFilter(c)}>{categoryLabel(c, lang)} <small>{countOf(c)}</small></button>
+        ))}
+      </div>
+      <TemplateCarousel templates={visible} selectedId={themeId} onSelect={pickTheme} label={H.themesTitle} lang={lang} size="lg" />
 
       <div ref={compare} className="compare">
         <div className="compare-head">
           <div className="pick">
             {styleManifest && (
               <div className="pick-phone" aria-hidden="true">
-                <iframe title={styleName} src={`/api/themes/${themeId}/demo`} scrolling="no" tabIndex={-1} />
+                <iframe title={styleName} src={`/api/themes/${themeId}/demo?lang=${lang}&s=${seed}`} scrolling="no" tabIndex={-1} />
               </div>
             )}
             <div>
@@ -87,33 +132,71 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
           {models.map((m) => {
             const copy = modelCopy(m.id, m.name, m.tagline, m.description, lang);
             const on = m.id === modelId;
+            const baseBlocks = BLOCKS.filter((b) => blockState(b, m) === "included" || blockState(b, m) === "base");
+            const optional = BLOCKS.filter((b) => blockState(b, m) === "option");
+            const ok = enabledThemes(catalog, m.id).some((t) => t.id === themeId);
             return (
               <article key={m.id} className={`model-card${on ? " is-on" : ""}`} onClick={() => setModelId(m.id)}>
+                {m.id === "invitation-rsvp" && <span className="model-badge">{T.popular}</span>}
                 <div className="model-card-head">
                   <h3>{copy.name}</h3>
                   <p className="model-price"><b>{formatPrice(m.priceCents)}</b></p>
                 </div>
                 <p className="model-tagline">{copy.tagline}</p>
                 <p className="model-desc">{copy.description}</p>
-                {m.included.length > 0 && (
-                  <ul className="chips" aria-label={L.from}>
-                    {m.included.map((k) => {
-                      const a = catalog.addons.find((x) => x.key === k);
-                      return <li key={k}>{a ? addonCopy(a.key, a.label, a.description, lang).label : k}</li>;
-                    })}
-                  </ul>
+                <p className="model-perks">{T.perks}</p>
+
+                <h4 className="model-sub">{T.included}</h4>
+                <ul className="model-blocks">
+                  {baseBlocks.map((b) => (
+                    <li key={b.type}><Check size={15} aria-hidden="true" />{blockCopy(b.type, b.label, lang)}</li>
+                  ))}
+                  {m.included.map((k) => {
+                    const a = addonPrice(k);
+                    return a ? <li key={k}><Check size={15} aria-hidden="true" />{addonCopy(a.key, a.label, a.description, lang).label}</li> : null;
+                  })}
+                </ul>
+
+                {optional.length > 0 && (
+                  <>
+                    <h4 className="model-sub">{T.optional}</h4>
+                    <ul className="model-blocks is-option">
+                      {m.options.filter((k) => !m.included.includes(k)).map((k) => {
+                        const a = addonPrice(k);
+                        if (!a) return null;
+                        return <li key={k}><Plus size={15} aria-hidden="true" />{addonCopy(a.key, a.label, a.description, lang).label}<em>+ {formatPrice(a.cents)}</em></li>;
+                      })}
+                    </ul>
+                  </>
                 )}
-                {m.options.length > 0 && (
-                  <p className="model-options">{H.optionsLabel}: {m.options.map((k) => { const a = catalog.addons.find((x) => x.key === k); return a ? addonCopy(a.key, a.label, a.description, lang).label : k; }).join(", ")}</p>
-                )}
+
+                {!ok && <p className="hint">{H.noStyleForModel}</p>}
                 <button type="button" className={on ? "btn solid" : "btn outline"} aria-pressed={on} onClick={(e) => { e.stopPropagation(); setModelId(m.id); }}>
-                  {on ? H.modelChosen : H.chooseModel}
+                  {on ? T.chosen : T.ask}
                 </button>
               </article>
             );
           })}
         </div>
-        {!compatible && model && <p className="hint">{H.noStyleForModel}</p>}
+
+        <div className="blocks-showcase">
+          <div className="showcase-head">
+            <h2>{T.blocks}</h2>
+            <p className="lede">{T.blocksText}</p>
+          </div>
+          <ul className="blocks-grid">
+            {BLOCKS.map((b) => {
+              const st = blockState(b, model);
+              return (
+                <li key={b.type} className={`block-tile is-${st}`}>
+                  <span className="block-tile-state">{st === "base" || st === "included" ? T.inc : st === "option" ? `${T.add} +${formatPrice(addonPrice(b.feature!)?.cents ?? 0)}` : T.unavailable}</span>
+                  <strong>{blockCopy(b.type, b.label, lang)}</strong>
+                  <span className="block-tile-desc">{b.description}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
 
       {error && <p role="alert" className="form-error models-error">{error}</p>}

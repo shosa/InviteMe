@@ -3,7 +3,7 @@
 import { EVENT_FIELDS, EVENT_TYPES, blockDef, enabledThemes, type BlockInstance, type Catalog, type EventType, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { Field, FieldEditor, type Values } from "./fields";
-import { TemplateCarousel } from "../TemplateCarousel";
+import { TemplateSwitch } from "./TemplateSwitch";
 import { ui } from "@/lib/ui";
 import { blockCopy, fieldCopy } from "@/lib/catalogCopy";
 
@@ -18,6 +18,7 @@ type Props = {
   onSetProp: (id: string, key: string, value: unknown, group?: string) => void;
   onSetEvent: (key: string, value: unknown, group?: string) => void;
   onSetTheme: (id: string) => void;
+  locked?: boolean;
   onSetLocale: (locale: "it" | "en") => void;
   onSetEventType: (t: EventType) => void;
   onSetQuestions: (q: RsvpQuestion[]) => void;
@@ -142,7 +143,7 @@ export function Inspector(p: Props) {
 
       <section className="bl-group" aria-labelledby="bl-style">
         <h3 id="bl-style">{L.template}</h3>
-        <TemplateCarousel templates={themes} selectedId={p.config.themeId} onSelect={p.onSetTheme} label={L.chooseTemplate} lang={p.lang} />
+        <TemplateSwitch themes={themes} currentId={p.config.themeId} locked={!!p.locked} onConfirm={p.onSetTheme} lang={p.lang} />
       </section>
 
       {hasRsvp && (

@@ -1,7 +1,7 @@
 {
   "engine": 2,
   "id": "rivista",
-  "name": "Rivista",
+  "name": "Pagine di carta",
   "description": "Impaginazione editoriale su due colonne, titoli grandi, filetti netti. Pensata per chi ama le riviste di moda.",
   "models": [],
   "themeColor": "#f4efe6",

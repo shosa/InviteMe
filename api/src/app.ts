@@ -244,6 +244,8 @@ export async function buildApp() {
       guests: inv.guests,
       views: inv.views,
       planner: inv.planner ?? {},
+      editCount: inv.edit_count ?? 0,
+      editSession: inv.edit_session ?? null,
       catalog: c,
       hasRsvp: hasRsvp(c, inv.config),
     };
@@ -265,9 +267,16 @@ export async function buildApp() {
     if (!user) return;
     const inv = await ownedInvitation(req.params.id, user.id);
     if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
-    if (inv.status === "paid") return reply.code(409).send({ error: "Invito già pagato: non è più modificabile" });
     const config = sanitizeConfig(await loadCatalog(), req.body);
     if (!config) return reply.code(400).send({ error: "Configurazione non valida" });
+    if (inv.status === "paid") {
+      // Dopo l'acquisto: una sola modifica, nella stessa sessione; il template non cambia più.
+      const session = String(req.headers["x-edit-session"] ?? "");
+      if (!session) return reply.code(400).send({ error: "Sessione di modifica mancante" });
+      if (inv.edit_count >= 1 && inv.edit_session !== session) return reply.code(409).send({ error: "Modifica già usata: l'invito si modifica una sola volta dopo l'acquisto" });
+      if (config.themeId !== (inv.config as InviteConfig).themeId) return reply.code(409).send({ error: "Dopo l'acquisto il template non si cambia" });
+      if (inv.edit_count === 0) await pool.query("UPDATE invitations SET edit_count = 1, edit_session = $2 WHERE id = $1", [inv.id, session]);
+    }
     await pool.query("UPDATE invitations SET config = $1 WHERE id = $2", [JSON.stringify(config), inv.id]);
     return { ok: true };
   });
@@ -373,8 +382,10 @@ export async function buildApp() {
   app.get<{ Params: { id: string } }>("/api/themes/:id/demo", async (req, reply) => {
     const theme = themes().find((t) => t.manifest.id === req.params.id);
     if (!theme) return reply.code(404).type("text/plain; charset=utf-8").send("Tema non trovato");
-    const html = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "demo", features: new Set(ADDON_KEYS), runtime: RUNTIME, preview: true });
-    return reply.type("text/html; charset=utf-8").header("Cache-Control", "public, max-age=300").send(html);
+    const lang = (req.query as { lang?: string }).lang === "en" ? "en" : "it";
+    const html = renderInvitePage({ theme, config: sampleConfig(theme.manifest, lang), slug: "demo", features: new Set(ADDON_KEYS), runtime: RUNTIME, preview: true });
+    // Ogni caricamento è un esempio diverso: niente cache.
+    return reply.type("text/html; charset=utf-8").header("Cache-Control", "no-store").send(html);
   });
 
   // Anteprima del builder: stessa pagina, con la configurazione in corso. Non viene salvata.

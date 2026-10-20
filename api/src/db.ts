@@ -71,6 +71,9 @@ CREATE TABLE IF NOT EXISTS outbox (
 ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
 -- Pannello di gestione dell'invito: note organizzative e nota del conto alla rovescia (non fanno parte della pagina).
 ALTER TABLE invitations ADD COLUMN IF NOT EXISTS planner jsonb NOT NULL DEFAULT '{}'::jsonb;
+-- Dopo l'acquisto l'invito si modifica una sola volta: la prima modifica salvata lo consuma e apre una sessione.
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS edit_count integer NOT NULL DEFAULT 0;
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS edit_session text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub text;
 CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_idx ON users (google_sub) WHERE google_sub IS NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'));
