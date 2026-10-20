@@ -31,7 +31,8 @@
         "assets/px-4333044.jpg",
         "assets/px-3295306.jpg",
         "assets/px-10382823.jpg"
-      ]
+      ],
+      "galleryStyle": "carousel"
     },
     "message": {
       "heading": "Vi aspettiamo",

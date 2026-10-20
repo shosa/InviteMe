@@ -31,7 +31,8 @@
         "assets/px-2264811.jpg",
         "assets/px-10382823.jpg",
         "assets/px-4333044.jpg"
-      ]
+      ],
+      "galleryStyle": "grid"
     },
     "message": {
       "heading": "Il nostro racconto",

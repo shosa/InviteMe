@@ -210,8 +210,9 @@ function lookWrap(props: Record<string, unknown>, html: string): string {
   const shape = typeof props.lookShape === "string" ? props.lookShape : "";
   const photo = typeof props.photoShape === "string" ? props.photoShape : "";
   const gallery = typeof props.galleryStyle === "string" ? props.galleryStyle : "";
-  if (!vars.length && !shape && !photo && !gallery) return html;
-  return `<div class="bk"${shape ? ` data-shape="${shape}"` : ""}${photo ? ` data-photo-shape="${photo}"` : ""}${gallery ? ` data-gallery="${gallery}"` : ""} style="${vars.join(";")}">\n${html}</div>\n`;
+  const cell = typeof props.cellShape === "string" ? props.cellShape : "";
+  if (!vars.length && !shape && !photo && !gallery && !cell) return html;
+  return `<div class="bk"${shape ? ` data-shape="${shape}"` : ""}${photo ? ` data-photo-shape="${photo}"` : ""}${gallery ? ` data-gallery="${gallery}"` : ""}${cell ? ` data-cell-shape="${cell}"` : ""} style="${vars.join(";")}">\n${html}</div>\n`;
 }
 
 // Regole comuni a tutti i temi per l'aspetto dei blocchi. Vincono sul tema solo dove il cliente ha scelto qualcosa.
@@ -255,6 +256,10 @@ const LOOK_CSS = `
 .bk[data-gallery="grid"] :has(> figure) > figure{flex:none;min-width:0}
 .bk[data-gallery="grid"] :has(> figure) > figure img{aspect-ratio:1/1}
 @media (max-width:600px){.bk[data-gallery="mosaic"] :has(> figure),.bk[data-gallery="grid"] :has(> figure){grid-template-columns:repeat(2,minmax(0,1fr))!important}.bk[data-gallery="mosaic"] :has(> figure) > figure:first-child{grid-column:span 2;grid-row:span 1}}
+/* Forma dei campi della data: vale anche per i template con una data propria (campi .scratch). */
+.bk[data-cell-shape="round"] :is(.dt-cell,.scratch){border-radius:50%!important;aspect-ratio:1/1;display:grid;place-items:center;min-width:0}
+.bk[data-cell-shape="pill"] :is(.dt-cell,.scratch){border-radius:999px!important}
+.bk[data-cell-shape="plain"] :is(.dt-cell,.scratch){background:none!important;border:0!important;box-shadow:none!important}
 html[data-preview]{scrollbar-width:none}html[data-preview]::-webkit-scrollbar{display:none}
 [data-cover] .env-top{margin:0 0 22px;font-size:13px;letter-spacing:.18em;text-transform:uppercase;text-align:center;color:inherit}
 [data-cover] .env-card{position:relative;width:min(78vw,420px);aspect-ratio:1.45;margin:0 auto;flex:none;filter:drop-shadow(0 26px 30px rgba(0,0,0,.28))}
