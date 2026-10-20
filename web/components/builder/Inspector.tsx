@@ -1,6 +1,6 @@
 "use client";
 
-import { EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
+import { BLOCK_LABELS, EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
 import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Ellipsis, Eye, EyeOff, LayoutGrid, Palette, Shapes, Trash2, Type } from "lucide-react";
@@ -11,6 +11,14 @@ import { blockCopy, fieldCopy } from "@/lib/catalogCopy";
 
 // Luogo e indirizzo: con il blocco Mappa si modificano lì, non nel pannello Evento.
 const LOCATION_KEYS = ["address"];
+
+// I testi del template (sopratitolo, etichette): se il campo è vuoto mostra il testo predefinito, così si può modificare.
+function templateValue(p: Props, def: BlockDef, key: string): unknown {
+  const raw = (p.block!.props as Values)[key];
+  const isTemplateText = (def.type === "hero" && key === "kicker") || (BLOCK_LABELS[def.type] ?? []).some((l) => l.key === key);
+  if (!isTemplateText || (raw !== undefined && raw !== "")) return raw ?? def.defaults[key];
+  return (p.config.locale === "en" ? def.defaultsEn?.[key] : undefined) ?? def.defaults[key];
+}
 
 // Gruppi di proprietà, nell'ordine in cui compaiono nelle schede: testi, colori, forme, altro.
 type TabKey = "all" | "texts" | "colors" | "shapes" | "other";
@@ -72,7 +80,7 @@ function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typ
               copy={(k, l) => fieldCopy(def.type, k, l, p.lang ?? "it")}
               standard={L.standardStyle}
               field={f}
-              value={(p.block!.props as Values)[f.key] ?? def.defaults[f.key]}
+              value={templateValue(p, def, f.key)}
               disabledByFeature={false}
               busy={p.busy}
               library={p.catalog.music}

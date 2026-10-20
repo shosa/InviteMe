@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type DragEvent } from "react";
-import { blockDef, type AddonKey, type BlockInstance, type BlockType, type Catalog, type InviteConfig } from "@inviteme/shared";
+import { blockDef, isFixedPosition, type AddonKey, type BlockInstance, type BlockType, type Catalog, type InviteConfig } from "@inviteme/shared";
 import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, GripVertical, Plus, Trash2 } from "lucide-react";
 import { ui, type Lang } from "@/lib/ui";
 import { blockCopy } from "@/lib/catalogCopy";
@@ -85,7 +85,7 @@ export function Canvas(p: Props) {
             return (
               <li
                 key={b.id}
-                draggable
+                draggable={!def?.locked && !def?.anchored}
                 onDragStart={(e) => onDragStart(e, i)}
                 onDragOver={(e) => { e.preventDefault(); setOver(i); }}
                 onDragLeave={() => setOver(null)}
@@ -93,18 +93,19 @@ export function Canvas(p: Props) {
                 onDragEnd={() => { setDragging(null); setOver(null); }}
                 onMouseEnter={() => p.onHover(b.id)}
                 onMouseLeave={() => p.onHover(null)}
-                className={`bl-item${def?.locked ? " is-locked" : ""}${active ? " is-on" : ""}${p.hover === b.id ? " is-hover" : ""}${b.hidden ? " is-hidden" : ""}${over === i && dragging !== null && dragging !== i ? " is-over" : ""}`}
+                className={`bl-item${def?.locked ? " is-locked" : ""}${def?.anchored ? " is-anchored" : ""}${active ? " is-on" : ""}${p.hover === b.id ? " is-hover" : ""}${b.hidden ? " is-hidden" : ""}${over === i && dragging !== null && dragging !== i ? " is-over" : ""}`}
               >
                 <span className="bl-grip" aria-hidden="true"><GripVertical size={16} /></span>
                 <button type="button" className="bl-select" onClick={() => p.onSelect(b.id)} aria-pressed={active}>
                   <span className="bl-name bl-name-row">{def && <BlockIcon type={def.type} size={16} />}<span>{name}</span></span>
                   {def?.locked && <small className="bl-lock">{L.mainBlock}</small>}
+                  {def?.anchored && <small className="bl-anchor">{L.alwaysFirst}</small>}
                   {b.hidden && <small>{L.hidden}</small>}
                   {!b.hidden && hint && <small className="bl-warn">{hint}</small>}
                 </button>
                 <div className="bl-tools" role="group" aria-label={`${L.actionsFor} ${name}`}>
-                  <button type="button" aria-label={L.moveUp} disabled={i === 0 || !!def?.locked} onClick={() => p.onMove(i, i - 1)}><ArrowUp size={15} /></button>
-                  <button type="button" aria-label={L.moveDown} disabled={i === p.blocks.length - 1 || !!def?.locked} onClick={() => p.onMove(i, i + 1)}><ArrowDown size={15} /></button>
+                  <button type="button" aria-label={L.moveUp} disabled={i === 0 || isFixedPosition(b.type)} onClick={() => p.onMove(i, i - 1)}><ArrowUp size={15} /></button>
+                  <button type="button" aria-label={L.moveDown} disabled={i === p.blocks.length - 1 || isFixedPosition(b.type)} onClick={() => p.onMove(i, i + 1)}><ArrowDown size={15} /></button>
                   <button type="button" aria-label={b.hidden ? L.show : L.hide} onClick={() => p.onToggle(b.id)}>{b.hidden ? <EyeOff size={15} /> : <Eye size={15} />}</button>
                   <button type="button" aria-label={L.duplicate} disabled={!!def?.unique} onClick={() => p.onDuplicate(b.id)}><Copy size={15} /></button>
                   <button type="button" aria-label={L.remove} disabled={!!def?.locked} onClick={() => p.onRemove(b.id)}><Trash2 size={15} /></button>

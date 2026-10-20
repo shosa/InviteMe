@@ -17,6 +17,7 @@ import {
   type InviteConfig,
   type RsvpQuestion,
   blockDef,
+  isFixedPosition,
 } from "@inviteme/shared";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Eye, Monitor, Redo2, Smartphone, Undo2, Users } from "lucide-react";
@@ -72,7 +73,8 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   const [firstSave, setFirstSave] = useState(true);
   const [showCover, setShowCover] = useState(false);
   // La busta si vede in anteprima quando è selezionata, oppure con l'interruttore «Mostra la busta».
-  const envelopeOn = showCover || selected !== null && config.blocks.some((b) => b.id === selected && b.type === "cover");
+  const hasCover = config.blocks.some((b) => b.type === "cover");
+  const envelopeOn = hasCover && (showCover || selected !== null && config.blocks.some((b) => b.id === selected && b.type === "cover"));
   const [hover, setHover] = useState<string | null>(null);
   const [scroll, setScroll] = useState({ y: 0, max: 0 });
   const frame = useRef<HTMLIFrameElement>(null);
@@ -201,12 +203,18 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   // Con una funzione a pagamento da attivare, la attiva e aggiunge il blocco in un solo passo.
   function addBlock(type: BlockType, feature?: AddonKey) {
     const b = makeBlock(type, config.locale);
-    edit((c) => ({ ...c, blocks: [...c.blocks, b], addons: feature && !c.addons.includes(feature) ? [...c.addons, feature] : c.addons }));
+    const top = !!blockDef(type)?.anchored;
+    edit((c) => ({ ...c, blocks: top ? [b, ...c.blocks] : [...c.blocks, b], addons: feature && !c.addons.includes(feature) ? [...c.addons, feature] : c.addons }));
     setSelected(b.id);
+  }
+  // Senza la funzione, i blocchi che la richiedono escono dalla struttura (annullabile con Annulla).
+  function withActiveFeatures(c: InviteConfig): InviteConfig {
+    const active = activeFeatures(catalog, c.model, c.addons);
+    return { ...c, blocks: c.blocks.filter((b) => { const f = blockDef(b.type)?.feature; return !f || active.has(f); }) };
   }
   // Funzioni a pagamento: si attivano dalla finestra dei blocchi. Le funzioni del modello sono sempre attive.
   function toggleAddon(key: AddonKey) {
-    edit((c) => ({ ...c, addons: c.addons.includes(key) ? c.addons.filter((a) => a !== key) : [...c.addons, key] }));
+    edit((c) => withActiveFeatures({ ...c, addons: c.addons.includes(key) ? c.addons.filter((a) => a !== key) : [...c.addons, key] }));
   }
   // Cambio di modello: si tengono solo le funzioni che il nuovo modello offre, e il tema resta se è compatibile.
   function setModel(id: string) {
@@ -214,7 +222,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
       const m = getModel(catalog, id);
       const themes = enabledThemes(catalog, id);
       const themeId = themes.some((t) => t.id === c.themeId) ? c.themeId : (themes[0]?.id ?? c.themeId);
-      return { ...c, model: id, addons: c.addons.filter((a) => m?.options.includes(a)), themeId };
+      return withActiveFeatures({ ...c, model: id, addons: c.addons.filter((a) => m?.options.includes(a)), themeId });
     });
   }
   function moveBlock(from: number, to: number) {
@@ -223,7 +231,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
       const [moved] = list.splice(from, 1);
       list.splice(Math.max(0, Math.min(list.length, to)), 0, moved);
       // Un blocco bloccato non cambia posizione: se lo spostamento la cambierebbe, non si fa nulla.
-      const fixed = (blocks: BlockInstance[]) => blocks.map((b, i) => (blockDef(b.type)?.locked ? i : -1)).filter((i) => i >= 0);
+      const fixed = (blocks: BlockInstance[]) => blocks.map((b, i) => (isFixedPosition(b.type) ? i : -1)).filter((i) => i >= 0);
       if (fixed(c.blocks).join() !== fixed(list).join()) return c;
       return { ...c, blocks: list };
     });
@@ -351,9 +359,20 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
 
       <main className="bl-center" aria-label={L.previewAria}>
         <div className="bl-preview-bar">
-          <span>{theme ? themeCopy(theme.id, theme.name, lang) : L.template}</span>
-          <label className="bl-cover-toggle"><input type="checkbox" checked={showCover} onChange={(e) => setShowCover(e.target.checked)} /> {L.showEnvelope}</label>
-          <span className="bl-preview-state">{previewState === "loading" ? L.updating : previewState === "error" ? "—" : ""}</span>
+          <div className="bl-tpl-chip">
+            <span className="bl-tpl-kicker">{L.template}</span>
+            <strong>{theme ? themeCopy(theme.id, theme.name, lang) : "—"}</strong>
+          </div>
+          <div className="bl-preview-tools">
+            {hasCover && (
+              <label className={`bl-switch${showCover ? " is-on" : ""}`}>
+                <input type="checkbox" role="switch" checked={showCover} onChange={(e) => setShowCover(e.target.checked)} />
+                <span className="bl-switch-track" aria-hidden="true"><span className="bl-switch-knob" /></span>
+                <span>{L.showEnvelope}</span>
+              </label>
+            )}
+            <span className="bl-preview-state">{previewState === "loading" ? L.updating : previewState === "error" ? "—" : ""}</span>
+          </div>
         </div>
         <div className={`bl-frame is-${device}`}>
           {preview ? (

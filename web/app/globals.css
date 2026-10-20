@@ -1452,3 +1452,22 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-item.is-locked { background: #E4F6EE; border-color: #0B6E65; }
 .bl-item.is-locked .bl-tools button:disabled { opacity: .35; }
 .bl-lock { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #0B6E65; background: #FFFFFF; border: 1px solid #0B6E65; border-radius: 999px; padding: 2px 8px; margin-left: 8px; }
+
+/* Barra di anteprima: nome del template in evidenza e interruttore della busta. */
+.bl-preview-bar { align-items: center; gap: 12px; padding: 12px 18px; }
+.bl-tpl-chip { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bl-tpl-kicker { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+.bl-tpl-chip strong { font-family: "Space Grotesk", sans-serif; font-size: 17px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bl-preview-tools { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.bl-switch { position: relative; display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.bl-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.bl-switch-track { position: relative; width: 38px; height: 22px; border-radius: 999px; background: var(--paper-deep); border: 1px solid var(--line); transition: background .2s; }
+.bl-switch-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--paper-light); box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .2s; }
+.bl-switch.is-on .bl-switch-track { background: var(--brass); border-color: var(--brass); }
+.bl-switch.is-on .bl-switch-knob { transform: translateX(16px); }
+.bl-switch input:focus-visible + .bl-switch-track { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+/* Busta: sempre prima, colore proprio (viola), non spostabile. */
+.bl-item.is-anchored { background: #F1ECFB; border-color: #5B3FA6; }
+.bl-anchor { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #5B3FA6; background: #FFFFFF; border: 1px solid #5B3FA6; border-radius: 999px; padding: 2px 8px; margin-left: 8px; }
+.bl-item.is-anchored .bl-tools button:disabled { opacity: .35; }

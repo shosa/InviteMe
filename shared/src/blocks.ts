@@ -31,6 +31,7 @@ export type BlockDef = {
   feature?: AddonKey; // il blocco si può aggiungere solo se l'invito ha la funzione
   unique?: boolean; // al massimo uno per invito
   locked?: boolean; // non si elimina, non si sposta né si duplica
+  anchored?: boolean; // sempre al primo posto, non spostabile (si può eliminare)
   fields: FieldDef[];
   defaults: Record<string, unknown>;
   defaultsEn?: Record<string, unknown>; // testi di partenza in inglese (invito in lingua inglese)
@@ -66,6 +67,7 @@ export const BLOCKS: BlockDef[] = [
     label: "Busta",
     description: "Copertina che si apre al tocco, con filmato e suono facoltativi.",
     unique: true,
+    anchored: true,
     fields: [
       { key: "topText", label: "Testo sopra la busta", type: "text", group: "Busta", max: 80 },
       { key: "sealText", label: "Testo nel sigillo", type: "text", group: "Busta", max: 12 },
@@ -295,6 +297,8 @@ export type BlockInstance = {
 };
 
 export const blockDef = (type: string): BlockDef | undefined => BLOCKS.find((b) => b.type === type);
+// Blocchi che non cambiano posizione: il principale e la busta.
+export const isFixedPosition = (type: string): boolean => !!(blockDef(type)?.locked || blockDef(type)?.anchored);
 
 // Blocchi di partenza per un nuovo invito. L'ordine è quello della pagina.
 // Aspetto: ogni blocco può cambiare sfondo e colore del testo. La data da grattare aggiunge forma e colore della copertura.
