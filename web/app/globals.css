@@ -1371,3 +1371,10 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .plan-details .plan-split { gap: 22px; }
 .plan-details .plan-blocks li { font-size: 16px; }
 @media (max-width: 900px) { .hm-style { grid-template-columns: minmax(0, 1fr); } .plan-options { grid-template-columns: minmax(0, 1fr); } .hm-acc .blocks-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } #modelli > .wrap { padding: 0 20px; } }
+
+/* Carosello dei template nella pagina, sotto lo stile scelto. */
+.hm-gallery { display: grid; gap: 22px; scroll-margin-top: 90px; }
+.hm-gallery-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+.hm-gallery-head h2 { margin: 0 0 6px; font-size: 2rem; }
+.hm-gallery-head .lede { margin: 0; }
+.hm-gallery .tpl-filters { justify-content: flex-end; }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BLOCKS, formatPrice, enabledThemes, themeCategories, type BlockDef, type Catalog, type ModelDef, type ThemeCategory } from "@inviteme/shared";
 import { CATEGORY_LIST, allLabel, categoryLabel } from "@/lib/categoryCopy";
@@ -45,7 +45,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   const [modelId, setModelId] = useState(models[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [galleryOpen, setGalleryOpen] = useState(false);
+  const gallery = useRef<HTMLElement>(null);
   const styleManifest = themes.find((t) => t.id === themeId);
   const styleName = styleManifest ? themeCopy(themeId, styleManifest.name, lang) : "";
   const model = models.find((m) => m.id === modelId);
@@ -65,10 +65,9 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   }
   const addonPrice = (key: string) => catalog.addons.find((a) => a.key === key);
 
-  // Scelto un template dalla galleria: si chiude la finestra.
+  // Scelto un template dal carosello: si aggiorna solo l'anteprima dello stile.
   function pickTheme(id: string) {
     setThemeId(id);
-    setGalleryOpen(false);
   }
 
   async function order() {
@@ -109,10 +108,26 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
           <h2>{styleName}</h2>
           <span className="hm-tag">{styleManifest ? categoryLabel(themeCategories(styleManifest.id)[0], lang) : ""}</span>
           <div className="hm-actions">
-            <button type="button" className="btn outline" onClick={() => setGalleryOpen(true)}>{H.changeTemplate}</button>
+            <button type="button" className="btn outline" onClick={() => gallery.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{H.changeTemplate}</button>
             <a className="btn solid" href={`/api/themes/${themeId}/demo?lang=${lang}&s=${seed}`} target="_blank" rel="noreferrer">{H.stylePreview}</a>
           </div>
         </div>
+      </section>
+
+      <section ref={gallery} className="hm-gallery" aria-labelledby="hm-gallery-title">
+        <div className="hm-gallery-head">
+          <div>
+            <h2 id="hm-gallery-title">{H.themesTitle}</h2>
+            <p className="lede">{H.themesLede}</p>
+          </div>
+          <div className="tpl-filters" role="group" aria-label={H.themesTitle}>
+            <button type="button" className={filter === "all" ? "is-on" : ""} aria-pressed={filter === "all"} onClick={() => changeFilter("all")}>{allLabel(lang)} <small>{shuffled.length}</small></button>
+            {CATEGORY_LIST.filter((c) => countOf(c) > 0).map((c) => (
+              <button key={c} type="button" className={filter === c ? "is-on" : ""} aria-pressed={filter === c} onClick={() => changeFilter(c)}>{categoryLabel(c, lang)} <small>{countOf(c)}</small></button>
+            ))}
+          </div>
+        </div>
+        <TemplateCarousel templates={visible} selectedId={themeId} onSelect={pickTheme} label={H.themesTitle} lang={lang} size="lg" />
       </section>
 
       <details className="hm-acc">
@@ -185,25 +200,6 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
       </section>
 
       {error && <p role="alert" className="form-error models-error">{error}</p>}
-
-      {galleryOpen && (
-        <div className="welcome-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setGalleryOpen(false); }}>
-          <div className="welcome tpl-gallery" role="dialog" aria-modal="true" aria-labelledby="gallery-title">
-            <h2 id="gallery-title">{H.themesTitle}</h2>
-            <p className="hint">{H.themesLede}</p>
-            <div className="tpl-filters" role="group" aria-label={H.themesTitle}>
-              <button type="button" className={filter === "all" ? "is-on" : ""} aria-pressed={filter === "all"} onClick={() => changeFilter("all")}>{allLabel(lang)} <small>{shuffled.length}</small></button>
-              {CATEGORY_LIST.filter((c) => countOf(c) > 0).map((c) => (
-                <button key={c} type="button" className={filter === c ? "is-on" : ""} aria-pressed={filter === c} onClick={() => changeFilter(c)}>{categoryLabel(c, lang)} <small>{countOf(c)}</small></button>
-              ))}
-            </div>
-            <TemplateCarousel templates={visible} selectedId={themeId} onSelect={pickTheme} label={H.themesTitle} lang={lang} size="lg" />
-            <div className="welcome-actions">
-              <button type="button" className="btn ghost" onClick={() => setGalleryOpen(false)}>{L.close}</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {model && (
         <div className="order-bar" role="region" aria-label={H.orderBarLabel}>
