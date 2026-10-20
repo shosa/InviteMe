@@ -933,3 +933,18 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .invite-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; list-style: none; margin: 0; padding: 0; }
 .invite-card { display: flex; flex-direction: column; gap: 22px; }
 .invite-actions { margin-top: auto; }
+
+/* Scena della Home su un paesaggio sfocato: la foto sfuma ai bordi e lascia in primo piano il parallasse. */
+.hero-visual { position: relative; isolation: isolate; }
+.hero-visual::before {
+  content: "";
+  position: absolute;
+  inset: -70px -60px;
+  z-index: -1;
+  background: url("/stock/landscape-4254871.jpg") center / cover no-repeat;
+  filter: blur(3px) saturate(0.85);
+  opacity: 0.9;
+  -webkit-mask-image: radial-gradient(ellipse 58% 58% at 50% 50%, #000 45%, transparent 100%);
+  mask-image: radial-gradient(ellipse 58% 58% at 50% 50%, #000 45%, transparent 100%);
+  pointer-events: none;
+}

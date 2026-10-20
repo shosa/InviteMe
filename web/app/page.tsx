@@ -40,7 +40,9 @@ export default async function Home() {
               </div>
               <p className="fine">{t.heroFine}</p>
             </div>
-            <HeroScene names={hero.title} day={hero.eventDate.slice(8, 10)} month={dateParts(hero.eventDate)?.month ?? ""} year={hero.eventDate.slice(0, 4)} target={`${hero.eventDate}T${hero.eventTime}`} photo="/stock/outdoor-table-angel-ayala.jpg" />
+            <div className="hero-visual">
+              <HeroScene names={hero.title} day={hero.eventDate.slice(8, 10)} month={dateParts(hero.eventDate)?.month ?? ""} year={hero.eventDate.slice(0, 4)} target={`${hero.eventDate}T${hero.eventTime}`} photo="/stock/outdoor-table-angel-ayala.jpg" />
+            </div>
           </div>
         </section>
 
