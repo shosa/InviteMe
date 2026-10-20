@@ -1414,3 +1414,9 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
   .sp-backdrop { padding: 0; }
   .sp-dialog { width: 100vw; height: 100dvh; border-radius: 0; }
 }
+
+/* Pannello proprietà: un divisore tra ogni campo modificabile. */
+.bl-fields > * + * { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
+.addr-list { list-style: none; margin: 6px 0 0; padding: 4px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 24px -16px rgba(0,0,0,0.3); max-height: 260px; overflow-y: auto; }
+.addr-list button { display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; background: none; border: 0; border-radius: 10px; padding: 10px 12px; cursor: pointer; color: var(--ink); }
+.addr-list button:hover { background: var(--paper); }

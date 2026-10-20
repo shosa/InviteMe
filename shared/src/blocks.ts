@@ -101,7 +101,20 @@ export const BLOCKS: BlockDef[] = [
     label: "Data",
     description: "Giorno, mese e anno in chiaro, sempre visibili.",
     unique: true,
-    fields: [],
+    fields: [
+      {
+        key: "cellShape",
+        label: "Forma dei campi",
+        type: "choice",
+        group: "Data",
+        options: [
+          { value: "box", label: "Riquadro" },
+          { value: "round", label: "Cerchio" },
+          { value: "pill", label: "Pillola" },
+          { value: "plain", label: "Solo testo" },
+        ],
+      },
+    ],
     defaults: {},
   },
   {

@@ -227,6 +227,9 @@ const LOOK_CSS = `
 .dt-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
 .dt-cell{display:grid;gap:6px;min-width:96px;padding:16px 20px;border:1px solid currentColor;border-radius:14px;opacity:.95}
 .dt-num{font-size:40px;line-height:1;font-weight:600}
+.dt-row[data-shape="round"] .dt-cell{border-radius:50%;aspect-ratio:1;min-width:112px;align-content:center;justify-items:center}
+.dt-row[data-shape="pill"] .dt-cell{border-radius:999px}
+.dt-row[data-shape="plain"] .dt-cell{border:0;padding:6px 12px}
 .dt-lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.75}
 .scratch,.dt-cell{container-type:inline-size}
 .scratch:nth-child(2) .sc-val,.dt-cell:nth-child(2) .dt-num{font-size:clamp(12px,17cqi,28px)!important;white-space:nowrap}

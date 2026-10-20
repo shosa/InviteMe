@@ -391,6 +391,29 @@ export async function buildApp() {
   });
 
   // Pagina dimostrativa di un tema, con dati d'esempio: la usano la home e la scheda dei modelli.
+  // Suggerimenti di indirizzo mentre si scrive (OpenStreetMap, senza chiave). Risultati in cache per 10 minuti.
+  const geoCache = new Map<string, { at: number; results: string[] }>();
+  app.get("/api/geocode", async (req, reply) => {
+    const user = await requireUser(req, reply);
+    if (!user) return;
+    const q = String((req.query as { q?: string }).q ?? "").trim().slice(0, 200);
+    if (q.length < 3) return { results: [] };
+    const hit = geoCache.get(q);
+    if (hit && Date.now() - hit.at < 600_000) return { results: hit.results };
+    let results: string[] = [];
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&accept-language=it&q=${encodeURIComponent(q)}`, {
+        headers: { "User-Agent": "InviteMe/1.0 (https://demo.shosa.me)" },
+      });
+      const list = (await res.json()) as { display_name?: string }[];
+      results = list.map((x) => x.display_name ?? "").filter(Boolean);
+    } catch {
+      results = [];
+    }
+    geoCache.set(q, { at: Date.now(), results });
+    return { results };
+  });
+
   // Anteprima dedicata di uno stile: telefono o desktop contenuto; a schermo intero da telefono.
   app.get<{ Params: { id: string } }>("/api/themes/:id/anteprima", async (req, reply) => {
     const theme = themes().find((t) => t.manifest.id === req.params.id);

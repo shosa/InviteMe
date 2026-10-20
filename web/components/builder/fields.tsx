@@ -1,5 +1,7 @@
 "use client";
 
+import { AddressField } from "./AddressField";
+
 import { useState, type ChangeEvent, type ReactNode } from "react";
 import { emptyValue, type Catalog, type FieldDef } from "@inviteme/shared";
 import { Upload } from "lucide-react";
@@ -31,6 +33,7 @@ export function FieldEditor({
   standard?: string; // etichetta della scelta «predefinito» per colori e opzioni
 }) {
   const fieldLabel = copy ? copy(field.key, field.label) : field.label;
+  if (field.key === "address") return <AddressField label={fieldLabel} value={typeof value === "string" ? value : ""} onChange={(v) => onChange(v)} />;
   const label = field.required ? `${fieldLabel} *` : fieldLabel;
   if (disabledByFeature) {
     return <p className="hint">{label}: disponibile con la funzione «{field.feature}». Attivala nella scheda Funzioni.</p>;
