@@ -934,17 +934,20 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .invite-card { display: flex; flex-direction: column; gap: 22px; }
 .invite-actions { margin-top: auto; }
 
-/* Scena della Home su un paesaggio sfocato: la foto sfuma ai bordi e lascia in primo piano il parallasse. */
+/* Scena della Home su un paesaggio: foto contenuta, nitida al centro, con i bordi che sfumano nella pagina. */
 .hero-visual { position: relative; isolation: isolate; }
 .hero-visual::before {
   content: "";
   position: absolute;
-  inset: -70px -60px;
+  top: 12%;
+  bottom: 12%;
+  left: 4%;
+  right: 4%;
   z-index: -1;
-  background: url("/stock/landscape-4254871.jpg") center / cover no-repeat;
-  filter: blur(3px) saturate(0.85);
-  opacity: 0.9;
-  -webkit-mask-image: radial-gradient(ellipse 58% 58% at 50% 50%, #000 45%, transparent 100%);
-  mask-image: radial-gradient(ellipse 58% 58% at 50% 50%, #000 45%, transparent 100%);
+  background: url("/stock/landscape-lago-verde.jpg") center / cover no-repeat;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent), linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent), linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-composite: intersect;
   pointer-events: none;
 }
