@@ -564,6 +564,18 @@
   }
 
   /* ---------- Avvio ---------- */
+  // Galleria con frecce: carosello e slider scorrono di una foto alla volta.
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('[data-gal-prev],[data-gal-next]');
+    if (!btn) return;
+    var box = btn.closest('.bk');
+    var first = box && box.querySelector('figure');
+    var track = first && first.parentElement;
+    if (!track) return;
+    var step = first.getBoundingClientRect().width + 12;
+    track.scrollBy({ left: btn.hasAttribute('data-gal-next') ? step : -step, behavior: 'smooth' });
+  });
+
   function boot() {
     initCover();
     initScratch();

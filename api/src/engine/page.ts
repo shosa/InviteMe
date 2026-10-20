@@ -212,7 +212,10 @@ function lookWrap(props: Record<string, unknown>, html: string): string {
   const gallery = typeof props.galleryStyle === "string" ? props.galleryStyle : "";
   const cell = typeof props.cellShape === "string" ? props.cellShape : "";
   if (!vars.length && !shape && !photo && !gallery && !cell) return html;
-  return `<div class="bk"${shape ? ` data-shape="${shape}"` : ""}${photo ? ` data-photo-shape="${photo}"` : ""}${gallery ? ` data-gallery="${gallery}"` : ""}${cell ? ` data-cell-shape="${cell}"` : ""} style="${vars.join(";")}">\n${html}</div>\n`;
+  const arrows = gallery === "carousel" || gallery === "slider"
+    ? `<button type="button" class="gal-btn gal-prev" data-gal-prev aria-label="Precedente">&#8249;</button><button type="button" class="gal-btn gal-next" data-gal-next aria-label="Successiva">&#8250;</button>`
+    : "";
+  return `<div class="bk"${shape ? ` data-shape="${shape}"` : ""}${photo ? ` data-photo-shape="${photo}"` : ""}${gallery ? ` data-gallery="${gallery}"` : ""}${cell ? ` data-cell-shape="${cell}"` : ""} style="${vars.join(";")}">\n${html}${arrows}</div>\n`;
 }
 
 // Regole comuni a tutti i temi per l'aspetto dei blocchi. Vincono sul tema solo dove il cliente ha scelto qualcosa.
@@ -260,6 +263,16 @@ const LOOK_CSS = `
 .bk[data-cell-shape="round"] :is(.dt-cell,.scratch){border-radius:50%!important;aspect-ratio:1/1;display:grid;place-items:center;min-width:0}
 .bk[data-cell-shape="pill"] :is(.dt-cell,.scratch){border-radius:999px!important}
 .bk[data-cell-shape="plain"] :is(.dt-cell,.scratch){background:none!important;border:0!important;box-shadow:none!important}
+/* Scorrimenti dell'invito senza barra di sistema: il bordo sfumato indica che c'è altro. */
+main.invite *{scrollbar-width:none}
+main.invite *::-webkit-scrollbar{display:none}
+.bk[data-gallery]{position:relative}
+.bk[data-gallery] :has(> figure){-webkit-mask-image:linear-gradient(to right,#000 86%,transparent);mask-image:linear-gradient(to right,#000 86%,transparent)}
+.bk[data-gallery="mosaic"] :has(> figure),.bk[data-gallery="grid"] :has(> figure){-webkit-mask-image:none;mask-image:none}
+.gal-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:#0E1116;box-shadow:0 6px 16px -8px rgba(0,0,0,.5);font-size:26px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.gal-prev{left:6px}
+.gal-next{right:6px}
+.gal-btn:focus-visible{outline:2px solid #0B6E65;outline-offset:2px}
 html[data-preview]{scrollbar-width:none}html[data-preview]::-webkit-scrollbar{display:none}
 [data-cover] .env-top{margin:0 0 22px;font-size:13px;letter-spacing:.18em;text-transform:uppercase;text-align:center;color:inherit}
 [data-cover] .env-card{position:relative;width:min(78vw,420px);aspect-ratio:1.45;margin:0 auto;flex:none;filter:drop-shadow(0 26px 30px rgba(0,0,0,.28))}
