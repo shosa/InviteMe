@@ -11,16 +11,20 @@ import { Accordion } from "./ui/Accordion";
 import { ThemesAdmin } from "./ThemesAdmin";
 import { toast } from "sonner";
 import { Plus, Trash2, Upload } from "lucide-react";
+import { AdminInvitations } from "./admin/AdminInvitations";
+import { AdminMedia } from "./admin/AdminMedia";
 
-type Tab = "panoramica" | "modelli" | "funzioni" | "stili" | "musica" | "ordini" | "utenti";
-const TABS: { id: Tab; label: string }[] = [
-  { id: "panoramica", label: "Panoramica" },
-  { id: "modelli", label: "Modelli" },
-  { id: "funzioni", label: "Funzioni e prezzi" },
-  { id: "stili", label: "Template" },
-  { id: "musica", label: "Musica" },
-  { id: "ordini", label: "Ordini" },
-  { id: "utenti", label: "Utenti" },
+type Tab = "panoramica" | "inviti" | "file" | "utenti" | "ordini" | "modelli" | "funzioni" | "stili" | "musica";
+const TABS: { id: Tab; label: string; group: "Gestione" | "Catalogo" }[] = [
+  { id: "panoramica", label: "Panoramica", group: "Gestione" },
+  { id: "inviti", label: "Inviti", group: "Gestione" },
+  { id: "file", label: "File caricati", group: "Gestione" },
+  { id: "utenti", label: "Clienti", group: "Gestione" },
+  { id: "ordini", label: "Ordini", group: "Gestione" },
+  { id: "modelli", label: "Modelli", group: "Catalogo" },
+  { id: "funzioni", label: "Funzioni e prezzi", group: "Catalogo" },
+  { id: "stili", label: "Template", group: "Catalogo" },
+  { id: "musica", label: "Musica", group: "Catalogo" },
 ];
 
 type Metrics = {
@@ -39,6 +43,7 @@ export function AdminConsole() {
   const [tab, setTab] = useState<Tab>("panoramica");
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [clientId, setClientId] = useState<string | undefined>(undefined);
 
   async function reload() {
     const res = await fetch("/api/admin/catalog");
@@ -69,10 +74,15 @@ export function AdminConsole() {
 
       <div className="admin-layout">
         <nav className="admin-nav" aria-label="Sezioni della console">
-          {TABS.map((t) => (
-            <button key={t.id} type="button" className={tab === t.id ? "is-on" : ""} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)}>
-              {t.label}
-            </button>
+          {(["Gestione", "Catalogo"] as const).map((group) => (
+            <div key={group} className="adm-navgroup">
+              <span className="adm-navlabel">{group}</span>
+              {TABS.filter((t) => t.group === group).map((t) => (
+                <button key={t.id} type="button" className={tab === t.id ? "is-on" : ""} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
 
@@ -83,7 +93,9 @@ export function AdminConsole() {
           {tab === "stili" && catalog && <ThemesAdmin catalog={catalog} onChanged={reload} />}
           {tab === "musica" && <MusicLibrary tracks={catalog?.music ?? []} onChange={reload} />}
           {tab === "ordini" && <Orders />}
-          {tab === "utenti" && <Users />}
+          {tab === "inviti" && <AdminInvitations initialUser={clientId} onClearUser={() => setClientId(undefined)} />}
+          {tab === "file" && <AdminMedia />}
+          {tab === "utenti" && <Users onOpenInvitations={(id) => { setClientId(id); setTab("inviti"); }} />}
           {!catalog && (tab === "modelli" || tab === "funzioni" || tab === "stili") && <p className="hint">Caricamento…</p>}
         </section>
       </div>
@@ -325,7 +337,7 @@ function Orders() {
   );
 }
 
-function Users() {
+function Users({ onOpenInvitations }: { onOpenInvitations: (userId: string) => void }) {
   const [rows, setRows] = useState<{ id: string; email: string; name: string; role: string; invitations: number; created_at: string }[]>([]);
   const load = () => fetch("/api/admin/users").then((r) => (r.ok ? r.json() : [])).then(setRows).catch(() => setRows([]));
   useEffect(() => {
@@ -345,7 +357,7 @@ function Users() {
             <tr key={u.id}>
               <td>{u.name}</td>
               <td>{u.email}</td>
-              <td>{u.invitations}</td>
+              <td>{u.invitations > 0 ? <button type="button" className="link" onClick={() => onOpenInvitations(u.id)}>{u.invitations}</button> : 0}</td>
               <td>
                 <select value={u.role} onChange={(e) => setRole(u.id, e.target.value)} aria-label={`Ruolo di ${u.email}`}>
                   <option value="user">Cliente</option>

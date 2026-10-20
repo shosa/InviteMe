@@ -43,6 +43,8 @@ import {
 } from "./auth";
 import { appUrl, inviteEmail, orderEmail, resetEmail, rsvpNoticeEmail, sendMail, type MailMessage } from "./mail";
 import { registerGoogle, googleEnabled } from "./google";
+import { registerAdminInvitations } from "./adminInvitations";
+import { registerAdminMedia } from "./adminMedia";
 import { createCheckout, invitationIdFromOrder, localCheckoutAllowed, shopifyConfigured, verifyShopifyWebhook } from "./shopify";
 
 const isProd = process.env.NODE_ENV === "production";
@@ -793,6 +795,8 @@ export async function buildApp() {
     return rows;
   });
 
+  registerAdminInvitations(app, requireAdmin);
+  registerAdminMedia(app, requireAdmin);
   registerGoogle(app);
   return app;
 }
