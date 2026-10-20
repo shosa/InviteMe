@@ -275,6 +275,8 @@ export async function buildApp() {
       if (!session) return reply.code(400).send({ error: "Sessione di modifica mancante" });
       if (inv.edit_count >= 1 && inv.edit_session !== session) return reply.code(409).send({ error: "Modifica già usata: l'invito si modifica una sola volta dopo l'acquisto" });
       if (config.themeId !== (inv.config as InviteConfig).themeId) return reply.code(409).send({ error: "Dopo l'acquisto il template non si cambia" });
+      const bought = new Set((inv.config as InviteConfig).addons ?? []);
+      if (config.addons.some((a) => !bought.has(a))) return reply.code(409).send({ error: "Per aggiungere una funzione serve un nuovo acquisto" });
       if (inv.edit_count === 0) await pool.query("UPDATE invitations SET edit_count = 1, edit_session = $2 WHERE id = $1", [inv.id, session]);
     }
     await pool.query("UPDATE invitations SET config = $1 WHERE id = $2", [JSON.stringify(config), inv.id]);

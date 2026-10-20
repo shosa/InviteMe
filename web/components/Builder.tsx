@@ -83,6 +83,10 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   const theme = catalog.themes.find((t) => t.manifest.id === config.themeId)?.manifest;
   const features = useMemo(() => new Set(activeFeatures(catalog, config.model, config.addons) as Set<AddonKey>), [catalog, config.model, config.addons]);
   const total = useMemo(() => totalCents(catalog, config.model, config.addons), [catalog, config.model, config.addons]);
+  // Quanto è già stato pagato: il prezzo compare dopo l'acquisto solo per le funzioni aggiunte e non ancora pagate.
+  const paidAlready = initial.status === "paid";
+  const paidTotal = useMemo(() => totalCents(catalog, initial.config.model, initial.config.addons), [catalog, initial.config]);
+  const extra = paidAlready ? total - paidTotal : 0;
   const block = config.blocks.find((b) => b.id === selected) ?? null;
   const title = String(config.event.title ?? "") || L.unnamed;
   const hasRsvp = config.blocks.some((b) => b.type === "rsvp");
@@ -406,7 +410,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
       {error && <p role="alert" className="form-error bl-error">{error}</p>}
 
       <footer className="bl-footer">
-        {locked ? (
+        {paidAlready && extra <= 0 ? (
           <div className="shared">
             <code>{shareUrl}</code>
             <button type="button" className="btn outline small" onClick={() => { navigator.clipboard?.writeText(shareUrl); toast.success("✓"); }}><Copy size={15} aria-hidden="true" />{L.copy}</button>
@@ -415,8 +419,8 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
         ) : (
           <>
             <div className="total">
-              <span>{L.total}</span>
-              <strong>{formatPrice(total)}</strong>
+              <span>{paidAlready ? (lang === "en" ? "New feature to buy" : "Funzione da acquistare") : L.total}</span>
+              <strong>{formatPrice(paidAlready ? extra : total)}</strong>
               <small>{model ? modelCopy(model.id, model.name, model.tagline, model.description, lang).name : ""}</small>
             </div>
             <button type="button" className="btn solid" disabled={checkingOut} onClick={checkout}>
