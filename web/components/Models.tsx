@@ -46,6 +46,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const gallery = useRef<HTMLElement>(null);
+  const modelsSection = useRef<HTMLElement>(null);
   const styleManifest = themes.find((t) => t.id === themeId);
   const styleName = styleManifest ? themeCopy(themeId, styleManifest.name, lang) : "";
   const model = models.find((m) => m.id === modelId);
@@ -65,9 +66,10 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   }
   const addonPrice = (key: string) => catalog.addons.find((a) => a.key === key);
 
-  // Scelto un template dal carosello: si aggiorna solo l'anteprima dello stile.
+  // Scelto un template dal carosello: l'anteprima si aggiorna e la pagina scorre alla scelta del modello.
   function pickTheme(id: string) {
     setThemeId(id);
+    requestAnimationFrame(() => modelsSection.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   async function order() {
@@ -130,26 +132,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
         </div>
       </section>
 
-      <details className="hm-acc">
-        <summary>
-          <span>{T.blocks}</span>
-          <small>{blockCount} · {optionCount} {en ? "addable" : "aggiungibili"}</small>
-        </summary>
-        <p className="hm-acc-text">{T.blocksText}</p>
-        <ul className="blocks-grid">
-          {BLOCKS.map((b) => {
-            const st = blockState(b, model);
-            return (
-              <li key={b.type} className={`block-tile is-${st}`}>
-                <span className="block-tile-name"><BlockIcon type={b.type} size={16} /><strong>{blockCopy(b.type, b.label, lang)}</strong></span>
-                <span className="block-tile-state">{st === "base" || st === "included" ? T.inc : st === "option" ? `${T.add} +${formatPrice(addonPrice(b.feature!)?.cents ?? 0)}` : T.unavailable}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </details>
-
-      <section className="hm-models">
+      <section ref={modelsSection} className="hm-models">
         <h2>{H.modelsHead}</h2>
         <p className="lede">{H.modelsLede}</p>
         <div className="plan-options" role="radiogroup" aria-label={H.modelsHead}>
@@ -215,6 +198,17 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
             <span className="order-bar-label">{H.totalLabel}</span>
             <strong>{formatPrice(model.priceCents)}</strong>
           </div>
+          <ul className="bar-blocks" aria-label={T.blocks}>
+            {BLOCKS.map((b) => {
+              const st = blockState(b, model);
+              return (
+                <li key={b.type} className={`bar-pill is-${st}`} title={blockCopy(b.type, b.label, lang)}>
+                  <BlockIcon type={b.type} size={14} />
+                  <span>{blockCopy(b.type, b.label, lang)}</span>
+                </li>
+              );
+            })}
+          </ul>
           <button type="button" className="btn solid lg" disabled={busy || !compatible} onClick={order}>
             {busy ? L.preparing : H.customize}
           </button>

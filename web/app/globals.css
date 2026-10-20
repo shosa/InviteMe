@@ -1380,3 +1380,18 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .hm-gallery-head .lede { margin: 0; }
 .hm-gallery .tpl-filters { justify-content: flex-end; }
 .plan-option-from { display: block; font-family: var(--font-text), sans-serif; font-size: 14px; font-weight: 600; color: var(--ink-soft); margin-bottom: 2px; }
+
+/* Sezione stile: meno spazio sopra, galleria più larga (meno margine laterale) per vedere più template insieme. */
+#modelli.section { padding-top: 40px; }
+.hm-gallery { width: min(1400px, calc(100vw - 32px)); position: relative; left: 50%; transform: translateX(-50%); }
+.hm-models { scroll-margin-top: 90px; }
+@media (max-width: 900px) { .hm-gallery { width: calc(100vw - 24px); } }
+
+/* Riepilogo dei blocchi nella barra in basso: pillole piccole con icona e nome, a scorrimento orizzontale. */
+.order-bar { flex-wrap: nowrap; }
+.bar-blocks { list-style: none; margin: 0; padding: 4px 2px; display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: thin; }
+.bar-pill { display: inline-flex; align-items: center; gap: 5px; flex: none; font-size: 12px; font-weight: 600; white-space: nowrap; border-radius: 999px; padding: 5px 10px; }
+.bar-pill.is-base, .bar-pill.is-included { background: #E4F6EE; color: #0B6E65; }
+.bar-pill.is-option { background: #FFF1D6; color: #7A4A00; }
+.bar-pill.is-na { background: var(--paper); color: var(--ink-soft); opacity: 0.6; }
+@media (max-width: 720px) { .bar-blocks { display: none; } }

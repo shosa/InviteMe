@@ -2,27 +2,28 @@
 export const THEME_CATEGORIES_ORDER = ["wedding", "baby", "birthday", "graduation", "anniversary", "corporate"] as const;
 export type ThemeCategory = (typeof THEME_CATEGORIES_ORDER)[number];
 
-// Un template può stare in più categorie: la prima è quella con cui compare nel gruppo "Tutti".
+// Ogni template sta in una sola categoria: il contenuto d'esempio segue quella categoria.
 export const THEME_CATEGORIES: Record<string, ThemeCategory[]> = {
   "anniversario-oro": ["anniversary"],
   "argento-anniversario": ["anniversary"],
-  "autunno-cena": ["corporate", "anniversary"],
+  "autunno-cena": ["birthday"],
   "baby-shower": ["baby"],
   "battesimo-celeste": ["baby"],
   "compleanno-festa": ["birthday"],
-  "festa-spiaggia": ["birthday"],
+  "festa-spiaggia": ["wedding"],
   "gala-aziendale": ["corporate"],
-  "giardino": ["wedding", "anniversary"],
+  "giardino": ["wedding"],
   "invitereference": ["wedding"],
   "laurea-giulia": ["graduation"],
   "lavanda-nozze": ["wedding"],
   "matrimonio-citta": ["wedding"],
   "matrimonio-lago": ["wedding"],
-  "minimo": ["wedding", "baby", "birthday", "graduation", "anniversary", "corporate"],
-  "notturno": ["wedding", "corporate"],
-  "pensionamento": ["birthday", "corporate"],
+  "minimo": ["wedding"],
+  "notturno": ["wedding"],
+  "pensionamento": ["corporate"],
   "prima-comunione": ["baby"],
-  "rivista": ["corporate", "graduation"],
+  "redazione": ["corporate"],
+  "rivista": ["corporate"],
   "velo": ["wedding"],
 };
 
