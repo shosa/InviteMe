@@ -63,7 +63,17 @@ export function renderInvitePage(input: PageInput): string {
     if (block.hidden || !blockDef(block.type)) continue;
     const template = partials.get(block.type as BlockType);
     if (!template) continue;
-    const html = renderTemplate(template, { ...globals, ...listFlags(block.props), ...block.props }, { missing: input.missing });
+    // Un campo vuoto non cancella il valore dell'evento quando la proprietà esiste anche tra i dati dell'evento (nomi, riga sotto i nomi).
+    const merged: Record<string, unknown> = { ...globals, ...listFlags(block.props) };
+    for (const [k, v] of Object.entries(block.props)) {
+      if (v === "" && k in globals) continue;
+      merged[k] = v;
+    }
+    let html = renderTemplate(template, merged, { missing: input.missing });
+    // L'etichetta «Con gioia» dei template diventa il testo sopra i nomi scelto nel blocco.
+    if (block.type === "hero" && typeof block.props.kicker === "string" && block.props.kicker) {
+      html = html.split(escapeHtml(String((globals.t as { withJoy?: string }).withJoy ?? ""))).join(escapeHtml(block.props.kicker));
+    }
     const look = block.type === "cover" ? html : lookWrap(block.props, html);
     // display:contents: il contenitore non cambia l'impaginazione; serve solo a sapere a quale blocco appartiene ciò che c'è dentro.
     const framed = input.builder ? `<div data-blk="${escapeHtml(block.id)}" style="display:contents">${look}</div>` : look;
@@ -212,7 +222,7 @@ function lookWrap(props: Record<string, unknown>, html: string): string {
   const gallery = typeof props.galleryStyle === "string" ? props.galleryStyle : "";
   const cell = typeof props.cellShape === "string" ? props.cellShape : "";
   if (!vars.length && !shape && !photo && !gallery && !cell) return html;
-  const arrows = gallery === "carousel" || gallery === "slider"
+  const arrows = gallery === "slider"
     ? `<button type="button" class="gal-btn gal-prev" data-gal-prev aria-label="Precedente">&#8249;</button><button type="button" class="gal-btn gal-next" data-gal-next aria-label="Successiva">&#8250;</button>`
     : "";
   return `<div class="bk"${shape ? ` data-shape="${shape}"` : ""}${photo ? ` data-photo-shape="${photo}"` : ""}${gallery ? ` data-gallery="${gallery}"` : ""}${cell ? ` data-cell-shape="${cell}"` : ""} style="${vars.join(";")}">\n${html}${arrows}</div>\n`;
@@ -248,7 +258,6 @@ const LOOK_CSS = `
 .bk[data-gallery] :has(> figure){display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding-bottom:8px;grid-template-columns:none!important}
 .bk[data-gallery] :has(> figure) > figure{margin:0;flex:0 0 auto}
 .bk[data-gallery] :has(> figure) > figure img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;display:block}
-.bk[data-gallery="carousel"] :has(> figure) > figure{flex:0 0 min(68%,300px);scroll-snap-align:start}
 .bk[data-gallery="slider"] :has(> figure) > figure{flex:0 0 100%;scroll-snap-align:center}
 .bk[data-gallery="slider"] :has(> figure) > figure img{aspect-ratio:3/2}
 .bk[data-gallery="mosaic"] :has(> figure){display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-auto-rows:110px;grid-auto-flow:dense;overflow:visible;scroll-snap-type:none;gap:8px}

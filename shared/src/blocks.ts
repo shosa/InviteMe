@@ -82,6 +82,9 @@ export const BLOCKS: BlockDef[] = [
     description: "Nomi, sottotitolo e foto principale.",
     unique: true,
     fields: [
+      { key: "kicker", label: "Testo sopra i nomi", type: "text", group: "Intestazione", max: 60 },
+      { key: "title", label: "Nomi (vuoto: quelli dell'evento)", type: "text", group: "Intestazione", max: 80 },
+      { key: "hosts", label: "Riga sotto i nomi (vuoto: quella dell'evento)", type: "text", group: "Intestazione", max: 120 },
       { key: "occasion", label: "Sottotitolo", type: "text", group: "Intestazione", max: 60 },
       { key: "couplePhoto", label: "Foto principale", type: "photo", group: "Intestazione" },
     ],
@@ -151,7 +154,6 @@ export const BLOCKS: BlockDef[] = [
         type: "choice",
         group: "Galleria",
         options: [
-          { value: "carousel", label: "Carosello" },
           { value: "slider", label: "Slider" },
           { value: "mosaic", label: "Mosaico" },
           { value: "grid", label: "Griglia" },
