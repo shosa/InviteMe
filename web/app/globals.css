@@ -1401,3 +1401,6 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bar-blocks::-webkit-scrollbar { height: 6px; display: block; }
 .bar-blocks::-webkit-scrollbar-track { background: #E8EBEF; border-radius: 999px; }
 .bar-blocks::-webkit-scrollbar-thumb { background: #9AA2AE; border-radius: 999px; }
+
+/* Cose incluse: pillole sotto i pulsanti dello stile, che vanno a capo (niente barra in basso). */
+.hm-pills { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }

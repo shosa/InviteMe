@@ -129,6 +129,17 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
             <button type="button" className="btn outline" onClick={() => gallery.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{H.changeTemplate}</button>
             <a className="btn solid" href={`/api/themes/${themeId}/demo?lang=${lang}&s=${seed}`} target="_blank" rel="noreferrer">{H.stylePreview}</a>
           </div>
+          <ul className="hm-pills" aria-label={T.blocks}>
+            {BLOCKS.map((b) => {
+              const st = blockState(b, model);
+              return (
+                <li key={b.type} className={`bar-pill is-${st}`} title={blockCopy(b.type, b.label, lang)}>
+                  <BlockIcon type={b.type} size={14} />
+                  <span>{blockCopy(b.type, b.label, lang)}</span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </section>
 
@@ -198,17 +209,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
             <span className="order-bar-label">{H.totalLabel}</span>
             <strong>{formatPrice(model.priceCents)}</strong>
           </div>
-          <ul className="bar-blocks" aria-label={T.blocks}>
-            {BLOCKS.map((b) => {
-              const st = blockState(b, model);
-              return (
-                <li key={b.type} className={`bar-pill is-${st}`} title={blockCopy(b.type, b.label, lang)}>
-                  <BlockIcon type={b.type} size={14} />
-                  <span>{blockCopy(b.type, b.label, lang)}</span>
-                </li>
-              );
-            })}
-          </ul>
+
           <button type="button" className="btn solid lg" disabled={busy || !compatible} onClick={order}>
             {busy ? L.preparing : H.customize}
           </button>
