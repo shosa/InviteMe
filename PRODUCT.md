@@ -11,7 +11,7 @@ Riferimento funzionale (non visivo): webgencyinvitations.com. Replichiamo tipolo
 - **Responsabili eventi aziendali e laureati** che devono mandare inviti rapidi e professionali.
 - **Wedding planner** che gestiscono più clienti e vogliono una commissione di referral.
 
-Bisogno principale: creare un invito bello in poche decine di minuti, senza design skill, e riceverlo in tempi brevi (standard 4–7 giorni, express 24–48 ore).
+Bisogno principale: creare un invito bello in poche decine di minuti, senza design skill, e riceverlo in tempi brevi (consegna standard 4–7 giorni).
 
 ## Modalità
 **Persuade** per landing, gallery template e pricing. **Operate** per builder e configuratore (scansione chiara, controlli prevedibili, anteprima sempre visibile). **Experience** per la pagina invito pubblica: l'invito è protagonista, l'interfaccia si ritira.

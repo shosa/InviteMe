@@ -26,7 +26,7 @@ describe("manifest degli stili", () => {
 
 describe("blocchi dell'invito", () => {
   const block = (type: string, extra: Partial<BlockInstance> = {}): BlockInstance => ({ id: `id-${type}-${Math.random().toString(36).slice(2, 6)}`, type: type as BlockInstance["type"], props: {}, ...extra });
-  const all = new Set(["rsvp", "program", "map", "music", "countdown", "gallery", "express"] as const);
+  const all = new Set(["rsvp", "program", "map", "music", "countdown", "gallery"] as const);
 
   it("scarta tipi sconosciuti e blocchi unici ripetuti", () => {
     const out = sanitizeBlocks([block("message"), block("alieno"), block("footer"), block("footer")], all as never);

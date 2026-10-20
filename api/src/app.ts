@@ -623,7 +623,7 @@ export async function buildApp() {
   app.put("/api/admin/catalog", async (req, reply) => {
     if (!(await requireAdmin(req, reply))) return;
     const b = (req.body ?? {}) as { models?: Row[]; addons?: Row[]; themes?: { id?: unknown; enabled?: unknown }[] };
-    const addonKeys = ["rsvp", "program", "map", "music", "countdown", "gallery", "express"];
+    const addonKeys = ["rsvp", "program", "map", "music", "countdown", "gallery"];
     const text = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
 
     const addons = (b.addons ?? []).filter((a) => addonKeys.includes(a.key)).map((a) => ({

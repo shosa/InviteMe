@@ -35,7 +35,6 @@ const PATHS: Record<AddonKey, React.ReactNode> = {
       <path d="M3.5 16l5-5 4 4 2.5-2.5 5.5 5.5" />
     </>
   ),
-  express: <path d="M13 3L5 13.5h6L10 21l8-10.5h-6L13 3z" />,
 };
 
 export function Glyph({ name }: { name: AddonKey }) {
