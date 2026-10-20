@@ -62,7 +62,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   const [firstSave, setFirstSave] = useState(true);
   const [showCover, setShowCover] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
-  const [frameHeight, setFrameHeight] = useState<number | null>(null);
+  const [scroll, setScroll] = useState({ y: 0, max: 0 });
   const frame = useRef<HTMLIFrameElement>(null);
 
   const model = getModel(catalog, config.model);
@@ -133,9 +133,9 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (e.source !== frame.current?.contentWindow) return;
-      const d = e.data as { type?: string; id?: unknown; h?: unknown } | null;
+      const d = e.data as { type?: string; id?: unknown; y?: unknown; max?: unknown } | null;
       if (d?.type === "hover") setHover(typeof d.id === "string" ? d.id : null);
-      if (d?.type === "size" && typeof d.h === "number") setFrameHeight(d.h);
+      if (d?.type === "scroll" && typeof d.y === "number" && typeof d.max === "number") setScroll({ y: d.y, max: d.max });
       if (d?.type === "select" && typeof d.id === "string") {
         setSelected(d.id);
         setPanel("proprieta");
@@ -309,12 +309,22 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
               title={L.previewTitle}
               srcDoc={preview}
               scrolling="no"
-              style={device === "mobile" && frameHeight ? { height: frameHeight } : undefined}
               sandbox="allow-scripts"
               onLoad={() => frame.current?.contentWindow?.postMessage({ type: "highlight", id: hover }, "*")}
             />
           ) : (
             <p className="hint">{L.loadingPreview}</p>
+          )}
+          {device === "mobile" && scroll.max > 0 && (
+            <input
+              type="range"
+              className="bl-scroll"
+              aria-label={L.scrollPreview}
+              min={0}
+              max={scroll.max}
+              value={scroll.max - scroll.y}
+              onChange={(e) => frame.current?.contentWindow?.postMessage({ type: "scrollTo", y: scroll.max - Number(e.target.value) }, "*")}
+            />
           )}
         </div>
       </main>

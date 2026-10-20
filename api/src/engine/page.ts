@@ -127,11 +127,11 @@ function pageGlobals(input: PageInput): Record<string, unknown> {
 }
 
 // Solo nell'anteprima del builder: evidenzia il blocco sotto il mouse (o quello scelto nella lista) e lo segnala al builder.
-// Messaggi: dal builder {type:"highlight", id}; dall'anteprima {type:"hover", id} e {type:"select", id}.
+// Messaggi: dal builder {type:"highlight", id} e {type:"scrollTo", y}; dall'anteprima {type:"hover", id}, {type:"select", id} e {type:"scroll", y, max}.
 const BUILDER_JS = `(function () {
   var box = document.createElement('div');
   box.setAttribute('aria-hidden', 'true');
-  box.style.cssText = 'position:fixed;pointer-events:none;display:none;z-index:2147483000;border:2px solid #d9822b;border-radius:6px;background:rgba(217,130,43,.06)';
+  box.style.cssText = 'position:fixed;pointer-events:none;display:none;z-index:2147483000;border:2px solid #14b8a6;border-radius:6px;background:rgba(20,184,166,.10)';
   document.body.appendChild(box);
   var current = null;
   function owner(el) { return el && el.closest ? el.closest('[data-blk]') : null; }
@@ -170,15 +170,22 @@ const BUILDER_JS = `(function () {
     var w = owner(e.target);
     if (w) parent.postMessage({ type: 'select', id: w.getAttribute('data-blk') }, '*');
   }, true);
-  // Altezza della pagina: il builder mostra l'anteprima mobile alla sua altezza, e a scorrere è la colonna, fuori dal telefono.
-  function reportSize() { parent.postMessage({ type: 'size', h: document.documentElement.scrollHeight }, '*'); }
-  if (window.ResizeObserver) new ResizeObserver(reportSize).observe(document.body);
-  window.addEventListener('load', reportSize);
-  window.addEventListener('scroll', paint, { passive: true });
+  // Lo scorrimento resta dentro il telefono, ma la sua barra è nel builder, fuori dalla cornice.
+  var hide = document.createElement('style');
+  hide.textContent = 'html{scrollbar-width:none}html::-webkit-scrollbar{display:none}';
+  document.head.appendChild(hide);
+  function reportScroll() {
+    var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    parent.postMessage({ type: 'scroll', y: window.scrollY, max: max }, '*');
+  }
+  if (window.ResizeObserver) new ResizeObserver(reportScroll).observe(document.body);
+  window.addEventListener('load', reportScroll);
+  window.addEventListener('scroll', function () { paint(); reportScroll(); }, { passive: true });
   window.addEventListener('resize', paint);
   window.addEventListener('message', function (e) {
     var d = e.data;
     if (d && d.type === 'highlight') { current = d.id || null; paint(); }
+    if (d && d.type === 'scrollTo') window.scrollTo(0, d.y);
   });
 })();`;
 

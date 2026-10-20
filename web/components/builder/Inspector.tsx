@@ -7,6 +7,9 @@ import { TemplateCarousel } from "../TemplateCarousel";
 import { ui } from "@/lib/ui";
 import { blockCopy, fieldCopy } from "@/lib/catalogCopy";
 
+// Luogo e indirizzo: con il blocco Mappa si modificano lì, non nel pannello Evento.
+const LOCATION_KEYS = ["venue", "address"];
+
 type Props = {
   config: InviteConfig;
   catalog: Catalog;
@@ -48,7 +51,7 @@ export function Inspector(p: Props) {
             </button>
           </div>
         </header>
-        {def.fields.length === 0 ? (
+        {def.fields.length === 0 && p.block.type !== "map" ? (
           <p className="hint">{L.blockHint}</p>
         ) : (
           <div className="bl-fields">
@@ -68,12 +71,34 @@ export function Inspector(p: Props) {
             ))}
           </div>
         )}
+        {p.block.type === "map" && (
+          <section className="bl-group" aria-labelledby="bl-loc">
+            <h3 id="bl-loc">{L.location}</h3>
+            <p className="hint">{L.locationHelp}</p>
+            <div className="bl-fields">
+              {EVENT_FIELDS.filter((f) => LOCATION_KEYS.includes(f.key)).map((f) => (
+                <FieldEditor
+                  key={f.key}
+                  copy={(k, l) => fieldCopy("event", k, l, p.lang ?? "it")}
+                  field={f}
+                  value={(p.config.event as Values)[f.key]}
+                  disabledByFeature={false}
+                  busy={p.busy}
+                  library={p.catalog.music}
+                  onChange={(v) => p.onSetEvent(f.key, v, `event:${f.key}`)}
+                  onUpload={p.onUpload}
+                />
+              ))}
+            </div>
+          </section>
+        )}
         {p.block.type === "rsvp" && <QuestionsEditor questions={p.config.rsvpQuestions} onChange={p.onSetQuestions} L={L} />}
       </div>
     );
   }
 
   const themes = enabledThemes(p.catalog, p.config.model);
+  const hasMap = p.config.blocks.some((b) => b.type === "map");
   return (
     <div className="bl-inspector">
       <header className="bl-insp-head">
@@ -86,8 +111,9 @@ export function Inspector(p: Props) {
 
       <section className="bl-group" aria-labelledby="bl-event">
         <h3 id="bl-event">{L.eventDetails}</h3>
+        {hasMap && <p className="hint">{L.locationInMap}</p>}
         <div className="bl-fields">
-          {EVENT_FIELDS.map((f) => (
+          {EVENT_FIELDS.filter((f) => !(hasMap && LOCATION_KEYS.includes(f.key))).map((f) => (
             <FieldEditor
               key={f.key}
               copy={(k, l) => fieldCopy("event", k, l, p.lang ?? "it")}
