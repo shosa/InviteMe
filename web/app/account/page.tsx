@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Nav } from "@/components/Nav";
 import { CopyLink } from "@/components/CopyLink";
+import { DeleteDraft } from "@/components/DeleteDraft";
 import { ApiError, apiServer } from "@/lib/api";
 import { getLang } from "@/lib/i18n";
 import { ui } from "@/lib/ui";
@@ -75,6 +76,7 @@ export default async function Account() {
                     {r.status === "paid" && <a className="btn outline small" href={`/i/${r.slug}`}>{t.viewInvite}</a>}
                     {r.status === "paid" && <CopyLink path={`/i/${r.slug}`} lang={lang} />}
                     {r.status === "paid" && <a className="btn outline small" href={`/planner/${r.id}`}>{t.managePlanner}</a>}
+                    {r.status !== "paid" && <DeleteDraft id={r.id} lang={lang} />}
                   </div>
                 </li>
               ))}

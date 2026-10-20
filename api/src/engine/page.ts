@@ -170,6 +170,10 @@ const BUILDER_JS = `(function () {
     var w = owner(e.target);
     if (w) parent.postMessage({ type: 'select', id: w.getAttribute('data-blk') }, '*');
   }, true);
+  // Altezza della pagina: il builder mostra l'anteprima mobile alla sua altezza, e a scorrere è la colonna, fuori dal telefono.
+  function reportSize() { parent.postMessage({ type: 'size', h: document.documentElement.scrollHeight }, '*'); }
+  if (window.ResizeObserver) new ResizeObserver(reportSize).observe(document.body);
+  window.addEventListener('load', reportSize);
   window.addEventListener('scroll', paint, { passive: true });
   window.addEventListener('resize', paint);
   window.addEventListener('message', function (e) {

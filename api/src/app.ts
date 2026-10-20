@@ -249,6 +249,17 @@ export async function buildApp() {
     };
   });
 
+  // Elimina una bozza. Un invito pagato non si cancella: è già stato acquistato e condiviso.
+  app.delete<{ Params: { id: string } }>("/api/invitations/:id", async (req, reply) => {
+    const user = await requireUser(req, reply);
+    if (!user) return;
+    const inv = await ownedInvitation(req.params.id, user.id);
+    if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
+    if (inv.status === "paid") return reply.code(409).send({ error: "Invito pagato: non si può eliminare" });
+    await pool.query("DELETE FROM invitations WHERE id = $1 AND status <> 'paid'", [inv.id]);
+    return reply.code(204).send();
+  });
+
   app.put<{ Params: { id: string } }>("/api/invitations/:id", async (req, reply) => {
     const user = await requireUser(req, reply);
     if (!user) return;

@@ -62,6 +62,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   const [firstSave, setFirstSave] = useState(true);
   const [showCover, setShowCover] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
+  const [frameHeight, setFrameHeight] = useState<number | null>(null);
   const frame = useRef<HTMLIFrameElement>(null);
 
   const model = getModel(catalog, config.model);
@@ -132,8 +133,9 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (e.source !== frame.current?.contentWindow) return;
-      const d = e.data as { type?: string; id?: unknown } | null;
+      const d = e.data as { type?: string; id?: unknown; h?: unknown } | null;
       if (d?.type === "hover") setHover(typeof d.id === "string" ? d.id : null);
+      if (d?.type === "size" && typeof d.h === "number") setFrameHeight(d.h);
       if (d?.type === "select" && typeof d.id === "string") {
         setSelected(d.id);
         setPanel("proprieta");
@@ -306,6 +308,8 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
               ref={frame}
               title={L.previewTitle}
               srcDoc={preview}
+              scrolling="no"
+              style={device === "mobile" && frameHeight ? { height: frameHeight } : undefined}
               sandbox="allow-scripts"
               onLoad={() => frame.current?.contentWindow?.postMessage({ type: "highlight", id: hover }, "*")}
             />
