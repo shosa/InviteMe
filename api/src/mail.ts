@@ -60,7 +60,7 @@ export function inviteEmail(p: { to: string; hosts: string; title: string; slug:
 }
 
 export function rsvpNoticeEmail(p: { to: string; title: string; attending: boolean; invitationId: string }): MailMessage {
-  const link = `${appUrl()}/planner/${p.invitationId}`;
+  const link = `${appUrl()}/invito/${p.invitationId}`;
   const verdict = p.attending ? "parteciperà" : "non potrà partecipare";
   return {
     to: p.to,

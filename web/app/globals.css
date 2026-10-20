@@ -1096,3 +1096,20 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .pl-guest-mail { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .pl-guests small { color: var(--ink-soft); font-size: 12px; }
 .pl-hidden-x { position: absolute; width: 1px; height: 1px; overflow: hidden; }
+
+/* Telefono: la vetrina dei template mostra più stili insieme, più piccoli e con una sfumatura leggera ai bordi. */
+@media (max-width: 720px) {
+  .tpl-track { -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent); mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent); padding: 8px 14px 18px; gap: 12px; }
+  .tpl-carousel.is-lg .tpl-track { grid-auto-columns: 168px; gap: 12px; padding: 8px 14px 18px; }
+  .tpl-carousel.is-lg .tpl-phone { width: 168px; height: 350px; padding: 6px; border-radius: 34px; }
+  .tpl-carousel.is-lg .tpl-screen { border-radius: 28px; }
+  .tpl-carousel.is-lg .tpl-screen iframe { width: 390px; height: 832px; transform: scale(0.4); }
+  .tpl-carousel.is-lg .tpl-hit { border-radius: 34px; }
+  .tpl-carousel.is-lg .tpl-meta { width: 168px; }
+  .tpl-carousel.is-lg .tpl-meta h3 { font-size: 1rem; }
+  .tpl-carousel.is-lg .tpl-meta p { display: none; }
+}
+.pl-pay { max-width: 620px; margin: 0 auto; }
+.pl-pay .pl-btn { text-decoration: none; display: inline-block; justify-self: start; }
+.home-showcase { grid-template-columns: minmax(0, 1fr); }
+.home-showcase > * { min-width: 0; }

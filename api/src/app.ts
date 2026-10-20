@@ -72,11 +72,11 @@ export async function buildApp() {
   // Il limite più alto è quello dei video in ingresso: poi ffmpeg li riduce (vedi media.ts).
   await app.register(multipart, { limits: { fileSize: 150 * 1024 * 1024, files: 1 } });
   ensureMediaDirs();
-  await app.register(staticFiles, { root: MEDIA_DIR, prefix: "/api/media/", decorateReply: false });
+  await app.register(staticFiles, { root: MEDIA_DIR, prefix: "/api/media/", decorateReply: false, maxAge: "7d" });
   // Asset di ogni tema (immagini, video, audio del tema), serviti dalla cartella del tema.
   for (const t of themes()) {
     const assets = path.join(t.dir, "assets");
-    if (fs.existsSync(assets)) await app.register(staticFiles, { root: assets, prefix: `/api/themes/${t.manifest.id}/assets/`, decorateReply: false, index: false });
+    if (fs.existsSync(assets)) await app.register(staticFiles, { root: assets, prefix: `/api/themes/${t.manifest.id}/assets/`, decorateReply: false, index: false, maxAge: "7d" });
   }
 
   // Il webhook Shopify va verificato sul corpo grezzo: lo conserviamo accanto al JSON già parsato.
