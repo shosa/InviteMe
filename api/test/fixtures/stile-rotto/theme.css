@@ -1,0 +1,2 @@
+@import url("https://evil.example.com/x.css");
+body { background: url(https://evil.example.com/a.png); }

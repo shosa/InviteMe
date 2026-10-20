@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import type { AddonDef, Catalog, MusicTrack, ModelDef, StyleDef } from "@inviteme/shared";
+import type { AddonDef, Catalog, MusicTrack, ModelDef } from "@inviteme/shared";
+
+// Ciò che la console salva: modelli, funzioni e quali template sono attivi (i template sono file, non dati).
+type CatalogSave = Pick<Catalog, "models" | "addons"> & { themes: { id: string; enabled: boolean }[] };
+const themeStates = (c: Catalog) => c.themes.map((t) => ({ id: t.manifest.id, enabled: t.enabled }));
 import { Switch } from "./ui/Switch";
 import { Accordion } from "./ui/Accordion";
 import { ThemesAdmin } from "./ThemesAdmin";
@@ -13,7 +17,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "panoramica", label: "Panoramica" },
   { id: "modelli", label: "Modelli" },
   { id: "funzioni", label: "Funzioni e prezzi" },
-  { id: "stili", label: "Temi" },
+  { id: "stili", label: "Template" },
   { id: "musica", label: "Musica" },
   { id: "ordini", label: "Ordini" },
   { id: "utenti", label: "Utenti" },
@@ -30,7 +34,7 @@ const toEuro = (cents: number) => (cents / 100).toString();
 const toCents = (v: string) => Math.max(0, Math.round((Number(v.replace(",", ".")) || 0) * 100));
 const fmt = (cents: number) => new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(cents / 100);
 
-// Console admin: modelli, funzioni e prezzi, stili, libreria musicale, ordini e utenti.
+// Console admin: modelli, funzioni e prezzi, template, libreria musicale, ordini e utenti.
 export function AdminConsole() {
   const [tab, setTab] = useState<Tab>("panoramica");
   const [catalog, setCatalog] = useState<Catalog | null>(null);
@@ -45,7 +49,7 @@ export function AdminConsole() {
   }, []);
 
   // Salva l'intero catalogo: l'API valida ogni campo e ignora ciò che non è consentito.
-  async function saveCatalog(next: Pick<Catalog, "models" | "addons" | "styles">) {
+  async function saveCatalog(next: CatalogSave) {
     setNotice(null);
     const res = await fetch("/api/admin/catalog", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) });
     const data = (await res.json().catch(() => ({}))) as { error?: string };
@@ -128,7 +132,7 @@ function Overview() {
   );
 }
 
-function ModelsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<Catalog, "models" | "addons" | "styles">) => void }) {
+function ModelsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: CatalogSave) => void }) {
   const [models, setModels] = useState<ModelDef[]>(catalog.models);
   const [euros, setEuros] = useState<Record<string, string>>(() => Object.fromEntries(catalog.models.map((m) => [m.id, toEuro(m.priceCents)])));
   const update = (id: string, patch: Partial<ModelDef>) => setModels((ms) => ms.map((m) => (m.id === id ? { ...m, ...patch } : m)));
@@ -142,7 +146,7 @@ function ModelsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
     setModels((ms) => [...ms, { id, name: "Nuovo modello", tagline: "", description: "", priceCents: 4900, included: [], options: [], enabled: false, sort: ms.length + 1 }]);
     setEuros((e) => ({ ...e, [id]: "49" }));
   };
-  const save = () => onSave({ models: models.map((m) => ({ ...m, priceCents: toCents(euros[m.id] ?? "0") })), addons: catalog.addons, styles: catalog.styles });
+  const save = () => onSave({ models: models.map((m) => ({ ...m, priceCents: toCents(euros[m.id] ?? "0") })), addons: catalog.addons, themes: themeStates(catalog) });
 
   return (
     <div className="stack-lg">
@@ -182,11 +186,11 @@ function ModelsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<
   );
 }
 
-function AddonsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Pick<Catalog, "models" | "addons" | "styles">) => void }) {
+function AddonsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: CatalogSave) => void }) {
   const [addons, setAddons] = useState<AddonDef[]>(catalog.addons);
   const [euros, setEuros] = useState<Record<string, string>>(() => Object.fromEntries(catalog.addons.map((a) => [a.key, toEuro(a.cents)])));
   const patch = (key: string, p: Partial<AddonDef>) => setAddons((list) => list.map((a) => (a.key === key ? { ...a, ...p } : a)));
-  const save = () => onSave({ models: catalog.models, styles: catalog.styles, addons: addons.map((a) => ({ ...a, cents: toCents(euros[a.key] ?? "0") })) });
+  const save = () => onSave({ models: catalog.models, themes: themeStates(catalog), addons: addons.map((a) => ({ ...a, cents: toCents(euros[a.key] ?? "0") })) });
   return (
     <div className="stack-lg">
       <p className="hint">Ogni funzione ha un prezzo fisso. Le modifiche valgono per tutti i modelli che la includono o la vendono a parte.</p>

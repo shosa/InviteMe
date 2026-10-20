@@ -1,0 +1,11 @@
+{{^preview}}
+<div data-cover role="button" tabindex="0" aria-label="{{t.openInviteAria}} {{title}}">
+  {{^coverVideo}}<div class="cover-monogram" aria-hidden="true">{{monogram}}</div>{{/coverVideo}}
+  {{#coverVideo}}<video data-cover-video playsinline muted preload="auto" src="{{coverVideo}}" aria-label="{{t.coverVideoAria}}"></video>{{/coverVideo}}
+  <div data-cover-tap>
+    <div class="wei-chevron"></div>
+    <div data-cover-label>{{t.tapToOpen}}</div>
+  </div>
+</div>
+{{#coverSound}}<audio data-base-audio preload="auto" src="{{coverSound}}"></audio>{{/coverSound}}
+{{/preview}}

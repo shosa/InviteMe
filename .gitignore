@@ -11,3 +11,7 @@ data/
 .env
 .env.*
 !.env.example
+
+# Materiale di riferimento (non versionare)
+reference/
+InviteReference/

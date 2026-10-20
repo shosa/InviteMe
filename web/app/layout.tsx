@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bodoni_Moda, Familjen_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
+import { getLang } from "@/lib/i18n";
 
 // Display didone e testo grotesco: scaricati in build e serviti dal nostro dominio.
 const display = Bodoni_Moda({ subsets: ["latin"], variable: "--font-display", display: "swap", style: ["normal", "italic"] });
@@ -18,9 +19,10 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const lang = await getLang();
   return (
-    <html lang="it" className={`${display.variable} ${text.variable}`}>
+    <html lang={lang} className={`${display.variable} ${text.variable}`}>
       <body>{children}<Toaster /></body>
     </html>
   );

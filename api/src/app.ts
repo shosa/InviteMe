@@ -6,13 +6,14 @@ import cookie from "@fastify/cookie";
 import multipart from "@fastify/multipart";
 import staticFiles from "@fastify/static";
 import {
+  ADDON_KEYS,
   EVENT_TYPES,
   activeFeatures,
   defaultConfig,
+  enabledThemes,
   formatPrice,
-  getAddon,
   getModel,
-  getStyle,
+  getTheme,
   hasRsvp,
   makeSlug,
   sanitizeConfig,
@@ -20,12 +21,13 @@ import {
   type AddonKey,
   type Catalog,
   type InviteConfig,
-  type StyleDef,
-  validateTheme,
+  type RsvpQuestion,
 } from "@inviteme/shared";
 import { pool, migrate, track } from "./db";
-import { BUILTIN_IDS, invalidateCatalog, mergeThemes } from "./catalog";
-import { loadCatalog, loadFullCatalog, saveCatalog } from "./catalog";
+import { invalidateCatalog, loadCatalog, loadFullCatalog, saveCatalog, themes } from "./catalog";
+import { renderInvitePage } from "./engine/page";
+import { RUNTIME_PATH, sampleConfig } from "./engine/themes";
+import { MEDIA_DIR, MediaError, convertMedia, ensureMediaDirs, INPUT_TYPES, type MediaKind } from "./media";
 import {
   SESSION_COOKIE,
   adminAllowed,
@@ -42,19 +44,40 @@ import { appUrl, inviteEmail, orderEmail, resetEmail, rsvpNoticeEmail, sendMail,
 import { registerGoogle, googleEnabled } from "./google";
 import { createCheckout, invitationIdFromOrder, localCheckoutAllowed, shopifyConfigured, verifyShopifyWebhook } from "./shopify";
 
-const MEDIA_DIR = process.env.MEDIA_DIR ?? path.join(process.cwd(), "data", "media");
 const isProd = process.env.NODE_ENV === "production";
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type Row = Record<string, any>;
 
+// Il codice della pagina invito (runtime del motore): letto una volta, incorporato in ogni pagina.
+const RUNTIME = fs.readFileSync(RUNTIME_PATH, "utf8");
+
+const textOf = (config: InviteConfig, key: string) => String(config.event[key] ?? "");
+const titleOf = (config: InviteConfig) => textOf(config, "title");
+const isMediaKind = (v: string): v is MediaKind => v === "photo" || v === "video" || v === "audio";
+
+// Pagina dell'invito per una configurazione. Null se il tema non esiste più (invito da ricreare).
+function renderFor(c: Catalog, slug: string, config: InviteConfig, preview = false): string | null {
+  const theme = themes().find((t) => t.manifest.id === config.themeId);
+  if (!theme) return null;
+  return renderInvitePage({ theme, config, slug, features: activeFeatures(c, config.model, config.addons), runtime: RUNTIME, preview });
+}
+
+const NOT_FOUND_PAGE = `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Invito non disponibile</title></head><body style="font-family:Georgia,serif;text-align:center;padding:60px 20px;color:#17242A"><p>Questo invito non è disponibile.</p></body></html>`;
+
 export async function buildApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" }, bodyLimit: 12 * 1024 * 1024 });
   await app.register(cookie);
-  await app.register(multipart, { limits: { fileSize: 15 * 1024 * 1024, files: 1 } });
-  fs.mkdirSync(MEDIA_DIR, { recursive: true });
+  // Il limite più alto è quello dei video in ingresso: poi ffmpeg li riduce (vedi media.ts).
+  await app.register(multipart, { limits: { fileSize: 150 * 1024 * 1024, files: 1 } });
+  ensureMediaDirs();
   await app.register(staticFiles, { root: MEDIA_DIR, prefix: "/api/media/", decorateReply: false });
+  // Asset di ogni tema (immagini, video, audio del tema), serviti dalla cartella del tema.
+  for (const t of themes()) {
+    const assets = path.join(t.dir, "assets");
+    if (fs.existsSync(assets)) await app.register(staticFiles, { root: assets, prefix: `/api/themes/${t.manifest.id}/assets/`, decorateReply: false, index: false });
+  }
 
   // Il webhook Shopify va verificato sul corpo grezzo: lo conserviamo accanto al JSON già parsato.
   app.addContentTypeParser("application/json", { parseAs: "string" }, (req, body, done) => {
@@ -177,8 +200,8 @@ export async function buildApp() {
       id: r.id,
       slug: r.slug,
       status: r.status,
-      title: r.config.title,
-      eventDate: r.config.eventDate,
+      title: titleOf(r.config),
+      eventDate: textOf(r.config, "eventDate"),
       model: getModel(c, r.config.model)?.name ?? r.config.model,
       views: r.views,
       guests: (r.guests ?? []).length,
@@ -190,14 +213,18 @@ export async function buildApp() {
     const user = await requireUser(req, reply);
     if (!user) return;
     const c = await loadCatalog();
-    const b = (req.body ?? {}) as { model?: string; eventType?: string; styleId?: string };
+    const b = (req.body ?? {}) as { model?: string; eventType?: string; themeId?: string };
     const model = getModel(c, String(b.model ?? ""));
     if (!model) return reply.code(400).send({ error: "Modello non disponibile" });
+    // Un tema scelto esplicitamente non viene sostituito: se non è disponibile, la richiesta fallisce.
+    const requested = b.themeId ? getTheme(c, String(b.themeId), model.id) : undefined;
+    if (b.themeId && !requested) return reply.code(400).send({ error: "Tema non disponibile per questo modello" });
+    const theme = requested ?? enabledThemes(c, model.id)[0];
+    if (!theme) return reply.code(400).send({ error: "Nessun tema disponibile per questo modello" });
     const eventType = EVENT_TYPES.find((e) => e.id === b.eventType)?.id ?? "wedding";
-    const config = defaultConfig(c, model.id, eventType);
-    config.styleId = getStyle(c, String(b.styleId ?? "")).id;
+    const config = defaultConfig(theme, model.id, eventType, activeFeatures(c, model.id, []));
     const id = randomUUID();
-    const slug = makeSlug(config.title);
+    const slug = makeSlug(titleOf(config));
     await pool.query("INSERT INTO invitations (id, slug, user_id, config) VALUES ($1, $2, $3, $4)", [id, slug, user.id, JSON.stringify(config)]);
     await track("invitation_created", id);
     return reply.code(201).send({ id, slug });
@@ -216,6 +243,7 @@ export async function buildApp() {
       config: inv.config as InviteConfig,
       guests: inv.guests,
       views: inv.views,
+      planner: inv.planner ?? {},
       catalog: c,
       hasRsvp: hasRsvp(c, inv.config),
     };
@@ -252,7 +280,7 @@ export async function buildApp() {
     const failed: string[] = [];
     for (const to of unique) {
       try {
-        await sendMail(inviteEmail({ to, hosts: inv.config.hosts, title: inv.config.title, slug: inv.slug, personal }));
+        await sendMail(inviteEmail({ to, hosts: textOf(inv.config, "hosts"), title: titleOf(inv.config), slug: inv.slug, personal }));
         sent.push(to);
       } catch {
         failed.push(to);
@@ -263,6 +291,22 @@ export async function buildApp() {
     for (const email of sent) if (!guests.some((g) => g.email === email)) guests.push({ email, sentAt: now });
     await pool.query("UPDATE invitations SET guests = $1 WHERE id = $2", [JSON.stringify(guests), inv.id]);
     return { sent: sent.length, failed };
+  });
+
+  // Note del pianificatore: testo libero per l'organizzatore (promemoria, nota del conto alla rovescia). Non va nella pagina invito.
+  app.put<{ Params: { id: string } }>("/api/invitations/:id/planner", async (req, reply) => {
+    const user = await requireUser(req, reply);
+    if (!user) return;
+    const inv = await ownedInvitation(req.params.id, user.id);
+    if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
+    if (inv.status !== "paid") return reply.code(409).send({ error: "Il pannello è disponibile dopo il pagamento" });
+    const b = (req.body ?? {}) as { notes?: unknown; countdownNote?: unknown };
+    const planner = {
+      notes: typeof b.notes === "string" ? b.notes.slice(0, 4000) : "",
+      countdownNote: typeof b.countdownNote === "string" ? b.countdownNote.slice(0, 200) : "",
+    };
+    await pool.query("UPDATE invitations SET planner = $1 WHERE id = $2", [JSON.stringify(planner), inv.id]);
+    return { ok: true, planner };
   });
 
   app.get<{ Params: { id: string }; Querystring: { format?: string } }>("/api/invitations/:id/rsvps", async (req, reply) => {
@@ -301,29 +345,71 @@ export async function buildApp() {
     };
   });
 
-  // ───────────── Pubblico: invito, conferme ─────────────
-  app.get<{ Params: { slug: string } }>("/api/public/invitations/:slug", async (req, reply) => {
+  // ───────────── Pubblico: pagina dell'invito, conferme ─────────────
+  app.get<{ Params: { slug: string } }>("/api/public/invitations/:slug/page", async (req, reply) => {
     const { rows } = await pool.query("SELECT * FROM invitations WHERE slug = $1 AND status = 'paid'", [req.params.slug]);
     const inv = rows[0];
-    if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
+    if (!inv) return reply.code(404).type("text/html; charset=utf-8").send(NOT_FOUND_PAGE);
+    const c = await loadCatalog();
+    const html = renderFor(c, inv.slug, inv.config as InviteConfig);
+    if (!html) return reply.code(410).type("text/html; charset=utf-8").send(NOT_FOUND_PAGE);
     await pool.query("UPDATE invitations SET views = views + 1 WHERE id = $1", [inv.id]);
     await track("invitation_viewed", inv.id);
+    return reply.type("text/html; charset=utf-8").header("Cache-Control", "no-cache").send(html);
+  });
+
+  // Pagina dimostrativa di un tema, con dati d'esempio: la usano la home e la scheda dei modelli.
+  app.get<{ Params: { id: string } }>("/api/themes/:id/demo", async (req, reply) => {
+    const theme = themes().find((t) => t.manifest.id === req.params.id);
+    if (!theme) return reply.code(404).type("text/plain; charset=utf-8").send("Tema non trovato");
+    const html = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "demo", features: new Set(ADDON_KEYS), runtime: RUNTIME, preview: true });
+    return reply.type("text/html; charset=utf-8").header("Cache-Control", "public, max-age=300").send(html);
+  });
+
+  // Anteprima del builder: stessa pagina, con la configurazione in corso. Non viene salvata.
+  app.post<{ Params: { id: string } }>("/api/invitations/:id/preview", async (req, reply) => {
+    const user = await requireUser(req, reply);
+    if (!user) return;
+    const inv = await ownedInvitation(req.params.id, user.id);
+    if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
     const c = await loadCatalog();
-    const config = inv.config as InviteConfig;
-    const track_ = c.music.find((t) => t.id === config.musicTrackId);
-    return {
-      id: inv.id,
-      slug: inv.slug,
-      config,
-      style: getStyle(c, config.styleId),
-      hasRsvp: hasRsvp(c, config),
-      musicSrc: track_?.url ?? config.musicUrl ?? c.music.find((t) => t.id === getStyle(c, config.styleId).music?.defaultTrackId)?.url ?? getStyle(c, config.styleId).music?.file ?? null,
-      features: [...activeFeatures(c, config.model, config.addons)],
-    };
+    const config = sanitizeConfig(c, req.body);
+    if (!config) return reply.code(400).send({ error: "Configurazione non valida" });
+    // Di default l'anteprima mostra la pagina senza busta: il cliente vede subito i contenuti. ?cover=1 la mostra.
+    const showCover = (req.query as { cover?: string }).cover === "1";
+    const html = renderFor(c, inv.slug, config, !showCover);
+    if (!html) return reply.code(400).send({ error: "Tema non disponibile" });
+    return reply.type("text/html; charset=utf-8").header("Cache-Control", "no-store").send(html);
+  });
+
+  // Carica un file del cliente (foto, video, audio): ffmpeg lo converte prima di salvarlo. Solo su inviti non pagati.
+  app.post<{ Params: { id: string }; Querystring: { kind?: string } }>("/api/invitations/:id/media", async (req, reply) => {
+    const user = await requireUser(req, reply);
+    if (!user) return;
+    const inv = await ownedInvitation(req.params.id, user.id);
+    if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
+    if (inv.status === "paid") return reply.code(409).send({ error: "Invito già pagato: non è più modificabile" });
+    const kind = String(req.query.kind ?? "");
+    if (!isMediaKind(kind)) return reply.code(400).send({ error: "Tipo di file non valido" });
+    const file = await req.file();
+    if (!file) return reply.code(400).send({ error: "Nessun file ricevuto" });
+    const ext = INPUT_TYPES[kind][file.mimetype];
+    if (!ext) return reply.code(415).send({ error: "Formato non supportato" });
+    const buffer = await file.toBuffer();
+    if (file.file.truncated) return reply.code(413).send({ error: "File troppo grande" });
+    try {
+      const saved = await convertMedia(kind, buffer, ext);
+      return reply.code(201).send({ url: saved.url, kind, bytes: saved.bytes });
+    } catch (e) {
+      if (e instanceof MediaError) return reply.code(e.status).send({ error: e.message });
+      throw e;
+    }
   });
 
   app.post("/api/rsvp", async (req, reply) => {
-    const b = (req.body ?? {}) as { slug?: string; answers?: Record<string, unknown> };
+    const b = (req.body ?? {}) as { slug?: string; answers?: Record<string, unknown>; website?: unknown };
+    // Campo trappola: un ospite vero non lo compila mai. Se arriva pieno è un bot: risposta ok, nulla salvato.
+    if (typeof b.website === "string" && b.website.trim()) return reply.code(201).send({ ok: true });
     if (!b.slug || !b.answers || typeof b.answers !== "object") return reply.code(400).send({ error: "Dati mancanti" });
     const { rows } = await pool.query(
       `SELECT i.id, i.config, u.email AS owner_email FROM invitations i JOIN users u ON u.id = i.user_id
@@ -335,22 +421,23 @@ export async function buildApp() {
     const c = await loadCatalog();
     if (!hasRsvp(c, inv.config)) return reply.code(400).send({ error: "Questo invito non prevede conferma di presenza" });
 
-    // Solo le domande configurate, con valori del tipo giusto.
-    const questions = (inv.config.rsvpQuestions as Row[]) ?? [];
+    // Solo le domande configurate, con valori del tipo giusto. Quelle obbligatorie devono esserci.
+    const questions = (inv.config.rsvpQuestions as RsvpQuestion[]) ?? [];
     const answers: Record<string, string | number | boolean> = {};
     for (const q of questions) {
       const v = b.answers[q.id];
       if (q.type === "yes-no" && typeof v === "boolean") answers[q.id] = v;
       else if (q.type === "number" && typeof v === "number" && v >= 0 && v <= 50) answers[q.id] = Math.round(v);
-      else if (q.type === "text" && typeof v === "string") answers[q.id] = v.slice(0, 500);
+      else if (q.type === "text" && typeof v === "string" && v.trim()) answers[q.id] = v.trim().slice(0, 500);
       else if (q.type === "choice" && typeof v === "string" && (q.options ?? []).includes(v)) answers[q.id] = v;
+      if (q.required && answers[q.id] === undefined) return reply.code(400).send({ error: `Manca una risposta: ${q.label}` });
     }
 
     await pool.query("INSERT INTO rsvps (id, invitation_id, answers) VALUES ($1, $2, $3)", [randomUUID(), inv.id, JSON.stringify(answers)]);
     await track("rsvp_submitted", inv.id);
     // Notifica al proprietario: un errore di posta non blocca la risposta dell'ospite.
     await sendMail(
-      rsvpNoticeEmail({ to: inv.owner_email, title: inv.config.title, attending: answers.attending === true, invitationId: inv.id }),
+      rsvpNoticeEmail({ to: inv.owner_email, title: titleOf(inv.config), attending: answers.attending === true, invitationId: inv.id }),
     ).catch((e) => req.log.warn({ err: e }, "notifica RSVP non inviata"));
     return reply.code(201).send({ ok: true });
   });
@@ -418,7 +505,7 @@ export async function buildApp() {
     );
     if (rows[0]) {
       await sendMail(
-        orderEmail({ to: rows[0].email, title: rows[0].config.title, amount: formatPrice(amountCents), slug: rows[0].slug }),
+        orderEmail({ to: rows[0].email, title: titleOf(rows[0].config), amount: formatPrice(amountCents), slug: rows[0].slug }),
       ).catch((e) => app.log.warn({ err: e }, "conferma d'ordine non inviata"));
     }
   }
@@ -488,13 +575,12 @@ export async function buildApp() {
     return loadFullCatalog();
   });
 
-  // Salva modelli, funzioni e stili. Ogni valore viene validato: l'admin non può inserire HTML o prezzi negativi.
+  // Salva modelli, funzioni e attivazione dei temi. Ogni valore viene validato: l'admin non può inserire HTML o prezzi negativi.
   app.put("/api/admin/catalog", async (req, reply) => {
     if (!(await requireAdmin(req, reply))) return;
-    const b = (req.body ?? {}) as { models?: Row[]; addons?: Row[]; styles?: Row[] };
+    const b = (req.body ?? {}) as { models?: Row[]; addons?: Row[]; themes?: { id?: unknown; enabled?: unknown }[] };
     const addonKeys = ["rsvp", "program", "map", "music", "countdown", "gallery", "express"];
     const text = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
-    const hex = (v: unknown, fb: string) => (typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : fb);
 
     const addons = (b.addons ?? []).filter((a) => addonKeys.includes(a.key)).map((a) => ({
       key: a.key,
@@ -504,8 +590,6 @@ export async function buildApp() {
       enabled: !!a.enabled,
     }));
     const keySet = new Set(addons.map((a) => a.key));
-    // I temi: preimpostati dal codice, caricati dall'admin validati uno per uno.
-    const styles = mergeThemes(Array.isArray(b.styles) ? (b.styles as StyleDef[]).slice(0, 40) : undefined);
     const models = (b.models ?? []).slice(0, 12).map((m, i) => ({
       id: text(m.id, 40).replace(/[^a-z0-9-]/gi, "-").toLowerCase() || `modello-${i}`,
       name: text(m.name, 80),
@@ -517,42 +601,25 @@ export async function buildApp() {
       enabled: !!m.enabled,
       sort: Number.isFinite(Number(m.sort)) ? Number(m.sort) : i,
     }));
-    if (models.length === 0 || styles.length === 0) return reply.code(400).send({ error: "Serve almeno un modello e uno stile" });
-    await saveCatalog({ models, addons, styles });
+    // I temi sono file del repository: qui si decide solo quali sono attivi.
+    const known = new Set(themes().map((t) => t.manifest.id));
+    const themeList = (Array.isArray(b.themes) ? b.themes : [])
+      .filter((t) => known.has(String(t.id)))
+      .map((t) => ({ id: String(t.id), enabled: t.enabled !== false }));
+    if (models.length === 0 || !themeList.some((t) => t.enabled)) return reply.code(400).send({ error: "Serve almeno un modello e un tema attivo" });
+    await saveCatalog({ models, addons, themes: themeList });
     return { ok: true };
   });
 
-  // Carica un tema: un manifest JSON validato (vedi docs/THEMES.md). Sostituisce un tema caricato con lo stesso id.
-  app.post("/api/admin/themes", async (req, reply) => {
-    if (!(await requireAdmin(req, reply))) return;
-    const r = validateTheme(req.body);
-    if (!r.theme) return reply.code(400).send({ error: "Tema non valido", errors: r.errors });
-    if (BUILTIN_IDS.has(r.theme.id)) return reply.code(409).send({ error: "Un tema preimpostato non si sostituisce: scegli un altro id" });
-    const c = await loadFullCatalog();
-    const others = c.styles.filter((s) => s.id !== r.theme!.id);
-    await saveCatalog({ models: c.models, addons: c.addons, styles: [...others, r.theme] as StyleDef[] });
-    return reply.code(201).send({ id: r.theme.id, name: r.theme.name });
-  });
-
-  // Attiva o disattiva un tema (anche preimpostato).
+  // Attiva o disattiva un tema.
   app.patch<{ Params: { id: string } }>("/api/admin/themes/:id", async (req, reply) => {
     if (!(await requireAdmin(req, reply))) return;
     const c = await loadFullCatalog();
-    const found = c.styles.find((s) => s.id === req.params.id);
-    if (!found) return reply.code(404).send({ error: "Tema non trovato" });
+    if (!c.themes.some((t) => t.manifest.id === req.params.id)) return reply.code(404).send({ error: "Tema non trovato" });
     const enabled = (req.body as { enabled?: boolean })?.enabled === true;
-    const styles = c.styles.map((s) => (s.id === found.id ? { ...s, enabled } : s));
-    if (!styles.some((s) => s.enabled)) return reply.code(400).send({ error: "Serve almeno un tema attivo" });
-    await saveCatalog({ models: c.models, addons: c.addons, styles });
-    return { ok: true };
-  });
-
-  // Elimina un tema caricato. I preimpostati non si eliminano, solo si disattivano.
-  app.delete<{ Params: { id: string } }>("/api/admin/themes/:id", async (req, reply) => {
-    if (!(await requireAdmin(req, reply))) return;
-    if (BUILTIN_IDS.has(req.params.id)) return reply.code(409).send({ error: "I temi preimpostati si disattivano, non si eliminano" });
-    const c = await loadFullCatalog();
-    await saveCatalog({ models: c.models, addons: c.addons, styles: c.styles.filter((s) => s.id !== req.params.id) });
+    const next = c.themes.map((t) => ({ id: t.manifest.id, enabled: t.manifest.id === req.params.id ? enabled : t.enabled }));
+    if (!next.some((t) => t.enabled)) return reply.code(400).send({ error: "Serve almeno un tema attivo" });
+    await saveCatalog({ models: c.models, addons: c.addons, themes: next });
     return { ok: true };
   });
 
@@ -562,15 +629,14 @@ export async function buildApp() {
     return rows;
   });
 
-  // Carica un brano (MP3, M4A, OGG) nella libreria. Serve la conferma dei diritti: è una responsabilità dell'admin.
+  // Carica un brano nella libreria. Serve la conferma dei diritti: è una responsabilità dell'admin. ffmpeg lo porta in MP3.
   app.post("/api/admin/music", async (req, reply) => {
     invalidateCatalog();
     if (!(await requireAdmin(req, reply))) return;
     const file = await req.file();
     if (!file) return reply.code(400).send({ error: "Nessun file ricevuto" });
-    const allowed: Record<string, string> = { "audio/mpeg": ".mp3", "audio/mp4": ".m4a", "audio/x-m4a": ".m4a", "audio/ogg": ".ogg" };
-    const ext = allowed[file.mimetype];
-    if (!ext) return reply.code(400).send({ error: "Formato non supportato: usa MP3, M4A o OGG" });
+    const ext = INPUT_TYPES.audio[file.mimetype];
+    if (!ext) return reply.code(400).send({ error: "Formato non supportato: usa MP3, M4A, OGG o WAV" });
     const fields = file.fields as Record<string, { value?: string } | undefined>;
     const title = String(fields.title?.value ?? file.filename).slice(0, 120).trim();
     const artist = String(fields.artist?.value ?? "").slice(0, 120);
@@ -578,19 +644,17 @@ export async function buildApp() {
     if (fields.rights?.value !== "true") return reply.code(400).send({ error: "Conferma di avere i diritti del brano" });
     if (!title) return reply.code(400).send({ error: "Inserisci il titolo" });
 
-    const id = randomUUID();
-    const name = `${id}${ext}`;
     const buffer = await file.toBuffer();
-    if (file.file.truncated) return reply.code(413).send({ error: "File troppo grande (massimo 15 MB)" });
-    fs.writeFileSync(path.join(MEDIA_DIR, name), buffer);
-    await pool.query("INSERT INTO music_tracks (id, title, artist, url, license) VALUES ($1, $2, $3, $4, $5)", [
-      id,
-      title,
-      artist,
-      `/api/media/${name}`,
-      license,
-    ]);
-    return reply.code(201).send({ id, title });
+    if (file.file.truncated) return reply.code(413).send({ error: "File troppo grande" });
+    try {
+      const saved = await convertMedia("audio", buffer, ext);
+      const id = randomUUID();
+      await pool.query("INSERT INTO music_tracks (id, title, artist, url, license) VALUES ($1, $2, $3, $4, $5)", [id, title, artist, saved.url, license]);
+      return reply.code(201).send({ id, title });
+    } catch (e) {
+      if (e instanceof MediaError) return reply.code(e.status).send({ error: e.message });
+      throw e;
+    }
   });
 
   app.post<{ Params: { id: string } }>("/api/admin/music/:id", async (req, reply) => {
@@ -667,4 +731,3 @@ export async function startApi() {
 }
 
 export type { Catalog, AddonKey, MailMessage, InviteConfig };
-export { getAddon };

@@ -33,6 +33,7 @@ services:
       SHOPIFY_VARIANT_ID: ${SHOPIFY_VARIANT_ID:-}
       SHOPIFY_WEBHOOK_SECRET: ${SHOPIFY_WEBHOOK_SECRET:-}
       ALLOW_LOCAL_CHECKOUT: ${ALLOW_LOCAL_CHECKOUT:-false}
+      DEMO_MODE: ${DEMO_MODE:-false}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     volumes:
@@ -51,8 +52,8 @@ services:
     environment:
       API_INTERNAL_URL: http://api:4000
     ports:
-      # Solo loopback: ci arriva nginx dell'host (proxy_pass http://127.0.0.1:8091), non Internet.
-      - "127.0.0.1:8091:3000"
+      # Solo loopback: ci arriva nginx dell'host (proxy_pass http://127.0.0.1:<WEB_PORT>), non Internet.
+      - "127.0.0.1:${WEB_PORT:-8091}:3000"
     depends_on:
       - api
     restart: unless-stopped

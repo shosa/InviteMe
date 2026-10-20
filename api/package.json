@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
     "devdb": "node scripts/devdb.mjs",
-    "validate-theme": "tsx scripts/validate-theme.ts"
+    "validate-theme": "tsx scripts/validate-theme.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "reset-invitations": "node scripts/reset-invitations.mjs"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

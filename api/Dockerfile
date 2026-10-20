@@ -1,7 +1,9 @@
 # API: Fastify + PostgreSQL. Il codice TypeScript viene eseguito con tsx (dipendenza di produzione).
+# ffmpeg converte i file dei clienti (foto, video, audio): vedi api/src/media.ts.
 FROM node:24-alpine
 WORKDIR /app
 ENV NODE_ENV=production PORT=4000
+RUN apk add --no-cache ffmpeg
 
 COPY package.json package-lock.json ./
 COPY shared/package.json shared/
@@ -12,6 +14,8 @@ RUN npm ci --omit=dev --workspace @inviteme/api --workspace @inviteme/shared --i
 
 COPY shared shared
 COPY api api
+COPY engine engine
+COPY themes themes
 
 RUN mkdir -p /app/data/media && chown -R node:node /app/data
 USER node

@@ -1,6 +1,7 @@
 import { Nav } from "@/components/Nav";
 import { AuthForm } from "@/components/AuthForm";
 import { apiPublic } from "@/lib/api";
+import { getLang } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -8,13 +9,14 @@ export default async function Accedi({ searchParams }: { searchParams: Promise<{
   const sp = await searchParams;
   const mode = sp.tab === "register" ? "register" : "login";
   const next = typeof sp.next === "string" && /^\/[a-zA-Z]/.test(sp.next) ? sp.next : "/account";
+  const lang = await getLang();
   const cat = await apiPublic<{ google?: boolean }>("/api/catalog");
   return (
     <>
-      <Nav />
+      <Nav lang={lang} />
       <main className="auth-page">
         <div className="auth-card">
-          <AuthForm initialMode={mode} next={next} google={!!cat?.google} googleError={sp.error === "google"} />
+          <AuthForm initialMode={mode} next={next} google={!!cat?.google} googleError={sp.error === "google"} lang={lang} />
         </div>
       </main>
     </>

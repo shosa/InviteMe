@@ -10,8 +10,12 @@ const API_VERSION = "2025-01";
 export const shopifyConfigured = () =>
   Boolean(process.env.SHOPIFY_STORE_DOMAIN && process.env.SHOPIFY_STOREFRONT_TOKEN && process.env.SHOPIFY_VARIANT_ID);
 
+// Modalità demo: senza Shopify e con DEMO_MODE=true ogni acquisto va a buon fine (nessun pagamento reale).
+// Con Shopify configurato la demo è sempre spenta: non può attivarsi per errore davanti a clienti veri.
+export const demoMode = () => !shopifyConfigured() && process.env.DEMO_MODE === "true";
+
 export const localCheckoutAllowed = () =>
-  process.env.NODE_ENV !== "production" || process.env.ALLOW_LOCAL_CHECKOUT === "true";
+  demoMode() || process.env.NODE_ENV !== "production" || process.env.ALLOW_LOCAL_CHECKOUT === "true";
 
 export type CheckoutInput = { invitationId: string; slug: string; addons: string[]; totalCents: number; origin: string };
 

@@ -1,14 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import { EVENT_TYPES, activeFeatures, formatPrice, getModel, getStyle, maxPhotos, totalCents, type AddonKey, type Catalog, type EventType, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
-import { Invitation } from "./Invitation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  activeFeatures,
+  formatPrice,
+  getModel,
+  makeBlock,
+  newBlockId,
+  totalCents,
+  type AddonKey,
+  type BlockInstance,
+  type BlockType,
+  type Catalog,
+  type EventType,
+  type InviteConfig,
+  type RsvpQuestion,
+} from "@inviteme/shared";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Upload } from "lucide-react";
-import { Switch } from "./ui/Switch";
-import { Accordion } from "./ui/Accordion";
-
-type Tab = "testi" | "stile" | "foto" | "programma" | "conferma" | "musica" | "funzioni" | "ospiti";
+import { ArrowLeft, Copy, Eye, Monitor, Redo2, Smartphone, Undo2, Users } from "lucide-react";
+import { Canvas } from "./builder/Canvas";
+import { Inspector } from "./builder/Inspector";
+import { GuestsPanel } from "./builder/guests";
+import { useHistory } from "./builder/history";
+import { ui, type Lang } from "@/lib/ui";
+import { modelCopy, themeCopy } from "@/lib/catalogCopy";
 
 export type Manage = {
   id: string;
@@ -19,146 +34,173 @@ export type Manage = {
   catalog: Catalog;
 };
 
-type RsvpSummary = {
-  total: number;
-  attending: number;
-  declined: number;
-  guests: number;
-  questions: RsvpQuestion[];
-  rsvps: { id: string; createdAt: string; answers: Record<string, string | number | boolean> }[];
-};
+type MobileTab = "blocchi" | "anteprima" | "proprieta";
+type Device = "desktop" | "mobile";
+type Save = "saved" | "saving" | "error";
 
-// Riduce la foto a max 1400 px in JPEG: resta leggera nel database e nella pagina pubblica.
-function compressImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, 1400 / Math.max(img.width, img.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.86));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Immagine non leggibile"));
-    };
-    img.src = url;
-  });
-}
-
-export function Builder({ initial }: { initial: Manage }) {
+// Editor dell'invito: palette e struttura a sinistra, anteprima reale al centro, proprietà a destra.
+export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang }) {
+  const L = ui(lang).builder;
   const catalog = initial.catalog;
-  const [config, setConfig] = useState<InviteConfig>(initial.config);
-  const [status, setStatus] = useState(initial.status);
-  const [guests, setGuests] = useState(initial.guests);
-  const [tab, setTab] = useState<Tab>("testi");
-  const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
+  const history = useHistory<InviteConfig>(initial.config);
+  const config = history.present;
+  const locked = initial.status === "paid";
+
+  const [selected, setSelected] = useState<string | null>(null);
+  const [panel, setPanel] = useState<"proprieta" | "ospiti">("proprieta");
+  const [device, setDevice] = useState<Device>("desktop");
+  const [mobileTab, setMobileTab] = useState<MobileTab>("anteprima");
+  const [save, setSave] = useState<Save>("saved");
+  const [preview, setPreview] = useState("");
+  const [previewState, setPreviewState] = useState<"ready" | "loading" | "error">("loading");
+  const [busy, setBusy] = useState<string | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
-  const firstRun = useRef(true);
-  const locked = status === "paid";
+  const [guests, setGuests] = useState(initial.guests);
+  const [firstSave, setFirstSave] = useState(true);
+  const [showCover, setShowCover] = useState(false);
 
   const model = getModel(catalog, config.model);
-  const style = getStyle(catalog, config.styleId);
-  const features = useMemo(() => [...activeFeatures(catalog, config.model, config.addons)] as AddonKey[], [catalog, config.model, config.addons]);
-  const has = (k: AddonKey) => features.includes(k);
+  const theme = catalog.themes.find((t) => t.manifest.id === config.themeId)?.manifest;
+  const features = useMemo(() => new Set(activeFeatures(catalog, config.model, config.addons) as Set<AddonKey>), [catalog, config.model, config.addons]);
   const total = useMemo(() => totalCents(catalog, config.model, config.addons), [catalog, config.model, config.addons]);
-  const photosMax = maxPhotos(catalog, config.model, config.addons);
-  const purchasable = (model?.options ?? []).map((k) => catalog.addons.find((a) => a.key === k)).filter((a): a is NonNullable<typeof a> => !!a);
-
-  const tabs = useMemo<{ id: Tab; label: string }[]>(() => {
-    const list: { id: Tab; label: string }[] = [
-      { id: "testi", label: "Testi" },
-      { id: "stile", label: "Stile" },
-      { id: "foto", label: "Foto" },
-    ];
-    if (has("program")) list.push({ id: "programma", label: "Programma" });
-    if (has("rsvp")) list.push({ id: "conferma", label: "Conferma" });
-    if (has("music")) list.push({ id: "musica", label: "Musica" });
-    list.push({ id: "funzioni", label: "Funzioni" });
-    list.push({ id: "ospiti", label: "Ospiti" });
-    return list;
-  }, [features]); // eslint-disable-line react-hooks/exhaustive-deps
+  const block = config.blocks.find((b) => b.id === selected) ?? null;
+  const title = String(config.event.title ?? "") || L.unnamed;
+  const hasRsvp = config.blocks.some((b) => b.type === "rsvp");
 
   useEffect(() => setOrigin(window.location.origin), []);
 
-  // Se una funzione viene disattivata, la sua scheda sparisce: torniamo alla prima disponibile.
+  // Salvataggio automatico: il database riceve sempre l'ultima versione.
   useEffect(() => {
-    if (!tabs.some((t) => t.id === tab)) setTab("testi");
-  }, [tabs, tab]);
-
-  // Autosalvataggio con debounce: nessun pulsante "salva", le modifiche sono già nel database.
-  useEffect(() => {
-    if (firstRun.current) {
-      firstRun.current = false;
+    if (firstSave) {
+      setFirstSave(false);
       return;
     }
     if (locked) return;
-    setSaveState("saving");
+    setSave("saving");
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/invitations/${initial.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(config),
-        });
+        const res = await fetch(`/api/invitations/${initial.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) });
         if (res.ok) {
-          setSaveState("saved");
+          setSave("saved");
           setError(null);
         } else {
           const data = (await res.json().catch(() => ({}))) as { error?: string };
-          setSaveState("error");
+          setSave("error");
           setError(data.error ?? "Salvataggio non riuscito");
         }
       } catch {
-        setSaveState("error");
+        setSave("error");
         setError("Connessione assente: le modifiche non sono state salvate.");
       }
-    }, 600);
+    }, 650);
     return () => clearTimeout(t);
-  }, [config, initial.id, locked]);
+  }, [config, initial.id, locked]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const shareUrl = `${origin}/i/${initial.slug}`;
+  // Anteprima: la pagina reale del motore, rigenerata dal server con la configurazione in corso.
+  useEffect(() => {
+    let alive = true;
+    setPreviewState("loading");
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/invitations/${initial.id}/preview?cover=${showCover ? 1 : 0}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) });
+        if (!alive) return;
+        if (res.ok) {
+          setPreview(await res.text());
+          setPreviewState("ready");
+        } else {
+          setPreviewState("error");
+        }
+      } catch {
+        if (alive) setPreviewState("error");
+      }
+    }, 420);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
+  }, [config, initial.id, showCover]);
 
-  function patch(p: Partial<InviteConfig>) {
-    setConfig((c) => ({ ...c, ...p }));
+  // Annulla e ripristina dalla tastiera (Ctrl/⌘+Z e Ctrl/⌘+Shift+Z) quando non si scrive in un campo.
+  useEffect(() => {
+    if (locked) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (e.target as HTMLElement).isContentEditable) return;
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z") return;
+      e.preventDefault();
+      if (e.shiftKey) history.redo();
+      else history.undo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [history, locked]);
+
+  // Modifiche alla configurazione: ogni azione passa dalla cronologia.
+  const edit = useCallback((next: (c: InviteConfig) => InviteConfig, group?: string) => history.set(next(config), group), [config, history]);
+
+  function addBlock(type: BlockType) {
+    const b = makeBlock(type, config.locale);
+    edit((c) => ({ ...c, blocks: [...c.blocks, b] }));
+    setSelected(b.id);
   }
-  function toggleAddon(key: AddonKey) {
-    setConfig((c) => ({ ...c, addons: c.addons.includes(key) ? c.addons.filter((k) => k !== key) : [...c.addons, key] }));
+  function moveBlock(from: number, to: number) {
+    edit((c) => {
+      const list = [...c.blocks];
+      const [moved] = list.splice(from, 1);
+      list.splice(Math.max(0, Math.min(list.length, to)), 0, moved);
+      return { ...c, blocks: list };
+    });
   }
-  async function addPhotos(e: ChangeEvent<HTMLInputElement>) {
-    const room = photosMax - config.photos.length;
-    const picked = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith("image/")).slice(0, Math.max(0, room));
-    e.target.value = "";
-    if (picked.length === 0) return;
+  function duplicateBlock(id: string) {
+    const src = config.blocks.find((b) => b.id === id);
+    if (!src) return;
+    const copy: BlockInstance = { ...src, id: newBlockId(), props: JSON.parse(JSON.stringify(src.props)) };
+    const at = config.blocks.findIndex((b) => b.id === id);
+    edit((c) => ({ ...c, blocks: [...c.blocks.slice(0, at + 1), copy, ...c.blocks.slice(at + 1)] }));
+    setSelected(copy.id);
+  }
+  function toggleBlock(id: string) {
+    edit((c) => ({ ...c, blocks: c.blocks.map((b) => (b.id === id ? { ...b, hidden: !b.hidden } : b)) }));
+  }
+  function removeBlock(id: string) {
+    edit((c) => ({ ...c, blocks: c.blocks.filter((b) => b.id !== id) }));
+    if (selected === id) setSelected(null);
+  }
+  function setProp(id: string, key: string, value: unknown, group?: string) {
+    edit((c) => ({ ...c, blocks: c.blocks.map((b) => (b.id === id ? { ...b, props: { ...b.props, [key]: value } } : b)) }), group);
+  }
+  function setEvent(key: string, value: unknown, group?: string) {
+    edit((c) => ({ ...c, event: { ...c.event, [key]: value } }), group);
+  }
+  function setTheme(id: string) {
+    edit((c) => ({ ...c, themeId: id }));
+  }
+
+  async function upload(kind: "photo" | "video" | "audio", file: File): Promise<string | null> {
+    setBusy(kind);
+    setError(null);
     try {
-      const urls = await Promise.all(picked.map(compressImage));
-      patch({ photos: [...config.photos, ...urls] });
-    } catch {
-      setError("Una delle immagini non si può leggere. Prova con un altro file.");
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch(`/api/invitations/${initial.id}/media?kind=${kind}`, { method: "POST", body });
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || !data.url) throw new Error(data.error ?? "Caricamento non riuscito");
+      return data.url;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Caricamento non riuscito");
+      return null;
+    } finally {
+      setBusy(null);
     }
-  }
-  function updateSection(id: string, field: "title" | "body", value: string) {
-    patch({ sections: config.sections.map((s) => (s.id === id ? { ...s, [field]: value } : s)) });
-  }
-  function updateQuestion(id: string, field: keyof RsvpQuestion, value: string) {
-    patch({ rsvpQuestions: config.rsvpQuestions.map((q) => (q.id === id ? { ...q, [field]: value } : q)) });
   }
 
   async function checkout() {
     setCheckingOut(true);
     setError(null);
     try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invitationId: initial.id }),
-      });
+      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ invitationId: initial.id }) });
       const data = (await res.json()) as { checkoutUrl?: string; error?: string };
       if (!res.ok || !data.checkoutUrl) throw new Error(data.error ?? "Pagamento non disponibile");
       window.location.href = data.checkoutUrl;
@@ -168,338 +210,108 @@ export function Builder({ initial }: { initial: Manage }) {
     }
   }
 
-  const trackOf = (id?: string) => catalog.music.find((t) => t.id === id);
+  const shareUrl = `${origin}/i/${initial.slug}`;
+  const saveLabel = locked ? L.paid : save === "saving" ? L.saving : save === "error" ? L.notSaved : L.saved;
 
   return (
-    <div className="builder">
-      <aside className="builder-panel" aria-label="Configuratore">
-        <header className="builder-head">
-          <a href="/account" className="back-link"><ArrowLeft size={16} aria-hidden="true" />I miei inviti</a>
-          <span className={`save save-${saveState}`} aria-live="polite">
-            {locked ? "Pagato" : saveState === "saving" ? "Salvataggio…" : saveState === "error" ? "Non salvato" : "Salvato"}
-          </span>
-        </header>
-        <div className="builder-title">
-          <h1>{config.title || "Il tuo invito"}</h1>
+    <div className={`bl-app is-${device} is-tab-${mobileTab}`}>
+      <header className="bl-top">
+        <a href="/account" className="back-link"><ArrowLeft size={16} aria-hidden="true" />{L.back}</a>
+        <h1 className="bl-title">{title}</h1>
+        <div className="bl-top-tools">
+          <button type="button" className="bl-icon" aria-label={L.undo} title={`${L.undo} (Ctrl+Z)`} disabled={locked || !history.canUndo} onClick={history.undo}><Undo2 size={17} /></button>
+          <button type="button" className="bl-icon" aria-label={L.redo} title={`${L.redo} (Ctrl+Shift+Z)`} disabled={locked || !history.canRedo} onClick={history.redo}><Redo2 size={17} /></button>
+          <span className="bl-sep" aria-hidden="true" />
+          <div className="bl-device" role="group" aria-label="Anteprima">
+            <button type="button" aria-pressed={device === "desktop"} className="bl-icon" aria-label={L.desktopPreview} onClick={() => setDevice("desktop")}><Monitor size={17} /></button>
+            <button type="button" aria-pressed={device === "mobile"} className="bl-icon" aria-label={L.phonePreview} onClick={() => setDevice("mobile")}><Smartphone size={17} /></button>
+          </div>
+          {locked && <button type="button" className="bl-icon" aria-label={L.guests} onClick={() => setPanel(panel === "ospiti" ? "proprieta" : "ospiti")}><Users size={17} /></button>}
+          <span className={`bl-save save-${save}`} aria-live="polite">{saveLabel}</span>
         </div>
+      </header>
 
-        <nav className="tabs" role="tablist" aria-label="Sezioni">
-          {tabs.map((t) => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? "tab is-on" : "tab"} onClick={() => setTab(t.id)}>
-              {t.label}
-            </button>
-          ))}
-        </nav>
+      <nav className="bl-mobile-tabs" role="tablist" aria-label="Sezioni">
+        <button role="tab" aria-selected={mobileTab === "blocchi"} onClick={() => setMobileTab("blocchi")}>{L.tabBlocks}</button>
+        <button role="tab" aria-selected={mobileTab === "anteprima"} onClick={() => setMobileTab("anteprima")}><Eye size={15} aria-hidden="true" /> {L.tabPreview}</button>
+        <button role="tab" aria-selected={mobileTab === "proprieta"} onClick={() => setMobileTab("proprieta")}>{L.tabProps}</button>
+      </nav>
 
-        <div className="pane">
-          {tab === "ospiti" ? (
-            <GuestsPanel invitationId={initial.id} paid={locked} hasRsvp={has("rsvp")} guests={guests} onSent={(sent) => setGuests((g) => [...g, ...sent.map((email) => ({ email, sentAt: new Date().toISOString() }))])} />
-          ) : (
-            <fieldset disabled={locked} className="pane-fields">
-              {tab === "testi" && (
-                <div className="stack-lg">
-                  <Accordion title="Evento" summary={config.title || undefined} defaultOpen>
-                    <div className="grid">
-                      <Field label="Tipo di evento">
-                        <select value={config.eventType} onChange={(e) => patch({ eventType: e.target.value as EventType })}>
-                          {EVENT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-                        </select>
-                      </Field>
-                      <Field label="Titolo"><input value={config.title} maxLength={80} onChange={(e) => patch({ title: e.target.value })} /></Field>
-                      <Field label="Chi invita" wide><input value={config.hosts} maxLength={80} onChange={(e) => patch({ hosts: e.target.value })} /></Field>
-                    </div>
-                  </Accordion>
-                  <Accordion title="Data e luogo" summary={config.eventDate ? `${config.eventDate} · ${config.venue}` : undefined}>
-                    <div className="grid">
-                      <Field label="Data"><input type="date" value={config.eventDate} onChange={(e) => patch({ eventDate: e.target.value })} /></Field>
-                      <Field label="Ora"><input type="time" value={config.eventTime} onChange={(e) => patch({ eventTime: e.target.value })} /></Field>
-                      <Field label="Luogo"><input value={config.venue} maxLength={120} onChange={(e) => patch({ venue: e.target.value })} /></Field>
-                      <Field label="Indirizzo" wide><input value={config.address} maxLength={200} onChange={(e) => patch({ address: e.target.value })} /></Field>
-                    </div>
-                  </Accordion>
-                  <Accordion title="Messaggio" summary={config.message ? config.message.slice(0, 40) : undefined}>
-                    <Field label="Testo di apertura" wide>
-                      <textarea rows={3} maxLength={500} value={config.message} onChange={(e) => patch({ message: e.target.value })} />
-                    </Field>
-                  </Accordion>
-                </div>
-              )}
-
-              {tab === "stile" && (
-                <div className="stack">
-                  <p className="hint">Il tema cambia grafica, forma e animazioni. Il contenuto resta lo stesso.</p>
-                  <div className="style-grid" role="radiogroup" aria-label="Stile">
-                    {catalog.styles.filter((s) => s.enabled).map((s) => (
-                      <label key={s.id} className={`style-card${config.styleId === s.id ? " is-on" : ""}`} style={{ background: s.bg, color: s.ink }}>
-                        <input type="radio" name="style" value={s.id} checked={config.styleId === s.id} onChange={() => patch({ styleId: s.id })} />
-                        <span className="style-accent" style={{ background: s.accent }} aria-hidden />
-                        <span className={s.fontKind === "serif" ? "style-name serif" : "style-name sans"}>{s.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {tab === "foto" && (
-                <div className="stack">
-                  <p className="hint">Fino a {photosMax} foto. La prima compare nell&apos;arco in cima all&apos;invito.</p>
-                  <div className="thumbs">
-                    {config.photos.map((src, i) => (
-                      <div key={i} className="thumb">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={src} alt={`Foto ${i + 1}`} />
-                        <button type="button" aria-label={`Rimuovi foto ${i + 1}`} onClick={() => patch({ photos: config.photos.filter((_, j) => j !== i) })}>×</button>
-                      </div>
-                    ))}
-                  </div>
-                  {config.photos.length < photosMax && (
-                    <label className="upload">
-                      <input type="file" accept="image/*" multiple onChange={addPhotos} />
-                      <span className="upload-inner"><Upload size={18} aria-hidden="true" />Carica foto</span>
-                    </label>
-                  )}
-                </div>
-              )}
-
-              {tab === "programma" && (
-                <div className="stack">
-                  <p className="hint">Per la timeline scrivi una riga per voce, nel formato <b>19:30 - Cerimonia</b>.</p>
-                  {config.sections.map((s) => (
-                    <Accordion key={s.id} title={s.title || "Voce"} summary={s.body.slice(0, 40)} className="card-edit-acc">
-                      <input aria-label="Titolo sezione" value={s.title} maxLength={80} onChange={(e) => updateSection(s.id, "title", e.target.value)} />
-                      <textarea aria-label="Testo sezione" rows={4} maxLength={600} value={s.body} onChange={(e) => updateSection(s.id, "body", e.target.value)} />
-                      <button type="button" className="link" onClick={() => patch({ sections: config.sections.filter((x) => x.id !== s.id) })}>Rimuovi</button>
-                    </Accordion>
-                  ))}
-                  <button type="button" className="btn outline" disabled={config.sections.length >= 5} onClick={() => patch({ sections: [...config.sections, { id: crypto.randomUUID(), title: "Nuova sezione", body: "19:00 - Inizio" }] })}>
-                    Aggiungi sezione
-                  </button>
-                </div>
-              )}
-
-              {tab === "conferma" && (
-                <div className="stack">
-                  <p className="hint">Le domande compaiono nel modulo di conferma. Per le scelte multiple inserisci le opzioni separate da virgola.</p>
-                  {config.rsvpQuestions.map((q) => (
-                    <Accordion key={q.id} title={q.label || "Domanda"} summary={q.type === "yes-no" ? "Sì / No" : q.type === "choice" ? "Scelta multipla" : q.type === "number" ? "Numero" : "Testo libero"} className="card-edit-acc">
-                      <div className="row">
-                        <input aria-label="Domanda" value={q.label} maxLength={160} onChange={(e) => updateQuestion(q.id, "label", e.target.value)} />
-                        <select aria-label="Tipo di risposta" value={q.type} onChange={(e) => updateQuestion(q.id, "type", e.target.value)}>
-                          <option value="yes-no">Sì / No</option>
-                          <option value="choice">Scelta multipla</option>
-                          <option value="number">Numero</option>
-                          <option value="text">Testo libero</option>
-                        </select>
-                        <button type="button" className="link" aria-label="Rimuovi domanda" onClick={() => patch({ rsvpQuestions: config.rsvpQuestions.filter((x) => x.id !== q.id) })}>×</button>
-                      </div>
-                      {q.type === "choice" && (
-                        <input aria-label="Opzioni" placeholder="Sì, No, Ti dirò più tardi" value={(q.options ?? []).join(", ")} onChange={(e) => patch({ rsvpQuestions: config.rsvpQuestions.map((x) => (x.id === q.id ? { ...x, options: e.target.value.split(",").map((o) => o.trim()).filter(Boolean) } : x)) })} />
-                      )}
-                    </Accordion>
-                  ))}
-                  <button type="button" className="btn outline" disabled={config.rsvpQuestions.length >= 8} onClick={() => patch({ rsvpQuestions: [...config.rsvpQuestions, { id: crypto.randomUUID(), label: "Nuova domanda", type: "text" }] })}>
-                    Aggiungi domanda
-                  </button>
-                </div>
-              )}
-
-              {tab === "musica" && (
-                <div className="stack">
-                  <p className="hint">Scegli un brano dalla libreria InviteMe, oppure incolla un link tuo di cui hai i diritti.</p>
-                  <div className="tracks" role="radiogroup" aria-label="Brano">
-                    <label className={`track${!config.musicTrackId ? " is-on" : ""}`}>
-                      <input type="radio" name="track" checked={!config.musicTrackId} onChange={() => patch({ musicTrackId: undefined })} />
-                      <span><b>Nessun brano dalla libreria</b><small>usa il link personale qui sotto</small></span>
-                    </label>
-                    {catalog.music.map((t) => (
-                      <label key={t.id} className={`track${config.musicTrackId === t.id ? " is-on" : ""}`}>
-                        <input type="radio" name="track" checked={config.musicTrackId === t.id} onChange={() => patch({ musicTrackId: t.id, musicUrl: undefined })} />
-                        <span><b>{t.title}</b><small>{t.artist || "Libreria InviteMe"}</small></span>
-                        <audio controls preload="none" src={t.url} />
-                      </label>
-                    ))}
-                    {catalog.music.length === 0 && <p className="hint">La libreria è vuota: l&apos;amministratore non ha ancora caricato brani.</p>}
-                  </div>
-                  <Field label="Link personale (https)" wide>
-                    <input type="url" placeholder="https://…/brano.mp3" disabled={!!config.musicTrackId} value={config.musicUrl ?? ""} onChange={(e) => patch({ musicUrl: e.target.value.trim() || undefined })} />
-                  </Field>
-                  {trackOf(config.musicTrackId) && <p className="hint">Brano selezionato: {trackOf(config.musicTrackId)?.title}</p>}
-                </div>
-              )}
-
-              {tab === "funzioni" && (
-                <div className="stack">
-                  <p className="hint">Ogni funzione ha un prezzo fisso. Il totale aggiornato è in basso.</p>
-                  {purchasable.map((a) => {
-                    const on = config.addons.includes(a.key);
-                    return (
-                      <div key={a.key} className={on ? "addon-row is-on" : "addon-row"}><div className="addon-text"><b>{a.label}</b><small>{a.description}</small></div><strong>+{formatPrice(a.cents)}</strong><Switch checked={on} onChange={() => toggleAddon(a.key)} ariaLabel={a.label} /></div>
-                    );
-                  })}
-                  {model && model.included.length > 0 && (
-                    <p className="hint">Incluse nel modello: {model.included.map((k) => catalog.addons.find((a) => a.key === k)?.label ?? k).join(", ")}.</p>
-                  )}
-                </div>
-              )}
-            </fieldset>
-          )}
-        </div>
-
-        {error && <p role="alert" className="form-error panel-error">{error}</p>}
-
-        <footer className="checkout">
-          {locked ? (
-            <div className="shared">
-              <p className="shared-label">Il tuo invito è attivo</p>
-              <div className="shared-link">
-                <code>{shareUrl}</code>
-                <button type="button" className="btn outline small" onClick={() => { navigator.clipboard?.writeText(shareUrl); toast.success("Link copiato"); }}><Copy size={16} aria-hidden="true" />Copia</button>
-              </div>
-              <a className="btn solid wide" href={`https://wa.me/?text=${encodeURIComponent(`Ti invitiamo! Trovi tutti i dettagli qui: ${shareUrl}`)}`} target="_blank" rel="noreferrer">
-                Condividi su WhatsApp
-              </a>
-            </div>
-          ) : (
-            <>
-              <div className="total">
-                <div>
-                  <span>Totale, pagamento unico</span>
-                  <small>{model?.name}{config.addons.length ? ` · ${config.addons.length} funzioni` : ""}</small>
-                </div>
-                <strong>{formatPrice(total)}</strong>
-              </div>
-              <button type="button" className="btn solid wide" disabled={checkingOut} onClick={checkout}>
-                {checkingOut ? "Apro il pagamento…" : "Procedi al pagamento"}
-              </button>
-              <p className="fine">Pagamento sicuro. Nessun abbonamento. Dopo il pagamento l&apos;invito non è più modificabile.</p>
-            </>
-          )}
-        </footer>
+      <aside className="bl-left" aria-label="Blocchi">
+        <Canvas
+          blocks={config.blocks}
+          selected={selected}
+          features={features}
+          onSelect={(id) => { setSelected(id); setPanel("proprieta"); setMobileTab("proprieta"); }}
+          lang={lang}
+          onAdd={addBlock}
+          onMove={moveBlock}
+          onDuplicate={duplicateBlock}
+          onToggle={toggleBlock}
+          onRemove={removeBlock}
+        />
       </aside>
 
-      <section className="preview" aria-label="Anteprima in tempo reale">
-        <p className="preview-label">Anteprima · {style.name}</p>
-        <div className="preview-frame">
-          <Invitation config={config} style={style} features={features} />
+      <main className="bl-center" aria-label={L.previewAria}>
+        <div className="bl-preview-bar">
+          <span>{theme ? themeCopy(theme.id, theme.name, lang) : L.template}</span>
+          <label className="bl-cover-toggle"><input type="checkbox" checked={showCover} onChange={(e) => setShowCover(e.target.checked)} /> {L.showEnvelope}</label>
+          <span className="bl-preview-state">{previewState === "loading" ? L.updating : previewState === "error" ? "—" : ""}</span>
         </div>
-      </section>
+        <div className={`bl-frame is-${device}`}>
+          {preview ? <iframe title={L.previewTitle} srcDoc={preview} sandbox="allow-scripts" /> : <p className="hint">{L.loadingPreview}</p>}
+        </div>
+      </main>
+
+      <aside className="bl-right" aria-label="Proprietà">
+        {panel === "ospiti" ? (
+          <GuestsPanel lang={lang} invitationId={initial.id} paid={locked} hasRsvp={hasRsvp} guests={guests} onSent={(sent) => setGuests((g) => [...g, ...sent.map((email) => ({ email, sentAt: new Date().toISOString() }))])} />
+        ) : (
+          <Inspector
+            lang={lang}
+            config={config}
+            catalog={catalog}
+            block={block}
+            busy={busy}
+            onSetProp={setProp}
+            onSetEvent={setEvent}
+            onSetTheme={setTheme}
+            onSetLocale={(locale) => edit((c) => ({ ...c, locale }))}
+            onSetEventType={(eventType: EventType) => edit((c) => ({ ...c, eventType }))}
+            onSetQuestions={(rsvpQuestions: RsvpQuestion[]) => edit((c) => ({ ...c, rsvpQuestions }), "questions")}
+            onToggle={toggleBlock}
+            onRemove={removeBlock}
+            onUpload={upload}
+          />
+        )}
+        {locked && panel === "proprieta" && (
+          <p className="hint bl-locked">{L.lockedNote}</p>
+        )}
+      </aside>
+
+      {error && <p role="alert" className="form-error bl-error">{error}</p>}
+
+      <footer className="bl-footer">
+        {locked ? (
+          <div className="shared">
+            <code>{shareUrl}</code>
+            <button type="button" className="btn outline small" onClick={() => { navigator.clipboard?.writeText(shareUrl); toast.success("✓"); }}><Copy size={15} aria-hidden="true" />{L.copy}</button>
+            <a className="btn solid" href={`https://wa.me/?text=${encodeURIComponent(`Ti invitiamo! Trovi tutti i dettagli qui: ${shareUrl}`)}`} target="_blank" rel="noreferrer">WhatsApp</a>
+          </div>
+        ) : (
+          <>
+            <div className="total">
+              <span>{L.total}</span>
+              <strong>{formatPrice(total)}</strong>
+              <small>{model ? modelCopy(model.id, model.name, model.tagline, model.description, lang).name : ""}</small>
+            </div>
+            <button type="button" className="btn solid" disabled={checkingOut} onClick={checkout}>
+              {checkingOut ? L.paying : L.pay}
+            </button>
+          </>
+        )}
+      </footer>
     </div>
   );
 }
 
-function GuestsPanel({ invitationId, paid, hasRsvp, guests, onSent }: { invitationId: string; paid: boolean; hasRsvp: boolean; guests: { email: string; sentAt: string }[]; onSent: (emails: string[]) => void }) {
-  const [summary, setSummary] = useState<RsvpSummary | null>(null);
-  const [emails, setEmails] = useState("");
-  const [note, setNote] = useState("");
-  const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!hasRsvp || !paid) return;
-    let alive = true;
-    const load = () =>
-      fetch(`/api/invitations/${invitationId}/rsvps`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d: RsvpSummary | null) => alive && d && setSummary(d))
-        .catch(() => undefined);
-    load();
-    const id = setInterval(load, 8000);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
-  }, [hasRsvp, paid, invitationId]);
-
-  async function send() {
-    const list = emails.split(/[\s,;]+/).filter(Boolean);
-    setSending(true);
-    setResult(null);
-    try {
-      const res = await fetch(`/api/invitations/${invitationId}/guests`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emails: list, message: note || undefined }),
-      });
-      const data = (await res.json()) as { sent?: number; failed?: string[]; error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Invio non riuscito");
-      setResult(`Inviati: ${data.sent}${data.failed?.length ? ` · non riusciti: ${data.failed.length}` : ""}`);
-      onSent(list.filter((e) => !data.failed?.includes(e)));
-      setEmails("");
-    } catch (e) {
-      setResult(e instanceof Error ? e.message : "Errore");
-    } finally {
-      setSending(false);
-    }
-  }
-
-  if (!paid) return <p className="hint">Dopo il pagamento potrai inviare il link agli ospiti e seguire le risposte qui.</p>;
-
-  return (
-    <div className="stack">
-      <section className="block">
-        <h3>Invia agli ospiti</h3>
-        <p className="hint">Un solo link per tutti. Indirizzi separati da virgola o da una riga.</p>
-        <label className="field wide">
-          <span>Indirizzi email</span>
-          <textarea rows={4} value={emails} onChange={(e) => setEmails(e.target.value)} placeholder="mario@esempio.it, giulia@esempio.it" />
-        </label>
-        <label className="field wide">
-          <span>Messaggio personale (facoltativo)</span>
-          <textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />
-        </label>
-        <button type="button" className="btn solid" disabled={sending || !emails.trim()} onClick={send}>
-          {sending ? "Invio in corso…" : "Invia gli inviti"}
-        </button>
-        {result && <p className="form-notice">{result}</p>}
-        {guests.length > 0 && <p className="hint">Inviti già spediti: {guests.length}</p>}
-      </section>
-
-      {hasRsvp && (
-        <section className="block">
-          <h3>Conferme di presenza</h3>
-          {!summary ? (
-            <p className="hint">Caricamento…</p>
-          ) : (
-            <>
-              <div className="sum">
-                <div><span>Risposte</span><strong>{summary.total}</strong></div>
-                <div><span>Presenti</span><strong>{summary.attending}</strong></div>
-                <div><span>Persone</span><strong>{summary.guests}</strong></div>
-              </div>
-              <a className="btn outline small" href={`/api/invitations/${invitationId}/rsvps?format=csv`}>Scarica CSV</a>
-              {summary.rsvps.length === 0 ? (
-                <p className="hint">Ancora nessuna risposta: compariranno qui in tempo reale.</p>
-              ) : (
-                <div className="table-wrap">
-                  <table>
-                    <thead><tr><th>Ricevuta</th>{summary.questions.map((q) => <th key={q.id}>{q.label}</th>)}</tr></thead>
-                    <tbody>
-                      {summary.rsvps.map((r) => (
-                        <tr key={r.id}>
-                          <td>{new Date(r.createdAt).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}</td>
-                          {summary.questions.map((q) => {
-                            const a = r.answers[q.id];
-                            return <td key={q.id}>{q.type === "yes-no" ? (a === true ? "Sì" : a === false ? "No" : "–") : String(a ?? "–")}</td>;
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
-          )}
-        </section>
-      )}
-    </div>
-  );
-}
-
-function Field({ label, children, wide }: { label: string; children: ReactNode; wide?: boolean }) {
-  return (
-    <label className={wide ? "field wide" : "field"}>
-      <span>{label}</span>
-      {children}
-    </label>
-  );
-}

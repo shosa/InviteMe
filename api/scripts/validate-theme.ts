@@ -1,26 +1,27 @@
-// Controlla un file tema prima del caricamento. Uso: npm run validate-theme -w @inviteme/api -- ../docs/examples/tema-esempio.json
-import { readFileSync } from "node:fs";
-import { validateTheme } from "@inviteme/shared";
+// Valida uno o più stili (cartelle con theme.json, theme.css, assets/) e i template dei blocchi.
+// Uso: npm run validate-theme -w @inviteme/api -- [cartella ...]   (senza argomenti: tutti gli stili in themes/)
+import fs from "fs";
+import path from "path";
+import { loadTheme, THEMES_DIR } from "../src/engine/themes";
+import { blockPartials } from "../src/engine/blocks";
 
-const file = process.argv[2];
-if (!file) {
-  console.error("Uso: npm run validate-theme -w @inviteme/api -- <file.json>");
-  process.exit(2);
+const args = process.argv.slice(2);
+const dirs = args.length
+  ? args.map((a) => path.resolve(a))
+  : fs.readdirSync(THEMES_DIR).map((n) => path.join(THEMES_DIR, n)).filter((d) => fs.statSync(d).isDirectory() && !path.basename(d).startsWith("_"));
+
+let failed = 0;
+for (const e of blockPartials().errors) {
+  console.error(`errore    ${e}`);
+  failed++;
 }
 
-let data: unknown;
-try {
-  data = JSON.parse(readFileSync(file, "utf8"));
-} catch {
-  console.error("Il file non è JSON valido.");
-  process.exit(1);
+for (const dir of dirs) {
+  const r = loadTheme(dir);
+  for (const w of r.warnings) console.warn(`avviso    ${w}`);
+  for (const e of r.errors) console.error(`errore    ${e}`);
+  if (r.theme) console.log(`ok       ${r.theme.manifest.id}: ${Object.keys(r.theme.manifest.demo).length} blocchi di esempio`);
+  else failed++;
 }
-
-const result = validateTheme(data);
-if (result.theme) {
-  console.log(`OK: tema "${result.theme.name}" (${result.theme.id}) valido.`);
-  process.exit(0);
-}
-console.error("Tema non valido:");
-for (const e of result.errors) console.error(`  - ${e}`);
-process.exit(1);
+console.log(failed ? `\n${failed} problema/i: lo stile non può essere pubblicato.` : "\nTutti gli stili sono validi.");
+process.exit(failed ? 1 : 0);

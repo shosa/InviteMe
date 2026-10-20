@@ -1,10 +1,11 @@
-// Catalogo condiviso tra API e frontend. I valori qui sono i DEFAULT: in produzione il catalogo
-// effettivo è letto dal database e modificabile dalla console admin (vedi api/src/catalog.ts).
-import { BUILTIN_THEMES, type StyleDef } from "./themes";
+// Catalogo condiviso tra API e frontend. I valori qui sono i DEFAULT: in produzione il catalogo effettivo
+// è letto dal database e modificabile dalla console admin (vedi api/src/catalog.ts).
+import type { AddonKey } from "./addons";
+import type { ThemeManifest } from "./engine/manifest";
 
+export type { AddonKey } from "./addons";
 export type ModelId = string;
 export type EventType = "wedding" | "birthday" | "baby" | "corporate" | "graduation";
-export type AddonKey = "rsvp" | "program" | "map" | "music" | "countdown" | "gallery" | "express";
 
 export type ModelDef = {
   id: ModelId;
@@ -20,13 +21,14 @@ export type ModelDef = {
 
 export type AddonDef = { key: AddonKey; label: string; description: string; cents: number; enabled: boolean };
 
-export type { StyleDef } from "./themes";
+// Un tema è una cartella in themes/ (vedi docs/TEMI.md). Il catalogo salva solo se è attivo.
+export type ThemeEntry = { enabled: boolean; manifest: ThemeManifest };
 
 export type MusicTrack = { id: string; title: string; artist: string; url: string; enabled: boolean; license: string };
 
-export type Catalog = { models: ModelDef[]; addons: AddonDef[]; styles: StyleDef[]; music: MusicTrack[] };
+export type Catalog = { models: ModelDef[]; addons: AddonDef[]; themes: ThemeEntry[]; music: MusicTrack[] };
 
-export const DEFAULT_CATALOG: Catalog = {
+export const DEFAULT_CATALOG: Omit<Catalog, "themes" | "music"> = {
   models: [
     {
       id: "save-the-date",
@@ -66,14 +68,11 @@ export const DEFAULT_CATALOG: Catalog = {
     { key: "rsvp", label: "Conferma di presenza", description: "Modulo di risposta con domande personalizzate", cents: 1500, enabled: true },
     { key: "program", label: "Programma dettagliato", description: "Fino a 5 voci: cerimonia, cena, festa", cents: 500, enabled: true },
     { key: "map", label: "Mappa e indicazioni", description: "Mappa del luogo con link alle indicazioni", cents: 1000, enabled: true },
-    { key: "music", label: "Musica di sottofondo", description: "Un brano dalla libreria, o il tuo link", cents: 1500, enabled: true },
+    { key: "music", label: "Musica di sottofondo", description: "Un brano dalla libreria, o il tuo file", cents: 1500, enabled: true },
     { key: "countdown", label: "Conto alla rovescia", description: "Giorni, ore, minuti e secondi alla data", cents: 500, enabled: true },
     { key: "gallery", label: "Galleria foto", description: "Fino a 6 foto invece di 3", cents: 1000, enabled: true },
     { key: "express", label: "Consegna express 24–48 h", description: "Priorità nella messa online", cents: 2500, enabled: true },
   ],
-  styles: BUILTIN_THEMES,
-
-  music: [],
 };
 
 export const EVENT_TYPES: { id: EventType; label: string; sampleTitle: string }[] = [
@@ -89,14 +88,19 @@ export const CURRENCY = "EUR";
 export function enabledModels(c: Catalog) {
   return c.models.filter((m) => m.enabled).sort((a, b) => a.sort - b.sort);
 }
-export function enabledStyles(c: Catalog) {
-  return c.styles.filter((s) => s.enabled);
+
+// Temi attivi che offrono il modello (un tema senza elenco di modelli li offre tutti).
+export function enabledThemes(c: Catalog, model?: string): ThemeManifest[] {
+  return c.themes
+    .filter((t) => t.enabled && (!model || t.manifest.models.length === 0 || t.manifest.models.includes(model)))
+    .map((t) => t.manifest);
 }
+
 export function getModel(c: Catalog, id: string) {
   return c.models.find((m) => m.id === id && m.enabled);
 }
-export function getStyle(c: Catalog, id: string) {
-  return c.styles.find((s) => s.id === id && s.enabled) ?? enabledStyles(c)[0] ?? c.styles[0];
+export function getTheme(c: Catalog, id: string, model?: string): ThemeManifest | undefined {
+  return enabledThemes(c, model).find((t) => t.id === id);
 }
 export function getAddon(c: Catalog, key: string) {
   return c.addons.find((a) => a.key === key && a.enabled);
@@ -108,10 +112,6 @@ export function activeFeatures(c: Catalog, model: string, selected: string[]): S
   const set = new Set<AddonKey>(m?.included ?? []);
   for (const a of selected) if (m?.options.includes(a as AddonKey) && getAddon(c, a)) set.add(a as AddonKey);
   return set;
-}
-
-export function maxPhotos(c: Catalog, model: string, selected: string[]): number {
-  return activeFeatures(c, model, selected).has("gallery") ? 6 : 3;
 }
 
 export function formatPrice(cents: number, locale = "it-IT", currency = CURRENCY) {

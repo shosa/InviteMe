@@ -4,9 +4,11 @@ Inviti digitali per matrimoni ed eventi: copertina sigillata, musica, programma,
 
 ## Struttura
 
-- `web/`: frontend Next.js (pagine, builder, console admin).
-- `api/`: API Fastify con PostgreSQL (account, inviti, pagamenti, email, console).
-- `shared/`: catalogo, prezzi e validazione, condivisi da API e frontend.
+- `web/`: frontend Next.js (pagine, builder, console admin). La pagina invito è servita dall'API.
+- `api/`: API Fastify con PostgreSQL (account, inviti, pagamenti, email, console, conversione media con ffmpeg).
+- `shared/`: catalogo, prezzi, validazione e motore di template, condivisi da API e frontend.
+- `engine/`: runtime del browser per le pagine invito (busta, audio, gratta, RSVP).
+- `themes/`: i temi, una cartella per tema. Per crearne uno: `docs/TEMI.md`. Come funziona il motore: `docs/MOTORE.md`.
 - `docker-compose.yml`: tre servizi: `db` (PostgreSQL), `api`, `web`.
 
 ## Avvio con Docker
@@ -53,17 +55,25 @@ Con l'API in esecuzione:
 BASE_URL=http://localhost:4000 ADMIN_TOKEN=test npm run smoke -w @inviteme/api
 ```
 
-Il test copre account, ruoli, catalogo, libreria musicale, creazione e modifica degli inviti, pagamento, conferme, email, metriche e webhook Shopify.
+Il test copre account, creazione e modifica degli inviti, caricamento e conversione dei file, anteprima, pagamento di prova, pagina pubblica, conferme e console admin.
+
+Per i temi:
+
+```bash
+npm run test -w @inviteme/shared
+npm run test -w @inviteme/api
+npm run validate-theme -w @inviteme/api      # tutti i temi in themes/
+```
 
 ## Console admin
 
-Si apre su `/admin` con un account amministratore. Da lì si gestiscono modelli, funzioni e prezzi, stili, libreria musicale, ordini e utenti. Un account diventa amministratore se la sua email coincide con `ADMIN_EMAIL`.
+Si apre su `/admin` con un account amministratore. Da lì si gestiscono modelli, funzioni e prezzi, attivazione dei temi, libreria musicale, ordini e utenti. I temi non si caricano dalla console: sono nella cartella `themes/`. Un account diventa amministratore se la sua email coincide con `ADMIN_EMAIL`.
 
 ## Pagamenti (Shopify)
 
 - Compila `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_STOREFRONT_TOKEN` e `SHOPIFY_VARIANT_ID` per il checkout reale.
 - Crea nel pannello Shopify un webhook `Ordini pagati` verso `https://<tuo-dominio>/api/webhooks/shopify` e imposta `SHOPIFY_WEBHOOK_SECRET`.
-- Senza Shopify il pagamento non è possibile in produzione, salvo `ALLOW_LOCAL_CHECKOUT=true`, che va usato solo per prove.
+- Senza Shopify il pagamento non è possibile in produzione. Per le prove o una demo imposta `DEMO_MODE=true`: ogni acquisto va a buon fine, senza pagamento reale. Con Shopify configurato la demo è sempre spenta.
 
 ## Email
 

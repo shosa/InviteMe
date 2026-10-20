@@ -1,0 +1,8 @@
+<section class="sec loc-sec">
+  <div class="card">
+    {{#heading}}<h2 class="title" data-anim="fadeinup">{{heading}}</h2>{{/heading}}
+    <div class="loc-name" data-anim="fadeinup" style="--d:.1s">{{venue | lines}}</div>
+    {{#address}}<div class="loc-addr" data-anim="fadeinup" style="--d:.2s">{{address | lines}}</div>{{/address}}
+    {{#photo}}<img class="loc-photo" src="{{photo}}" loading="lazy" decoding="async" alt="" data-anim="zoomin" style="--d:.3s">{{/photo}}
+  </div>
+</section>

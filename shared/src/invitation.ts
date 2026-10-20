@@ -1,52 +1,61 @@
-import { EVENT_TYPES, activeFeatures, enabledModels, enabledStyles, getModel, getStyle, maxPhotos, type AddonKey, type Catalog, type EventType } from "./catalog";
+import { EVENT_TYPES, activeFeatures, enabledModels, enabledThemes, getModel, getTheme, type Catalog, type EventType } from "./catalog";
+import type { AddonKey } from "./addons";
+import { sanitizeValues } from "./engine/values";
+import { sanitizeQuestions, type RsvpQuestion, type ThemeManifest } from "./engine/manifest";
+import { BLOCK_TYPES, EVENT_DEFAULTS, EVENT_FIELDS, blockDef, defaultBlocks, makeBlock, newBlockId, type BlockInstance, type BlockType } from "./blocks";
 
-export type RsvpQuestion = { id: string; label: string; type: "yes-no" | "text" | "number" | "choice"; options?: string[] };
+export type { RsvpQuestion } from "./engine/manifest";
+export type { BlockInstance, BlockType } from "./blocks";
 
+// Configurazione di un invito: dati dell'evento, lista ordinata di blocchi, domande di conferma.
+// `themeId` è lo stile (colori, font, CSS). Il contenuto è tutto nei blocchi.
 export type InviteConfig = {
+  themeId: string;
   model: string;
-  styleId: string;
-  eventType: EventType;
-  title: string;
-  hosts: string;
-  eventDate: string; // yyyy-mm-dd
-  eventTime: string; // HH:mm
-  venue: string;
-  address: string;
-  message: string;
-  photos: string[]; // data URL JPEG compressi
-  sections: { id: string; title: string; body: string }[];
-  rsvpQuestions: RsvpQuestion[];
   addons: AddonKey[]; // solo funzioni acquistabili per il modello
-  musicTrackId?: string; // brano dalla libreria dell'admin
-  musicUrl?: string; // oppure un link https proprio
+  eventType: EventType;
   locale: "it" | "en";
+  event: Record<string, unknown>; // titolo, nomi, data, ora, luogo, indirizzo
+  blocks: BlockInstance[];
+  rsvpQuestions: RsvpQuestion[];
 };
 
+export const MAX_BLOCKS = 30;
+
+// Domande di partenza per la conferma di presenza.
 export const DEFAULT_RSVP: RsvpQuestion[] = [
-  { id: "attending", label: "Parteciperai?", type: "yes-no" },
-  { id: "guests", label: "Numero di persone (compreso lei/lui)", type: "number" },
-  { id: "diet", label: "Esigenze alimentari", type: "text" },
+  { id: "name", label: "Nome e cognome", type: "text", required: true },
+  { id: "attending", label: "Parteciperai?", type: "yes-no", required: true, yes: "Sì, con piacere", no: "Purtroppo non posso" },
+  { id: "guests", label: "Numero di persone (compreso te)", type: "number" },
   { id: "note", label: "Un messaggio per gli sposi", type: "text" },
 ];
 
-export function defaultConfig(c: Catalog, model: string, eventType: EventType = "wedding"): InviteConfig {
+// Stesse domande in inglese, per gli inviti con lingua della pagina inglese.
+export const DEFAULT_RSVP_EN: RsvpQuestion[] = [
+  { id: "name", label: "Full name", type: "text", required: true },
+  { id: "attending", label: "Will you attend?", type: "yes-no", required: true, yes: "Yes, with pleasure", no: "Sorry, I cannot" },
+  { id: "guests", label: "Number of people (including you)", type: "number" },
+  { id: "note", label: "A message for the hosts", type: "text" },
+];
+
+export function defaultRsvp(locale: "it" | "en"): RsvpQuestion[] {
+  return locale === "en" ? DEFAULT_RSVP_EN : DEFAULT_RSVP;
+}
+
+// Config di partenza per un nuovo invito, con i blocchi che le funzioni del modello abilitano.
+export function defaultConfig(theme: ThemeManifest, model: string, eventType: EventType = "wedding", features: ReadonlySet<AddonKey> = new Set()): InviteConfig {
   const type = EVENT_TYPES.find((e) => e.id === eventType) ?? EVENT_TYPES[0];
+  const event: Record<string, unknown> = { ...EVENT_DEFAULTS, title: type.sampleTitle };
+  event.eventDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 60).toISOString().slice(0, 10);
   return {
+    themeId: theme.id,
     model,
-    styleId: enabledStyles(c)[0]?.id ?? "carta",
-    eventType,
-    title: type.sampleTitle,
-    hosts: eventType === "wedding" ? "Sara e Luca" : "La famiglia",
-    eventDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 60).toISOString().slice(0, 10),
-    eventTime: "19:30",
-    venue: "Villa dei Glicini",
-    address: "Via dei Giardini 12, Firenze",
-    message: "Abbiamo il piacere di invitarvi a festeggiare con noi.",
-    photos: [],
-    sections: [{ id: "s1", title: "Programma", body: "Aperitivo in giardino, cena e musica fino a notte." }],
-    rsvpQuestions: DEFAULT_RSVP,
     addons: [],
+    eventType,
     locale: "it",
+    event,
+    blocks: defaultBlocks(features),
+    rsvpQuestions: DEFAULT_RSVP,
   };
 }
 
@@ -61,63 +70,71 @@ export function makeSlug(title: string): string {
   return `${base || "invito"}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-const str = (v: unknown, max: number, fallback = "") => (typeof v === "string" ? v.slice(0, max) : fallback);
-
 // Valida e normalizza la configurazione ricevuta dal client: nessun campo è fidato.
+// Ritorna null se lo stile o il modello non sono disponibili.
 export function sanitizeConfig(c: Catalog, input: unknown): InviteConfig | null {
   if (!input || typeof input !== "object") return null;
   const x = input as Record<string, unknown>;
+  const locale: "it" | "en" = x.locale === "en" ? "en" : "it";
   const models = enabledModels(c);
   if (models.length === 0) return null;
   const model = getModel(c, String(x.model)) ? String(x.model) : models[0].id;
-  const base = defaultConfig(c, model);
-  const eventType = EVENT_TYPES.some((e) => e.id === x.eventType) ? (x.eventType as EventType) : base.eventType;
-  const styleId = getStyle(c, String(x.styleId)).id;
+  const theme = getTheme(c, String(x.themeId), model) ?? enabledThemes(c, model)[0];
+  if (!theme) return null;
 
   const options = getModel(c, model)?.options ?? [];
   const selected = Array.isArray(x.addons)
     ? [...new Set(x.addons.filter((a): a is AddonKey => typeof a === "string" && options.includes(a as AddonKey)))]
     : [];
   const features = activeFeatures(c, model, selected);
-  const track = c.music.find((t) => t.id === x.musicTrackId && t.enabled);
-  const musicUrl = str(x.musicUrl, 500);
-  const rsvpChoice = x.rsvpQuestions;
+  const eventType = EVENT_TYPES.some((e) => e.id === x.eventType) ? (x.eventType as EventType) : "wedding";
+
+  const blocks = sanitizeBlocks(x.blocks, features);
+  const hasForm = blocks.some((b) => b.type === "rsvp") && features.has("rsvp");
+  const questions = hasForm ? sanitizeQuestions(x.rsvpQuestions, "rsvpQuestions") : [];
 
   return {
+    themeId: theme.id,
     model,
-    styleId,
-    eventType,
-    title: str(x.title, 80, base.title),
-    hosts: str(x.hosts, 80, base.hosts),
-    eventDate: /^\d{4}-\d{2}-\d{2}$/.test(str(x.eventDate, 10)) ? str(x.eventDate, 10) : base.eventDate,
-    eventTime: /^\d{2}:\d{2}$/.test(str(x.eventTime, 5)) ? str(x.eventTime, 5) : base.eventTime,
-    venue: str(x.venue, 120, base.venue),
-    address: str(x.address, 200, base.address),
-    message: str(x.message, 500, base.message),
-    photos: Array.isArray(x.photos)
-      ? x.photos.filter((p): p is string => typeof p === "string" && p.startsWith("data:image/")).slice(0, maxPhotos(c, model, selected))
-      : [],
-    sections: Array.isArray(x.sections)
-      ? x.sections.slice(0, 5).map((s, i) => {
-          const y = (s ?? {}) as Record<string, unknown>;
-          return { id: str(y.id, 40, `s${i}`), title: str(y.title, 80), body: str(y.body, 600) };
-        })
-      : base.sections,
-    rsvpQuestions: features.has("rsvp") && Array.isArray(rsvpChoice)
-      ? rsvpChoice.slice(0, 8).map((q, i) => {
-          const y = (q ?? {}) as Record<string, unknown>;
-          const type = y.type === "number" || y.type === "text" || y.type === "yes-no" || y.type === "choice" ? y.type : "text";
-          const options = Array.isArray(y.options) ? y.options.filter((o): o is string => typeof o === "string").map((o) => o.slice(0, 60)).slice(0, 6) : undefined;
-          return { id: str(y.id, 40, `q${i}`), label: str(y.label, 160, "Domanda"), type, options };
-        })
-      : base.rsvpQuestions,
     addons: selected,
-    musicTrackId: track ? track.id : undefined,
-    musicUrl: !track && musicUrl.startsWith("https://") ? musicUrl : undefined,
-    locale: x.locale === "en" ? "en" : "it",
+    eventType,
+    locale,
+    event: sanitizeValues(EVENT_FIELDS, x.event, features),
+    blocks,
+    rsvpQuestions: questions.length ? questions : hasForm ? defaultRsvp(locale) : [],
   };
 }
 
-export function hasRsvp(c: Catalog, config: Pick<InviteConfig, "model" | "addons">): boolean {
-  return activeFeatures(c, config.model, config.addons).has("rsvp");
+// Blocchi: solo tipi noti, funzioni acquistate, blocchi unici, proprietà ripulite, al massimo MAX_BLOCKS.
+export function sanitizeBlocks(input: unknown, features: ReadonlySet<AddonKey>): BlockInstance[] {
+  if (!Array.isArray(input)) return [];
+  const out: BlockInstance[] = [];
+  const seen = new Set<string>();
+  for (const raw of input.slice(0, MAX_BLOCKS)) {
+    if (!raw || typeof raw !== "object") continue;
+    const y = raw as Record<string, unknown>;
+    const type = (BLOCK_TYPES as readonly string[]).includes(String(y.type)) ? (y.type as BlockType) : null;
+    const def = type ? blockDef(type) : undefined;
+    if (!def || !type) continue;
+    if (def.feature && !features.has(def.feature)) continue;
+    if (def.unique && seen.has(type)) continue;
+    seen.add(type);
+    const id = typeof y.id === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(y.id) ? y.id : newBlockId();
+    out.push({
+      id,
+      type,
+      hidden: y.hidden === true,
+      props: sanitizeValues(def.fields, y.props, features),
+    });
+  }
+  return out;
+}
+
+// Il blocco nuovo di un tipo, con le proprietà di partenza (per l'aggiunta dal builder).
+export { makeBlock };
+
+// L'invito ha il modulo di conferma: il tema lo supporta, il modello (o un addon) lo prevede, e c'è il blocco.
+export function hasRsvp(c: Catalog, config: Pick<InviteConfig, "themeId" | "model" | "addons" | "blocks">): boolean {
+  const theme = getTheme(c, config.themeId, config.model);
+  return !!theme && activeFeatures(c, config.model, config.addons).has("rsvp") && config.blocks.some((b) => b.type === "rsvp" && !b.hidden);
 }

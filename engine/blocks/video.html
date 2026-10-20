@@ -1,0 +1,14 @@
+{{#video}}
+<section class="sec video-sec">
+  <div class="card">
+    {{#heading}}<h2 class="title" data-anim="fadeinup">{{heading}}</h2>{{/heading}}
+    <div class="video-frame" data-loop-video data-anim="zoomin" style="--d:.2s">
+      <video muted loop playsinline preload="none"><source src="{{video}}" type="video/mp4"></video>
+      <button class="video-play" type="button" aria-label="{{t.playVideo}}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6,4 20,12 6,20"></polygon></svg>
+      </button>
+    </div>
+    <img class="orn" src="assets/ornament.svg" alt="" data-anim="fadein" style="--d:.4s">
+  </div>
+</section>
+{{/video}}

@@ -1,0 +1,13 @@
+{
+  "engine": 2,
+  "id": "stile-rotto",
+  "name": "Stile rotto",
+  "description": "Fixture: deve essere respinto dal validatore",
+  "models": [],
+  "themeColor": "#17242A",
+  "fonts": ["https://evil.example.com/font.css"],
+  "demo": {
+    "hero": { "couplePhoto": "assets/manca.jpg" },
+    "cover": { "coverSound": "https://evil.example.com/x.mp3" }
+  }
+}

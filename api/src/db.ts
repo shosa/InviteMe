@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS outbox (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+-- Pannello di gestione dell'invito: note organizzative e nota del conto alla rovescia (non fanno parte della pagina).
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS planner jsonb NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub text;
 CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_idx ON users (google_sub) WHERE google_sub IS NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'));
