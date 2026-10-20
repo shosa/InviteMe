@@ -1,6 +1,7 @@
 import {
   ADDON_KEYS,
   BLOCK_LABELS,
+  type BlockLayout,
   blockDef,
   escapeHtml,
   renderTemplate,
@@ -101,7 +102,7 @@ export function renderInvitePage(input: PageInput): string {
     if (block.type === "hero" && typeof block.props.kicker === "string" && block.props.kicker) {
       html = html.split(escapeHtml(String((globals.t as { withJoy?: string }).withJoy ?? ""))).join(escapeHtml(block.props.kicker));
     }
-    const look = block.type === "cover" ? html : lookWrap(block.props, html);
+    const look = block.type === "cover" ? html : placeBlock(block.layout, lookWrap(block.props, html));
     // display:contents: il contenitore non cambia l'impaginazione; serve solo a sapere a quale blocco appartiene ciò che c'è dentro.
     const framed = input.builder ? `<div data-blk="${escapeHtml(block.id)}" style="display:contents">${look}</div>` : look;
     if (block.type === "cover") cover += framed;
@@ -236,6 +237,12 @@ const BUILDER_JS = `(function () {
     }
   });
 })();`;
+
+// Posizione libera del blocco: si sposta e si restringe restando nel flusso della pagina. Senza posizione non cambia nulla.
+function placeBlock(layout: BlockLayout | undefined, html: string): string {
+  if (!layout) return html;
+  return `<div class="bk-place" style="position:relative;left:${layout.x}%;width:${layout.w}%;margin-top:${layout.dy}px">\n${html}</div>\n`;
+}
 
 // Aspetto scelto dal cliente per un blocco (sfondo, testo, forma e copertura del gratta). Senza scelte il blocco non viene toccato.
 // I valori sono già validati (esadecimali e opzioni note), quindi possono stare in uno stile inline.

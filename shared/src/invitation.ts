@@ -2,7 +2,7 @@ import { EVENT_TYPES, activeFeatures, enabledModels, enabledThemes, getModel, ge
 import type { AddonKey } from "./addons";
 import { sanitizeValues } from "./engine/values";
 import { sanitizeQuestions, type RsvpQuestion, type ThemeManifest } from "./engine/manifest";
-import { BLOCK_TYPES, EVENT_DEFAULTS, EVENT_FIELDS, blockDef, defaultBlocks, makeBlock, newBlockId, type BlockInstance, type BlockType } from "./blocks";
+import { BLOCK_TYPES, EVENT_DEFAULTS, EVENT_FIELDS, blockDef, defaultBlocks, makeBlock, newBlockId, sanitizeLayout, type BlockInstance, type BlockType } from "./blocks";
 
 export type { RsvpQuestion } from "./engine/manifest";
 export type { BlockInstance, BlockType } from "./blocks";
@@ -120,11 +120,13 @@ export function sanitizeBlocks(input: unknown, features: ReadonlySet<AddonKey>):
     if (def.unique && seen.has(type)) continue;
     seen.add(type);
     const id = typeof y.id === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(y.id) ? y.id : newBlockId();
+    const layout = sanitizeLayout(y.layout);
     out.push({
       id,
       type,
       hidden: y.hidden === true,
       props: sanitizeValues(def.fields, y.props, features),
+      ...(layout ? { layout } : {}),
     });
   }
   return out;
