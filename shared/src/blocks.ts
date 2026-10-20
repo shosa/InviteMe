@@ -260,7 +260,10 @@ const SCRATCH_LOOK: FieldDef[] = [
   },
   { key: "lookCover", label: "Colore della copertura", type: "color", group: "Aspetto" },
 ];
-for (const b of BLOCKS) b.fields = [...b.fields, ...LOOK_FIELDS, ...(b.type === "scratchdate" ? SCRATCH_LOOK : [])];
+for (const b of BLOCKS) {
+  if (b.type === "music") continue; // il lettore audio non ha superfici da colorare
+  b.fields = [...b.fields, ...LOOK_FIELDS, ...(b.type === "scratchdate" ? SCRATCH_LOOK : [])];
+}
 
 export const DEFAULT_BLOCKS: BlockType[] = ["cover", "hero", "scratchdate", "countdown", "message", "program", "venue", "map", "transfer", "dresscode", "rsvp", "footer"];
 

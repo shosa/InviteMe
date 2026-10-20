@@ -64,6 +64,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   const [hover, setHover] = useState<string | null>(null);
   const [scroll, setScroll] = useState({ y: 0, max: 0 });
   const frame = useRef<HTMLIFrameElement>(null);
+  const scrollY = useRef(0);
 
   const model = getModel(catalog, config.model);
   const theme = catalog.themes.find((t) => t.manifest.id === config.themeId)?.manifest;
@@ -135,7 +136,15 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
       if (e.source !== frame.current?.contentWindow) return;
       const d = e.data as { type?: string; id?: unknown; y?: unknown; max?: unknown } | null;
       if (d?.type === "hover") setHover(typeof d.id === "string" ? d.id : null);
-      if (d?.type === "scroll" && typeof d.y === "number" && typeof d.max === "number") setScroll({ y: d.y, max: d.max });
+      if (d?.type === "scroll" && typeof d.y === "number") {
+        const y: number = d.y;
+        scrollY.current = y;
+        setScroll((s) => ({ ...s, y }));
+      }
+      if (d?.type === "max" && typeof d.max === "number") {
+        const max: number = d.max;
+        setScroll((s) => ({ ...s, max }));
+      }
       if (d?.type === "select" && typeof d.id === "string") {
         setSelected(d.id);
         setPanel("proprieta");
@@ -308,9 +317,11 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
               ref={frame}
               title={L.previewTitle}
               srcDoc={preview}
-              scrolling="no"
               sandbox="allow-scripts"
-              onLoad={() => frame.current?.contentWindow?.postMessage({ type: "highlight", id: hover }, "*")}
+              onLoad={() => {
+                frame.current?.contentWindow?.postMessage({ type: "restore", id: selected, y: scrollY.current }, "*");
+                frame.current?.contentWindow?.postMessage({ type: "highlight", id: hover }, "*");
+              }}
             />
           ) : (
             <p className="hint">{L.loadingPreview}</p>

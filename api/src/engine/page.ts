@@ -127,7 +127,7 @@ function pageGlobals(input: PageInput): Record<string, unknown> {
 }
 
 // Solo nell'anteprima del builder: evidenzia il blocco sotto il mouse (o quello scelto nella lista) e lo segnala al builder.
-// Messaggi: dal builder {type:"highlight", id} e {type:"scrollTo", y}; dall'anteprima {type:"hover", id}, {type:"select", id} e {type:"scroll", y, max}.
+// Messaggi: dal builder {type:"highlight", id}, {type:"scrollTo", y}, {type:"restore", id, y}; dall'anteprima {type:"hover", id}, {type:"select", id}, {type:"scroll", y} e {type:"max", max}.
 const BUILDER_JS = `(function () {
   var box = document.createElement('div');
   box.setAttribute('aria-hidden', 'true');
@@ -174,18 +174,24 @@ const BUILDER_JS = `(function () {
   var hide = document.createElement('style');
   hide.textContent = 'html{scrollbar-width:none}html::-webkit-scrollbar{display:none}';
   document.head.appendChild(hide);
-  function reportScroll() {
-    var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    parent.postMessage({ type: 'scroll', y: window.scrollY, max: max }, '*');
+  function reportMax() {
+    parent.postMessage({ type: 'max', max: Math.max(0, document.documentElement.scrollHeight - window.innerHeight) }, '*');
   }
-  if (window.ResizeObserver) new ResizeObserver(reportScroll).observe(document.body);
-  window.addEventListener('load', reportScroll);
+  function reportScroll() { parent.postMessage({ type: 'scroll', y: window.scrollY }, '*'); }
+  if (window.ResizeObserver) new ResizeObserver(reportMax).observe(document.body);
+  window.addEventListener('load', reportMax);
   window.addEventListener('scroll', function () { paint(); reportScroll(); }, { passive: true });
   window.addEventListener('resize', paint);
   window.addEventListener('message', function (e) {
     var d = e.data;
     if (d && d.type === 'highlight') { current = d.id || null; paint(); }
     if (d && d.type === 'scrollTo') window.scrollTo(0, d.y);
+    if (d && d.type === 'restore') {
+      // Dopo un salvataggio si torna al blocco che si stava modificando, altrimenti alla stessa posizione.
+      var target = d.id && document.querySelector('[data-blk="' + d.id + '"]');
+      if (target) (target.firstElementChild || target).scrollIntoView({ block: 'center' });
+      else window.scrollTo(0, d.y || 0);
+    }
   });
 })();`;
 
@@ -210,6 +216,8 @@ const LOOK_CSS = `
 .bk[data-shape="square"] [data-scratch]{border-radius:0!important}
 .bk[data-shape="round"] [data-scratch]{border-radius:50%!important}
 .bk[data-shape="pill"] [data-scratch]{border-radius:999px!important}
+[data-music-toggle]{position:fixed!important;right:18px!important;bottom:18px!important;top:auto!important;left:auto!important;z-index:9000!important;width:52px!important;height:52px!important;border-radius:50%!important;border:0!important;background:#0E1116!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:0!important;box-shadow:0 10px 28px rgba(0,0,0,.25)!important;cursor:pointer}
+[data-music-toggle] svg{width:20px!important;height:20px!important;fill:#FFFFFF!important}
 `;
 
 // Per ogni lista del blocco, un flag "has<Nome>" vero se ha almeno una voce: la sezione si mostra una volta sola.
