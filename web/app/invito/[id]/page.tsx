@@ -5,28 +5,14 @@ import type { Catalog, InviteConfig } from "@inviteme/shared";
 import { Nav } from "@/components/Nav";
 import { CopyLink } from "@/components/CopyLink";
 import { WelcomeDialog } from "@/components/dashboard/WelcomeDialog";
-import { Confetti } from "@/components/dashboard/Clipart";
+import { InviteHero } from "@/components/dashboard/InviteHero";
+import { inkOn, accentOf } from "@/lib/invitePalette";
 import { ApiError, apiServer } from "@/lib/api";
 import { getLang } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 type Inv = { id: string; slug: string; status: "draft" | "paid"; config: InviteConfig; guests: unknown[] | number; views: number; catalog: Catalog };
-
-// Luce del colore dell'invito: testo chiaro sui fondi scuri, scuro sui chiari.
-function inkOn(hex: string): string {
-  const n = parseInt(hex.replace("#", "").padEnd(6, "0").slice(0, 6), 16);
-  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? "#0E1116" : "#FFFFFF";
-}
-
-// Colore per le illustrazioni: se il colore dell'invito è chiaro, una versione più scura resta leggibile.
-function accentOf(hex: string): string {
-  if (inkOn(hex) === "#0E1116") return hex;
-  const n = parseInt(hex.replace("#", "").padEnd(6, "0").slice(0, 6), 16);
-  const d = (c: number) => Math.round(c * 0.45).toString(16).padStart(2, "0");
-  return `#${d((n >> 16) & 255)}${d((n >> 8) & 255)}${d(n & 255)}`;
-}
 
 // Dashboard personale di un invito: dopo il pagamento è la prima schermata, con il link da condividere.
 export default async function InvitoDashboard({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ benvenuto?: string }> }) {
@@ -61,14 +47,12 @@ export default async function InvitoDashboard({ params, searchParams }: { params
     <>
       <Nav current="account" lang={lang} />
       <main className="idash" style={{ "--inv": color, "--inv-ink": ink } as React.CSSProperties}>
-        <section className="idash-hero">
-          <Confetti className="idash-confetti" color={ink} />
-          <div className="wrap">
-            <p className="idash-kicker">{paid ? T.live : T.draft}</p>
-            <h1>{title}</h1>
-            <p className="idash-when">{when || T.noDate}{inv.config.event.venue ? ` · ${inv.config.event.venue}` : ""}</p>
-          </div>
-        </section>
+        <InviteHero
+          kicker={paid ? T.live : T.draft}
+          title={title}
+          when={`${when || T.noDate}${inv.config.event.venue ? ` · ${inv.config.event.venue}` : ""}`}
+          ink={ink}
+        />
 
         <div className="wrap idash-body">
           {!paid && (

@@ -48,7 +48,6 @@ export default async function Home() {
 
         <section id="modelli" className="section">
           <div className="wrap">
-            <h2 className="section-title">{h.modelsTitle}</h2>
             <Models catalog={catalog} lang={lang} />
           </div>
         </section>

@@ -11,7 +11,7 @@ const RESUME_MS = 6000;
 
 // Carosello dei template pre-fatti: ogni template è un telefono con la sua pagina reale, che scorre da solo.
 // Si sceglie toccando il telefono: niente pulsanti con il nome.
-export function TemplateCarousel({ templates, selectedId, onSelect, label, lang = "it" }: { templates: ThemeManifest[]; selectedId: string; onSelect: (id: string) => void; label: string; lang?: Lang }) {
+export function TemplateCarousel({ templates, selectedId, onSelect, label, lang = "it", size = "md" }: { templates: ThemeManifest[]; selectedId: string; onSelect: (id: string) => void; label: string; lang?: Lang; size?: "md" | "lg" }) {
   const L = ui(lang).builder;
   const track = useRef<HTMLDivElement>(null);
   // Anteprime da caricare: la scelta e le vicine subito, le altre quando entrano nel carosello.
@@ -89,7 +89,7 @@ export function TemplateCarousel({ templates, selectedId, onSelect, label, lang 
 
   return (
     <div
-      className="tpl-carousel"
+      className={`tpl-carousel${size === "lg" ? " is-lg" : ""}`}
       role="region"
       aria-roledescription="carosello"
       aria-label={label}

@@ -60,7 +60,7 @@ export const DEFAULT_CATALOG: Omit<Catalog, "themes" | "music"> = {
       priceCents: 2900,
       included: [],
       options: ["rsvp", "program", "map", "music", "countdown", "gallery", "express"],
-      enabled: false,
+      enabled: true,
       sort: 3,
     },
   ],
