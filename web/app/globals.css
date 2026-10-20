@@ -1446,3 +1446,9 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-tabs::-webkit-scrollbar { display: none; }
 .bl-tab { font: inherit; font-size: 13px; font-weight: 600; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted, #4A5361); padding: 8px 10px; cursor: pointer; white-space: nowrap; }
 .bl-tab.on { color: var(--ink, #0E1116); border-bottom-color: var(--teal, #0B6E65); }
+.bl-tab { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Blocco principale (Intestazione con i dati dell'evento): colore proprio, sempre in cima, non eliminabile. */
+.bl-item.is-locked { background: #E4F6EE; border-color: #0B6E65; }
+.bl-item.is-locked .bl-tools button:disabled { opacity: .35; }
+.bl-lock { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #0B6E65; background: #FFFFFF; border: 1px solid #0B6E65; border-radius: 999px; padding: 2px 8px; margin-left: 8px; }

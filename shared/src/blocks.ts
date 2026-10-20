@@ -30,12 +30,14 @@ export type BlockDef = {
   description: string;
   feature?: AddonKey; // il blocco si può aggiungere solo se l'invito ha la funzione
   unique?: boolean; // al massimo uno per invito
+  locked?: boolean; // non si elimina, non si sposta né si duplica
   fields: FieldDef[];
   defaults: Record<string, unknown>;
   defaultsEn?: Record<string, unknown>; // testi di partenza in inglese (invito in lingua inglese)
 };
 
-// Dati dell'evento: validi per tutto l'invito, modificati nel pannello «Evento».
+// Dati dell'evento: validi per tutto l'invito. Nomi, riga sotto i nomi, data e ora si modificano nel blocco Intestazione.
+export const HERO_EVENT_KEYS = ["title", "hosts", "eventDate", "eventTime"];
 export const EVENT_FIELDS: FieldDef[] = [
   { key: "title", label: "Nomi o titolo", type: "text", group: "Evento", required: true, max: 80 },
   { key: "hosts", label: "Riga sotto i nomi", type: "text", group: "Evento", max: 120 },
@@ -78,8 +80,9 @@ export const BLOCKS: BlockDef[] = [
   {
     type: "hero",
     label: "Intestazione",
-    description: "Nomi, sottotitolo e foto principale.",
+    description: "Nomi, data e ora dell'evento, sottotitolo e foto principale.",
     unique: true,
+    locked: true,
     fields: [
       { key: "kicker", label: "Testo sopra i nomi", type: "text", group: "Intestazione", max: 60 },
       { key: "occasion", label: "Sottotitolo", type: "text", group: "Intestazione", max: 60 },

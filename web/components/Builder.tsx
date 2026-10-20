@@ -16,6 +16,7 @@ import {
   type EventType,
   type InviteConfig,
   type RsvpQuestion,
+  blockDef,
 } from "@inviteme/shared";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Eye, Monitor, Redo2, Smartphone, Undo2, Users } from "lucide-react";
@@ -221,6 +222,9 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
       const list = [...c.blocks];
       const [moved] = list.splice(from, 1);
       list.splice(Math.max(0, Math.min(list.length, to)), 0, moved);
+      // Un blocco bloccato non cambia posizione: se lo spostamento la cambierebbe, non si fa nulla.
+      const fixed = (blocks: BlockInstance[]) => blocks.map((b, i) => (blockDef(b.type)?.locked ? i : -1)).filter((i) => i >= 0);
+      if (fixed(c.blocks).join() !== fixed(list).join()) return c;
       return { ...c, blocks: list };
     });
   }
@@ -236,6 +240,8 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
     edit((c) => ({ ...c, blocks: c.blocks.map((b) => (b.id === id ? { ...b, hidden: !b.hidden } : b)) }));
   }
   function removeBlock(id: string) {
+    const target = config.blocks.find((b) => b.id === id);
+    if (target && blockDef(target.type)?.locked) return;
     edit((c) => ({ ...c, blocks: c.blocks.filter((b) => b.id !== id) }));
     if (selected === id) setSelected(null);
   }

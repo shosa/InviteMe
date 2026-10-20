@@ -1,8 +1,9 @@
 "use client";
 
-import { EVENT_FIELDS, EVENT_TYPES, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
+import { EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
 import { useMemo, useState } from "react";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Ellipsis, Eye, EyeOff, LayoutGrid, Palette, Shapes, Trash2, Type } from "lucide-react";
 import { Field, FieldEditor, type Values } from "./fields";
 import { TemplateSwitch } from "./TemplateSwitch";
 import { ui } from "@/lib/ui";
@@ -22,45 +23,64 @@ function fieldTab(f: FieldDef): Exclude<TabKey, "all"> {
 }
 const TAB_ORDER: Exclude<TabKey, "all">[] = ["texts", "colors", "shapes", "other"];
 
+// Una riga del pannello: una proprietà del blocco, oppure un dato dell'evento (solo nell'Intestazione).
+type Item = { field: FieldDef; event: boolean };
+
 function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typeof ui>["builder"] }) {
   const [tab, setTab] = useState<TabKey>("all");
-  const fields = useMemo(
-    () => [...def.fields].sort((a, b) => TAB_ORDER.indexOf(fieldTab(a)) - TAB_ORDER.indexOf(fieldTab(b))),
-    [def],
-  );
-  const shown = tab === "all" ? fields : fields.filter((f) => fieldTab(f) === tab);
-  const present = new Set(fields.map(fieldTab));
-  const tabs: [TabKey, string][] = [
-    ["all", L.tabAll],
-    ["texts", L.tabTexts],
-    ["colors", L.tabColors],
-    ["shapes", L.tabShapes],
-    ["other", L.tabOther],
+  const items = useMemo<Item[]>(() => {
+    const own = def.fields.map((field) => ({ field, event: false }));
+    const fromEvent = def.type === "hero" ? EVENT_FIELDS.filter((f) => HERO_EVENT_KEYS.includes(f.key)).map((field) => ({ field, event: true })) : [];
+    return [...fromEvent, ...own].sort((a, b) => TAB_ORDER.indexOf(fieldTab(a.field)) - TAB_ORDER.indexOf(fieldTab(b.field)));
+  }, [def]);
+  const shown = tab === "all" ? items : items.filter((i) => fieldTab(i.field) === tab);
+  const present = new Set(items.map((i) => fieldTab(i.field)));
+  const tabs: [TabKey, string, LucideIcon][] = [
+    ["all", L.tabAll, LayoutGrid],
+    ["texts", L.tabTexts, Type],
+    ["colors", L.tabColors, Palette],
+    ["shapes", L.tabShapes, Shapes],
+    ["other", L.tabOther, Ellipsis],
   ];
   return (
     <>
       <div className="bl-tabs" role="tablist">
-        {tabs.filter(([k]) => k === "all" || present.has(k)).map(([k, label]) => (
+        {tabs.filter(([k]) => k === "all" || present.has(k)).map(([k, label, Icon]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? "bl-tab on" : "bl-tab"} onClick={() => setTab(k)}>
+            <Icon size={15} aria-hidden="true" />
             {label}
           </button>
         ))}
       </div>
       <div className="bl-fields">
-        {shown.map((f) => (
-          <FieldEditor
-            key={f.key}
-            copy={(k, l) => fieldCopy(def.type, k, l, p.lang ?? "it")}
-            standard={L.standardStyle}
-            field={f}
-            value={(p.block!.props as Values)[f.key] ?? def.defaults[f.key]}
-            disabledByFeature={false}
-            busy={p.busy}
-            library={p.catalog.music}
-            onChange={(v) => p.onSetProp(p.block!.id, f.key, v, `${p.block!.id}:${f.key}`)}
-            onUpload={p.onUpload}
-          />
-        ))}
+        {shown.map(({ field: f, event }) =>
+          event ? (
+            <FieldEditor
+              key={`event:${f.key}`}
+              copy={(k, l) => fieldCopy("event", k, l, p.lang ?? "it")}
+              field={f}
+              value={(p.config.event as Values)[f.key]}
+              disabledByFeature={false}
+              busy={p.busy}
+              library={p.catalog.music}
+              onChange={(v) => p.onSetEvent(f.key, v, `event:${f.key}`)}
+              onUpload={p.onUpload}
+            />
+          ) : (
+            <FieldEditor
+              key={f.key}
+              copy={(k, l) => fieldCopy(def.type, k, l, p.lang ?? "it")}
+              standard={L.standardStyle}
+              field={f}
+              value={(p.block!.props as Values)[f.key] ?? def.defaults[f.key]}
+              disabledByFeature={false}
+              busy={p.busy}
+              library={p.catalog.music}
+              onChange={(v) => p.onSetProp(p.block!.id, f.key, v, `${p.block!.id}:${f.key}`)}
+              onUpload={p.onUpload}
+            />
+          ),
+        )}
       </div>
     </>
   );
@@ -142,6 +162,7 @@ export function Inspector(p: Props) {
 
   const themes = enabledThemes(p.catalog, p.config.model);
   const hasMap = p.config.blocks.some((b) => b.type === "map");
+  const hasHero = p.config.blocks.some((b) => b.type === "hero");
   return (
     <div className="bl-inspector">
       <header className="bl-insp-head">
@@ -156,7 +177,7 @@ export function Inspector(p: Props) {
         <h3 id="bl-event">{L.eventDetails}</h3>
         {hasMap && <p className="hint">{L.locationInMap}</p>}
         <div className="bl-fields">
-          {EVENT_FIELDS.filter((f) => !(hasMap && LOCATION_KEYS.includes(f.key))).map((f) => (
+          {EVENT_FIELDS.filter((f) => !(hasHero && HERO_EVENT_KEYS.includes(f.key)) && !(hasMap && LOCATION_KEYS.includes(f.key))).map((f) => (
             <FieldEditor
               key={f.key}
               copy={(k, l) => fieldCopy("event", k, l, p.lang ?? "it")}
