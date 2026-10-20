@@ -397,6 +397,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
             onSetQuestions={(rsvpQuestions: RsvpQuestion[]) => edit((c) => ({ ...c, rsvpQuestions }), "questions")}
             onToggle={toggleBlock}
             onRemove={removeBlock}
+            onBack={() => setSelected(null)}
             onUpload={upload}
           />
         )}

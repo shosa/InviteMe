@@ -24,6 +24,7 @@ type Props = {
   onSetQuestions: (q: RsvpQuestion[]) => void;
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
+  onBack?: () => void;
   onUpload: (kind: "photo" | "video" | "audio", file: File) => Promise<string | null>;
   lang?: "it" | "en";
 };
@@ -43,6 +44,7 @@ export function Inspector(p: Props) {
             <h2>{blockCopy(def.type, def.label, p.lang ?? "it")}</h2>
             <p className="hint">{def.description}</p>
           </div>
+          {p.onBack && <button type="button" className="bl-back" onClick={p.onBack}>← {L.eventDetails}</button>}
           <div className="bl-insp-actions">
             <button type="button" className="bl-icon" aria-label={p.block.hidden ? L.show : L.hide} onClick={() => p.onToggle(p.block!.id)}>
               {p.block.hidden ? <EyeOff size={17} /> : <Eye size={17} />}
@@ -62,7 +64,7 @@ export function Inspector(p: Props) {
                 copy={(k, l) => fieldCopy(def.type, k, l, p.lang ?? "it")}
                 standard={L.standardStyle}
                 field={f}
-                value={(p.block!.props as Values)[f.key]}
+                value={(p.block!.props as Values)[f.key] ?? def.defaults[f.key]}
                 disabledByFeature={false}
                 busy={p.busy}
                 library={p.catalog.music}

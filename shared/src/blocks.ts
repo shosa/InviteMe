@@ -83,13 +83,11 @@ export const BLOCKS: BlockDef[] = [
     unique: true,
     fields: [
       { key: "kicker", label: "Testo sopra i nomi", type: "text", group: "Intestazione", max: 60 },
-      { key: "title", label: "Nomi (vuoto: quelli dell'evento)", type: "text", group: "Intestazione", max: 80 },
-      { key: "hosts", label: "Riga sotto i nomi (vuoto: quella dell'evento)", type: "text", group: "Intestazione", max: 120 },
       { key: "occasion", label: "Sottotitolo", type: "text", group: "Intestazione", max: 60 },
       { key: "couplePhoto", label: "Foto principale", type: "photo", group: "Intestazione" },
     ],
-    defaults: { occasion: "Per sempre", couplePhoto: "" },
-    defaultsEn: { occasion: "Forever" },
+    defaults: { kicker: "Con gioia", occasion: "Per sempre", couplePhoto: "" },
+    defaultsEn: { kicker: "With joy", occasion: "Forever" },
   },
   {
     type: "scratchdate",
