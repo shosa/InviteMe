@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   activeFeatures,
+  enabledThemes,
   formatPrice,
   getModel,
   makeBlock,
@@ -60,6 +61,8 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   const [guests, setGuests] = useState(initial.guests);
   const [firstSave, setFirstSave] = useState(true);
   const [showCover, setShowCover] = useState(false);
+  const [hover, setHover] = useState<string | null>(null);
+  const frame = useRef<HTMLIFrameElement>(null);
 
   const model = getModel(catalog, config.model);
   const theme = catalog.themes.find((t) => t.manifest.id === config.themeId)?.manifest;
@@ -122,6 +125,25 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
     };
   }, [config, initial.id, showCover]);
 
+  // Lista e anteprima si scambiano l'evidenziazione: l'hover sull'una accende l'altra, e un click nell'anteprima seleziona il blocco.
+  useEffect(() => {
+    frame.current?.contentWindow?.postMessage({ type: "highlight", id: hover }, "*");
+  }, [hover, preview]);
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (e.source !== frame.current?.contentWindow) return;
+      const d = e.data as { type?: string; id?: unknown } | null;
+      if (d?.type === "hover") setHover(typeof d.id === "string" ? d.id : null);
+      if (d?.type === "select" && typeof d.id === "string") {
+        setSelected(d.id);
+        setPanel("proprieta");
+        setMobileTab("proprieta");
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
+
   // Annulla e ripristina dalla tastiera (Ctrl/⌘+Z e Ctrl/⌘+Shift+Z) quando non si scrive in un campo.
   useEffect(() => {
     if (locked) return;
@@ -140,10 +162,24 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   // Modifiche alla configurazione: ogni azione passa dalla cronologia.
   const edit = useCallback((next: (c: InviteConfig) => InviteConfig, group?: string) => history.set(next(config), group), [config, history]);
 
-  function addBlock(type: BlockType) {
+  // Con una funzione a pagamento da attivare, la attiva e aggiunge il blocco in un solo passo.
+  function addBlock(type: BlockType, feature?: AddonKey) {
     const b = makeBlock(type, config.locale);
-    edit((c) => ({ ...c, blocks: [...c.blocks, b] }));
+    edit((c) => ({ ...c, blocks: [...c.blocks, b], addons: feature && !c.addons.includes(feature) ? [...c.addons, feature] : c.addons }));
     setSelected(b.id);
+  }
+  // Funzioni a pagamento: si attivano dalla finestra dei blocchi. Le funzioni del modello sono sempre attive.
+  function toggleAddon(key: AddonKey) {
+    edit((c) => ({ ...c, addons: c.addons.includes(key) ? c.addons.filter((a) => a !== key) : [...c.addons, key] }));
+  }
+  // Cambio di modello: si tengono solo le funzioni che il nuovo modello offre, e il tema resta se è compatibile.
+  function setModel(id: string) {
+    edit((c) => {
+      const m = getModel(catalog, id);
+      const themes = enabledThemes(catalog, id);
+      const themeId = themes.some((t) => t.id === c.themeId) ? c.themeId : (themes[0]?.id ?? c.themeId);
+      return { ...c, model: id, addons: c.addons.filter((a) => m?.options.includes(a)), themeId };
+    });
   }
   function moveBlock(from: number, to: number) {
     edit((c) => {
@@ -240,11 +276,17 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
       <aside className="bl-left" aria-label="Blocchi">
         <Canvas
           blocks={config.blocks}
+          config={config}
+          catalog={catalog}
           selected={selected}
+          hover={hover}
           features={features}
           onSelect={(id) => { setSelected(id); setPanel("proprieta"); setMobileTab("proprieta"); }}
+          onHover={setHover}
           lang={lang}
           onAdd={addBlock}
+          onToggleAddon={toggleAddon}
+          onSetModel={setModel}
           onMove={moveBlock}
           onDuplicate={duplicateBlock}
           onToggle={toggleBlock}
@@ -259,7 +301,17 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
           <span className="bl-preview-state">{previewState === "loading" ? L.updating : previewState === "error" ? "—" : ""}</span>
         </div>
         <div className={`bl-frame is-${device}`}>
-          {preview ? <iframe title={L.previewTitle} srcDoc={preview} sandbox="allow-scripts" /> : <p className="hint">{L.loadingPreview}</p>}
+          {preview ? (
+            <iframe
+              ref={frame}
+              title={L.previewTitle}
+              srcDoc={preview}
+              sandbox="allow-scripts"
+              onLoad={() => frame.current?.contentWindow?.postMessage({ type: "highlight", id: hover }, "*")}
+            />
+          ) : (
+            <p className="hint">{L.loadingPreview}</p>
+          )}
         </div>
       </main>
 

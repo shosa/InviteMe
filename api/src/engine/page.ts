@@ -32,6 +32,7 @@ export type PageInput = {
   features: ReadonlySet<AddonKey>;
   runtime: string;
   preview?: boolean; // anteprima e demo: niente busta, il contenuto è subito visibile
+  builder?: boolean; // anteprima del builder: ogni blocco ha un contenitore con il suo id, per evidenziarlo e selezionarlo
   missing?: Set<string>; // validazione: segnaposto che non trovano un dato
 };
 
@@ -63,8 +64,11 @@ export function renderInvitePage(input: PageInput): string {
     const template = partials.get(block.type as BlockType);
     if (!template) continue;
     const html = renderTemplate(template, { ...globals, ...listFlags(block.props), ...block.props }, { missing: input.missing });
-    if (block.type === "cover") cover += html;
-    else main += lookWrap(block.props, html);
+    const look = block.type === "cover" ? html : lookWrap(block.props, html);
+    // display:contents: il contenitore non cambia l'impaginazione; serve solo a sapere a quale blocco appartiene ciò che c'è dentro.
+    const framed = input.builder ? `<div data-blk="${escapeHtml(block.id)}" style="display:contents">${look}</div>` : look;
+    if (block.type === "cover") cover += framed;
+    else main += framed;
   }
   const body = `${cover}<main class="invite">\n${main}</main>`;
 
@@ -97,7 +101,7 @@ ${html}
 <script>
 ${runtime}
 </script>
-</body>
+${input.builder ? `<script>\n${BUILDER_JS}\n</script>\n` : ""}</body>
 </html>
 `;
 }
@@ -121,6 +125,58 @@ function pageGlobals(input: PageInput): Record<string, unknown> {
     preview: !!input.preview,
   };
 }
+
+// Solo nell'anteprima del builder: evidenzia il blocco sotto il mouse (o quello scelto nella lista) e lo segnala al builder.
+// Messaggi: dal builder {type:"highlight", id}; dall'anteprima {type:"hover", id} e {type:"select", id}.
+const BUILDER_JS = `(function () {
+  var box = document.createElement('div');
+  box.setAttribute('aria-hidden', 'true');
+  box.style.cssText = 'position:fixed;pointer-events:none;display:none;z-index:2147483000;border:2px solid #d9822b;border-radius:6px;background:rgba(217,130,43,.06)';
+  document.body.appendChild(box);
+  var current = null;
+  function owner(el) { return el && el.closest ? el.closest('[data-blk]') : null; }
+  function bounds(wrap) {
+    var r = null;
+    for (var i = 0; i < wrap.children.length; i++) {
+      var b = wrap.children[i].getBoundingClientRect();
+      if (!b.width && !b.height) continue;
+      if (!r) r = { l: b.left, t: b.top, r: b.right, b: b.bottom };
+      else { r.l = Math.min(r.l, b.left); r.t = Math.min(r.t, b.top); r.r = Math.max(r.r, b.right); r.b = Math.max(r.b, b.bottom); }
+    }
+    return r;
+  }
+  function paint() {
+    var wrap = current && document.querySelector('[data-blk="' + current + '"]');
+    var r = wrap && bounds(wrap);
+    if (!r) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.style.left = (r.l - 4) + 'px';
+    box.style.top = (r.t - 4) + 'px';
+    box.style.width = (r.r - r.l + 8) + 'px';
+    box.style.height = (r.b - r.t + 8) + 'px';
+  }
+  function setCurrent(id, notify) {
+    if (id === current) return;
+    current = id;
+    paint();
+    if (notify) parent.postMessage({ type: 'hover', id: id }, '*');
+  }
+  document.addEventListener('mousemove', function (e) {
+    var w = owner(e.target);
+    setCurrent(w ? w.getAttribute('data-blk') : null, true);
+  });
+  document.addEventListener('mouseout', function (e) { if (!e.relatedTarget) setCurrent(null, true); });
+  document.addEventListener('click', function (e) {
+    var w = owner(e.target);
+    if (w) parent.postMessage({ type: 'select', id: w.getAttribute('data-blk') }, '*');
+  }, true);
+  window.addEventListener('scroll', paint, { passive: true });
+  window.addEventListener('resize', paint);
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (d && d.type === 'highlight') { current = d.id || null; paint(); }
+  });
+})();`;
 
 // Aspetto scelto dal cliente per un blocco (sfondo, testo, forma e copertura del gratta). Senza scelte il blocco non viene toccato.
 // I valori sono già validati (esadecimali e opzioni note), quindi possono stare in uno stile inline.

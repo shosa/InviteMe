@@ -58,10 +58,10 @@ const titleOf = (config: InviteConfig) => textOf(config, "title");
 const isMediaKind = (v: string): v is MediaKind => v === "photo" || v === "video" || v === "audio";
 
 // Pagina dell'invito per una configurazione. Null se il tema non esiste più (invito da ricreare).
-function renderFor(c: Catalog, slug: string, config: InviteConfig, preview = false): string | null {
+function renderFor(c: Catalog, slug: string, config: InviteConfig, preview = false, builder = false): string | null {
   const theme = themes().find((t) => t.manifest.id === config.themeId);
   if (!theme) return null;
-  return renderInvitePage({ theme, config, slug, features: activeFeatures(c, config.model, config.addons), runtime: RUNTIME, preview });
+  return renderInvitePage({ theme, config, slug, features: activeFeatures(c, config.model, config.addons), runtime: RUNTIME, preview, builder });
 }
 
 const NOT_FOUND_PAGE = `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Invito non disponibile</title></head><body style="font-family:Georgia,serif;text-align:center;padding:60px 20px;color:#17242A"><p>Questo invito non è disponibile.</p></body></html>`;
@@ -377,7 +377,7 @@ export async function buildApp() {
     if (!config) return reply.code(400).send({ error: "Configurazione non valida" });
     // Di default l'anteprima mostra la pagina senza busta: il cliente vede subito i contenuti. ?cover=1 la mostra.
     const showCover = (req.query as { cover?: string }).cover === "1";
-    const html = renderFor(c, inv.slug, config, !showCover);
+    const html = renderFor(c, inv.slug, config, !showCover, true);
     if (!html) return reply.code(400).send({ error: "Tema non disponibile" });
     return reply.type("text/html; charset=utf-8").header("Cache-Control", "no-store").send(html);
   });
