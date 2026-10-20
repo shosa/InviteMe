@@ -908,17 +908,6 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .logo-word { font-family: var(--font-display), sans-serif; font-weight: 700; letter-spacing: -0.02em; }
 .lede { color: var(--ink-soft); }
 
-/* Copertina della Home: telefono statico con i dati d'esempio. */
-.hero-phone { display: flex; justify-content: center; }
-.hero-phone-screen { width: 320px; height: 660px; border-radius: 52px; background: #0e1116; padding: 11px; box-sizing: border-box; box-shadow: 0 30px 60px -36px rgba(14, 17, 22, 0.5); }
-.hero-phone-inner { height: 100%; border-radius: 42px; background: #fff; padding: 44px 28px 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; text-align: center; overflow: hidden; }
-.hero-phone-kicker { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #0b6e65; font-weight: 600; }
-.hero-phone-names { font-family: var(--font-display), sans-serif; font-weight: 700; font-size: 44px; line-height: 1.02; letter-spacing: -0.03em; margin-top: 18px; color: #0e1116; }
-.hero-phone-rule { width: 44px; height: 3px; background: #14b8a6; margin-top: 22px; }
-.hero-phone-dates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 26px; }
-.hero-phone-dates span { background: #f5f6f8; border-radius: 14px; padding: 14px 0; text-align: center; font-family: var(--font-display), sans-serif; font-size: 26px; font-weight: 700; color: #0e1116; }
-.hero-phone-screen p { font-size: 14px; line-height: 1.5; color: #4a5361; margin: 24px 0 0; }
-.hero-phone-cta { margin-top: auto; margin-bottom: 34px; background: #14b8a6; color: #0e1116; font-weight: 600; font-size: 15px; border-radius: 999px; padding: 15px 0; text-align: center; }
 
 /* Passi della Home e card dell'account: superfici bianche con bordo e raggio ampio. */
 .steps li { background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 30px; }
@@ -938,7 +927,6 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .dash-filter { display: inline-flex; gap: 4px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px; margin-bottom: 28px; }
 .dash-filter a { font-size: 14px; font-weight: 500; color: var(--ink-soft); text-decoration: none; border-radius: 999px; padding: 8px 16px; }
 .dash-filter a.is-on { background: var(--ink); color: #fff; font-weight: 600; }
-.hero-phone-cta { align-self: stretch; }
 .bl-struct-head .bl-h { font-family: var(--font-display), sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; text-transform: none; color: var(--ink); margin: 0; }
 .total strong { color: var(--ink); }
 .bl-item .bl-warn { color: #a35a00; }
