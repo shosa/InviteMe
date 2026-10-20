@@ -1,6 +1,7 @@
 "use client";
 
-import { EVENT_FIELDS, EVENT_TYPES, blockDef, enabledThemes, type BlockInstance, type Catalog, type EventType, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
+import { EVENT_FIELDS, EVENT_TYPES, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
+import { useMemo, useState } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { Field, FieldEditor, type Values } from "./fields";
 import { TemplateSwitch } from "./TemplateSwitch";
@@ -8,7 +9,62 @@ import { ui } from "@/lib/ui";
 import { blockCopy, fieldCopy } from "@/lib/catalogCopy";
 
 // Luogo e indirizzo: con il blocco Mappa si modificano lì, non nel pannello Evento.
-const LOCATION_KEYS = ["venue", "address"];
+const LOCATION_KEYS = ["address"];
+
+// Gruppi di proprietà, nell'ordine in cui compaiono nelle schede: testi, colori, forme, altro.
+type TabKey = "all" | "texts" | "colors" | "shapes" | "other";
+const SHAPE_KEYS = ["cellShape", "galleryStyle", "lookShape", "photoShape"];
+function fieldTab(f: FieldDef): Exclude<TabKey, "all"> {
+  if (["text", "longtext", "url", "date", "time", "number"].includes(f.type)) return "texts";
+  if (f.type === "color") return "colors";
+  if (f.type === "choice" && SHAPE_KEYS.includes(f.key)) return "shapes";
+  return "other";
+}
+const TAB_ORDER: Exclude<TabKey, "all">[] = ["texts", "colors", "shapes", "other"];
+
+function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typeof ui>["builder"] }) {
+  const [tab, setTab] = useState<TabKey>("all");
+  const fields = useMemo(
+    () => [...def.fields].sort((a, b) => TAB_ORDER.indexOf(fieldTab(a)) - TAB_ORDER.indexOf(fieldTab(b))),
+    [def],
+  );
+  const shown = tab === "all" ? fields : fields.filter((f) => fieldTab(f) === tab);
+  const present = new Set(fields.map(fieldTab));
+  const tabs: [TabKey, string][] = [
+    ["all", L.tabAll],
+    ["texts", L.tabTexts],
+    ["colors", L.tabColors],
+    ["shapes", L.tabShapes],
+    ["other", L.tabOther],
+  ];
+  return (
+    <>
+      <div className="bl-tabs" role="tablist">
+        {tabs.filter(([k]) => k === "all" || present.has(k)).map(([k, label]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? "bl-tab on" : "bl-tab"} onClick={() => setTab(k)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="bl-fields">
+        {shown.map((f) => (
+          <FieldEditor
+            key={f.key}
+            copy={(k, l) => fieldCopy(def.type, k, l, p.lang ?? "it")}
+            standard={L.standardStyle}
+            field={f}
+            value={(p.block!.props as Values)[f.key] ?? def.defaults[f.key]}
+            disabledByFeature={false}
+            busy={p.busy}
+            library={p.catalog.music}
+            onChange={(v) => p.onSetProp(p.block!.id, f.key, v, `${p.block!.id}:${f.key}`)}
+            onUpload={p.onUpload}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
 
 type Props = {
   config: InviteConfig;
@@ -56,22 +112,7 @@ export function Inspector(p: Props) {
         {def.fields.length === 0 && p.block.type !== "map" ? (
           <p className="hint">{L.blockHint}</p>
         ) : (
-          <div className="bl-fields">
-            {def.fields.map((f) => (
-              <FieldEditor
-                key={f.key}
-                copy={(k, l) => fieldCopy(def.type, k, l, p.lang ?? "it")}
-                standard={L.standardStyle}
-                field={f}
-                value={(p.block!.props as Values)[f.key] ?? def.defaults[f.key]}
-                disabledByFeature={false}
-                busy={p.busy}
-                library={p.catalog.music}
-                onChange={(v) => p.onSetProp(p.block!.id, f.key, v, `${p.block!.id}:${f.key}`)}
-                onUpload={p.onUpload}
-              />
-            ))}
-          </div>
+          <BlockFields key={p.block.id} p={p} def={def} L={L} />
         )}
         {p.block.type === "map" && (
           <section className="bl-group" aria-labelledby="bl-loc">

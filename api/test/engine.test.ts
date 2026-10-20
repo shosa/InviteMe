@@ -111,8 +111,7 @@ describe("localizzazione", () => {
   const theme = loadThemes().themes.find((t) => t.manifest.id === "invitereference")!;
 
   it("con locale inglese le etichette dei blocchi sono in inglese", () => {
-    const config = sampleConfig(theme.manifest);
-    config.locale = "en";
+    const config = sampleConfig(theme.manifest, "en");
     const html = renderInvitePage({ theme, config, slug: "x", features: new Set(ADDON_KEYS), runtime, preview: false });
     assert.match(html, /Tap to open/);
     assert.match(html, /Scratch to reveal the date/);

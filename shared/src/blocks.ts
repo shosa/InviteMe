@@ -41,7 +41,6 @@ export const EVENT_FIELDS: FieldDef[] = [
   { key: "hosts", label: "Riga sotto i nomi", type: "text", group: "Evento", max: 120 },
   { key: "eventDate", label: "Data", type: "date", group: "Evento", required: true },
   { key: "eventTime", label: "Ora di inizio", type: "time", group: "Evento", required: true },
-  { key: "venue", label: "Luogo", type: "text", group: "Evento", max: 120 },
   { key: "address", label: "Indirizzo", type: "text", group: "Evento", max: 200 },
 ];
 
@@ -182,14 +181,31 @@ export const BLOCKS: BlockDef[] = [
   },
   {
     type: "venue",
-    label: "Luogo",
-    description: "Nome, indirizzo e foto del luogo.",
+    label: "Location",
+    description: "Nome e tipo del luogo; l'indirizzo si imposta nella Mappa.",
     unique: true,
     fields: [
-      { key: "heading", label: "Titolo", type: "text", group: "Luogo", max: 80 },
-      { key: "photo", label: "Foto del luogo", type: "photo", group: "Luogo" },
+      { key: "heading", label: "Titolo", type: "text", group: "Location", max: 80 },
+      { key: "venue", label: "Nome del luogo", type: "text", group: "Location", max: 120 },
+      {
+        key: "kind",
+        label: "Tipo",
+        type: "choice",
+        group: "Location",
+        options: [
+          { value: "villa", label: "Villa" },
+          { value: "chiesa", label: "Chiesa" },
+          { value: "ristorante", label: "Ristorante" },
+          { value: "giardino", label: "Giardino" },
+          { value: "hotel", label: "Hotel" },
+          { value: "sala", label: "Sala ricevimenti" },
+          { value: "spiaggia", label: "Spiaggia" },
+          { value: "altro", label: "Altro" },
+        ],
+      },
+      { key: "photo", label: "Foto del luogo", type: "photo", group: "Location" },
     ],
-    defaults: { heading: "Dove", photo: "" },
+    defaults: { heading: "Dove", venue: "", kind: "", photo: "" },
     defaultsEn: { heading: "Where" },
   },
   {
@@ -319,6 +335,33 @@ const PHOTO_SHAPE: FieldDef = {
 };
 for (const b of BLOCKS) {
   if (b.fields.some((f) => f.type === "photo" || f.type === "photos")) b.fields = [...b.fields, PHOTO_SHAPE];
+}
+
+// Testi che il motore mette nei blocchi (etichette): diventano campi modificabili, già compilati con il testo attuale.
+type LabelDef = { key: string; tKey: string; label: string; it: string; en: string };
+const DATE_LABELS: LabelDef[] = [
+  { key: "dateTitle", tKey: "dateTitle", label: "Titolo della data", it: "La data", en: "The date" },
+  { key: "dayLabel", tKey: "dayLabel", label: "Etichetta del giorno", it: "Giorno", en: "Day" },
+  { key: "monthLabel", tKey: "monthLabel", label: "Etichetta del mese", it: "Mese", en: "Month" },
+  { key: "yearLabel", tKey: "yearLabel", label: "Etichetta dell'anno", it: "Anno", en: "Year" },
+];
+export const BLOCK_LABELS: Partial<Record<BlockType, LabelDef[]>> = {
+  cover: [{ key: "tapLabel", tKey: "tapToOpen", label: "Testo per aprire la busta", it: "Tocca per aprire", en: "Tap to open" }],
+  hero: [{ key: "scrollLabel", tKey: "scrollDown", label: "Testo per scorrere", it: "Scorri", en: "Scroll" }],
+  date: DATE_LABELS,
+  scratchdate: [...DATE_LABELS, { key: "revealLabel", tKey: "revealAll", label: "Testo per scoprire la data", it: "Scopri la data", en: "Reveal the date" }],
+  rsvp: [
+    { key: "openLabel", tKey: "rsvpOpen", label: "Testo per aprire la conferma", it: "Clicca per aprire", en: "Click to open" },
+    { key: "submitLabel", tKey: "rsvpSubmit", label: "Testo del pulsante di invio", it: "Invia", en: "Send" },
+    { key: "thanksLabel", tKey: "rsvpThanks", label: "Titolo del ringraziamento", it: "Grazie di cuore!", en: "Thank you!" },
+  ],
+};
+for (const def of BLOCKS) {
+  const labels = BLOCK_LABELS[def.type];
+  if (!labels) continue;
+  def.fields = [...def.fields, ...labels.map((l) => ({ key: l.key, label: l.label, type: "text" as const, group: "Testi", max: 120 }))];
+  def.defaults = { ...def.defaults, ...Object.fromEntries(labels.map((l) => [l.key, l.it])) };
+  def.defaultsEn = { ...(def.defaultsEn ?? {}), ...Object.fromEntries(labels.map((l) => [l.key, l.en])) };
 }
 
 export const DEFAULT_BLOCKS: BlockType[] = ["cover", "hero", "scratchdate", "countdown", "message", "program", "venue", "map", "transfer", "dresscode", "rsvp", "footer"];

@@ -1,5 +1,6 @@
 import {
   ADDON_KEYS,
+  BLOCK_LABELS,
   blockDef,
   escapeHtml,
   renderTemplate,
@@ -68,6 +69,23 @@ export function renderInvitePage(input: PageInput): string {
     for (const [k, v] of Object.entries(block.props)) {
       if (v === "" && k in globals) continue;
       merged[k] = v;
+    }
+    // Le etichette modificate nel blocco sostituiscono quelle del tema, solo per questo blocco.
+    const labelTexts: Record<string, string> = {};
+    for (const l of BLOCK_LABELS[block.type as BlockType] ?? []) {
+      const v = block.props[l.key];
+      if (typeof v === "string" && v.trim()) labelTexts[l.tKey] = v;
+    }
+    if (Object.keys(labelTexts).length) merged.t = { ...(globals.t as Record<string, string>), ...labelTexts };
+    // Il tipo del luogo si mostra con il suo nome (Villa, Chiesa…), nella lingua dell'invito.
+    // Sempre definito per il luogo (vuoto se non scelto), così il segnaposto è coperto anche senza tipo.
+    if (block.type === "venue") {
+      const names: Record<string, Record<string, string>> = {
+        it: { villa: "Villa", chiesa: "Chiesa", ristorante: "Ristorante", giardino: "Giardino", hotel: "Hotel", sala: "Sala ricevimenti", spiaggia: "Spiaggia", altro: "Altro" },
+        en: { villa: "Villa", chiesa: "Church", ristorante: "Restaurant", giardino: "Garden", hotel: "Hotel", sala: "Function room", spiaggia: "Beach", altro: "Other" },
+      };
+      const kind = typeof block.props.kind === "string" ? block.props.kind : "";
+      merged.kindLabel = names[config.locale]?.[kind] ?? "";
     }
     let html = renderTemplate(template, merged, { missing: input.missing });
     // L'etichetta «Con gioia» dei template diventa il testo sopra i nomi scelto nel blocco.

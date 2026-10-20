@@ -49,7 +49,7 @@ export const BLOCK_COPY_EN: Record<string, string> = {
   message: "Message",
   gallery: "Gallery",
   program: "Programme",
-  venue: "Venue",
+  venue: "Location",
   map: "Map",
   transfer: "How to get there",
   dresscode: "Dress code",

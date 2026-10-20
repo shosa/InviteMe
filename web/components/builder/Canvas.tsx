@@ -34,7 +34,7 @@ function missing(b: BlockInstance, config: InviteConfig, L: ReturnType<typeof ui
     case "map":
       return config.event.address ? null : L.hintAddress;
     case "venue":
-      return config.event.venue ? null : L.hintVenue;
+      return p.venue || config.event.venue ? null : L.hintVenue;
     case "gallery":
       return Array.isArray(p.photos) && p.photos.length > 0 ? null : L.hintPhotos;
     case "program":

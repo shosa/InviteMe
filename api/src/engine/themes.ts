@@ -159,7 +159,7 @@ export function sampleConfig(manifest: ThemeManifest, lang: "it" | "en" = "it", 
       type,
       hidden: false,
       // I valori dello stile (immagini, filmati) restano quelli del template; i testi cambiano a ogni caricamento.
-      props: { ...JSON.parse(JSON.stringify(def.defaults)), ...(manifest.demo[type] ?? {}), ...generated },
+      props: { ...JSON.parse(JSON.stringify(lang === "en" ? (def.defaultsEn ?? def.defaults) : def.defaults)), ...(manifest.demo[type] ?? {}), ...generated },
     };
   });
   return config;

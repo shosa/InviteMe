@@ -1440,3 +1440,9 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-question .row input, .bl-question .row select { background: #fff; border: 1px solid #C9CED6; border-radius: 12px; padding: 11px 14px; font-size: 15px; }
 .bl-question > .link { justify-self: start; }
 .bl-questions > .btn { margin-top: 14px; }
+
+/* Schede delle proprietà: come segnalibri sopra i campi. */
+.bl-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 4px 0 16px; overflow-x: auto; scrollbar-width: none; }
+.bl-tabs::-webkit-scrollbar { display: none; }
+.bl-tab { font: inherit; font-size: 13px; font-weight: 600; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted, #4A5361); padding: 8px 10px; cursor: pointer; white-space: nowrap; }
+.bl-tab.on { color: var(--ink, #0E1116); border-bottom-color: var(--teal, #0B6E65); }
