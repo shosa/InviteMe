@@ -1272,3 +1272,14 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .compare .model-card .model-desc { font-size: 19px; }
 .compare .model-card .model-tagline { font-size: 1.35rem; }
 @media (max-width: 760px) { .model-split { grid-template-columns: minmax(0, 1fr); } }
+
+/* Colonna Struttura più larga: il nome del blocco resta su una riga, le frecce e le icone non si sovrappongono. */
+.bl-app { grid-template-columns: 360px minmax(0, 1fr) 360px; }
+.bl-item { grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; padding: 8px 6px 8px 4px; }
+.bl-select { min-width: 0; }
+.bl-name-row { min-width: 0; max-width: 100%; }
+.bl-name-row > span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.bl-name, .bl-select small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bl-tools { display: flex; flex-wrap: nowrap; gap: 0; }
+.bl-tools button { width: 26px; height: 26px; padding: 0; display: grid; place-items: center; }
+.bl-tools button svg { width: 14px; height: 14px; }
