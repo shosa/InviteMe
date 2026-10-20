@@ -41,11 +41,19 @@ export function Typing({ phrases }: { phrases: string[] }) {
     return () => window.clearTimeout(timer);
   }, [phrases]);
 
+  // La frase più lunga occupa sempre lo spazio (invisibile): il testo che si scrive non spinge il resto della pagina.
+  const longest = phrases.reduce((a, b) => (b.length > a.length ? b : a), phrases[0] ?? "");
+
   return (
     <span className="typing">
       <span className="sr-only">{phrases[0]}</span>
-      <span aria-hidden="true">{text}</span>
-      <span className="caret" aria-hidden="true" />
+      <span className="typing-box">
+        <span className="typing-ghost" aria-hidden="true">{longest}</span>
+        <span className="typing-live" aria-hidden="true">
+          {text}
+          <span className="caret" />
+        </span>
+      </span>
     </span>
   );
 }

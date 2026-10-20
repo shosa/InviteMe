@@ -934,20 +934,26 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .invite-card { display: flex; flex-direction: column; gap: 22px; }
 .invite-actions { margin-top: auto; }
 
-/* Scena della Home su un paesaggio: foto contenuta, nitida al centro, con i bordi che sfumano nella pagina. */
 .hero-visual { position: relative; isolation: isolate; }
+/* Paesaggio ad arco, più grande della scena, con bordi netti: la forma arco è il fondo della composizione. */
 .hero-visual::before {
   content: "";
   position: absolute;
-  top: 12%;
-  bottom: 12%;
-  left: 4%;
-  right: 4%;
+  top: -4%;
+  bottom: 2%;
+  left: -10%;
+  right: -10%;
   z-index: -1;
   background: url("/stock/landscape-lago-verde.jpg") center / cover no-repeat;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent), linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  border-radius: 999px 999px 0 0;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 11%, #000 89%, transparent), linear-gradient(to bottom, #000 80%, transparent);
   -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent), linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 11%, #000 89%, transparent), linear-gradient(to bottom, #000 80%, transparent);
   mask-composite: intersect;
   pointer-events: none;
 }
+/* Titolo che si scrive: la frase più lunga tiene il posto, così l'altezza dell'hero non cambia durante l'animazione. */
+.typing-box { display: inline-grid; }
+.typing-box > span { grid-area: 1 / 1; }
+.typing-ghost { visibility: hidden; }
+.hero-title { max-width: 14ch; }

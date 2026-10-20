@@ -207,8 +207,9 @@ function lookWrap(props: Record<string, unknown>, html: string): string {
   if (typeof props.lookInk === "string" && props.lookInk) vars.push(`--bk-ink:${props.lookInk}`);
   if (typeof props.lookCover === "string" && props.lookCover) vars.push(`--bk-cover:${props.lookCover}`);
   const shape = typeof props.lookShape === "string" ? props.lookShape : "";
-  if (!vars.length && !shape) return html;
-  return `<div class="bk"${shape ? ` data-shape="${shape}"` : ""} style="${vars.join(";")}">\n${html}</div>\n`;
+  const photo = typeof props.photoShape === "string" ? props.photoShape : "";
+  if (!vars.length && !shape && !photo) return html;
+  return `<div class="bk"${shape ? ` data-shape="${shape}"` : ""}${photo ? ` data-photo-shape="${photo}"` : ""} style="${vars.join(";")}">\n${html}</div>\n`;
 }
 
 // Regole comuni a tutti i temi per l'aspetto dei blocchi. Vincono sul tema solo dove il cliente ha scelto qualcosa.
@@ -220,6 +221,18 @@ const LOOK_CSS = `
 .bk[data-shape="square"] [data-scratch]{border-radius:0!important}
 .bk[data-shape="round"] [data-scratch]{border-radius:50%!important}
 .bk[data-shape="pill"] [data-scratch]{border-radius:999px!important}
+[data-cover] .env-top{margin:0 0 22px;font-size:13px;letter-spacing:.18em;text-transform:uppercase;text-align:center;color:inherit}
+[data-cover] .env-card{position:relative;width:min(78vw,420px);aspect-ratio:1.45;margin:0 auto;filter:drop-shadow(0 26px 30px rgba(0,0,0,.28))}
+[data-cover] .env{position:absolute;inset:0;overflow:hidden;border-radius:6px;background:linear-gradient(to top right,transparent 49.6%,rgba(0,0,0,.07) 50%,transparent 50.4%),linear-gradient(to top left,transparent 49.6%,rgba(0,0,0,.07) 50%,transparent 50.4%),var(--env,#f7f1e6)}
+[data-cover] .env-flap{position:absolute;left:0;right:0;top:0;height:58%;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.09)),var(--env,#f7f1e6);clip-path:polygon(0 0,100% 0,50% 100%)}
+[data-cover] .env-seal{position:absolute;left:50%;top:58%;width:24%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.35),transparent 42%),var(--seal,#8e2a22);box-shadow:0 4px 10px rgba(0,0,0,.3);color:#fff;font-size:clamp(13px,3.2vw,20px);font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-align:center;line-height:1.1;padding:0 6px;box-sizing:border-box}
+.bk[data-photo-shape] img:not(.fl):not(.orn){object-fit:cover}
+.bk[data-photo-shape="arch"] img:not(.fl):not(.orn){border-radius:999px 999px 0 0!important}
+.bk[data-photo-shape="circle"] img:not(.fl):not(.orn){border-radius:50%!important;aspect-ratio:1/1}
+.bk[data-photo-shape="oval"] img:not(.fl):not(.orn){border-radius:50%!important;aspect-ratio:4/5}
+.bk[data-photo-shape="rounded"] img:not(.fl):not(.orn){border-radius:28px!important}
+.bk[data-photo-shape="diamond"] img:not(.fl):not(.orn){clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.bk[data-photo-shape="hexagon"] img:not(.fl):not(.orn){clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
 [data-music-toggle]{position:fixed!important;right:18px!important;bottom:18px!important;top:auto!important;left:auto!important;z-index:9000!important;width:52px!important;height:52px!important;border-radius:50%!important;border:0!important;background:#0E1116!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:0!important;box-shadow:0 10px 28px rgba(0,0,0,.25)!important;cursor:pointer}
 [data-music-toggle] svg{width:20px!important;height:20px!important;fill:#FFFFFF!important}
 `;

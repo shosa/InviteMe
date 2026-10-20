@@ -61,6 +61,8 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   const [guests, setGuests] = useState(initial.guests);
   const [firstSave, setFirstSave] = useState(true);
   const [showCover, setShowCover] = useState(false);
+  // La busta si vede in anteprima quando è selezionata, oppure con l'interruttore «Mostra la busta».
+  const envelopeOn = showCover || selected !== null && config.blocks.some((b) => b.id === selected && b.type === "cover");
   const [hover, setHover] = useState<string | null>(null);
   const [scroll, setScroll] = useState({ y: 0, max: 0 });
   const frame = useRef<HTMLIFrameElement>(null);
@@ -118,7 +120,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
     setPreviewState("loading");
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/invitations/${initial.id}/preview?cover=${showCover ? 1 : 0}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) });
+        const res = await fetch(`/api/invitations/${initial.id}/preview?cover=${envelopeOn ? 1 : 0}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) });
         if (!alive) return;
         if (res.ok) {
           setPreview(await res.text());
@@ -134,7 +136,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
       alive = false;
       clearTimeout(t);
     };
-  }, [config, initial.id, showCover]);
+  }, [config, initial.id, envelopeOn]);
 
   // Lista e anteprima si scambiano l'evidenziazione: l'hover sull'una accende l'altra, e un click nell'anteprima seleziona il blocco.
   useEffect(() => {

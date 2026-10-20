@@ -65,10 +65,14 @@ export const BLOCKS: BlockDef[] = [
     description: "Copertina che si apre al tocco, con filmato e suono facoltativi.",
     unique: true,
     fields: [
+      { key: "topText", label: "Testo sopra la busta", type: "text", group: "Busta", max: 80 },
+      { key: "sealText", label: "Testo nel sigillo", type: "text", group: "Busta", max: 12 },
+      { key: "envelopeColor", label: "Colore della busta", type: "color", group: "Busta" },
+      { key: "sealColor", label: "Colore del sigillo", type: "color", group: "Busta" },
       { key: "coverVideo", label: "Filmato della busta (muto, max 90 s)", type: "video", group: "Busta" },
       { key: "coverSound", label: "Suono all'apertura", type: "audio", group: "Busta" },
     ],
-    defaults: { coverVideo: "", coverSound: "" },
+    defaults: { topText: "", sealText: "", coverVideo: "", coverSound: "" },
     defaultsEn: {},
   },
   {
@@ -263,6 +267,24 @@ const SCRATCH_LOOK: FieldDef[] = [
 for (const b of BLOCKS) {
   if (b.type === "music") continue; // il lettore audio non ha superfici da colorare
   b.fields = [...b.fields, ...LOOK_FIELDS, ...(b.type === "scratchdate" ? SCRATCH_LOOK : [])];
+}
+// Forma della foto: predefinite, scelte dal cliente per ogni blocco che mostra una o più foto.
+const PHOTO_SHAPE: FieldDef = {
+  key: "photoShape",
+  label: "Forma della foto",
+  type: "choice",
+  group: "Foto",
+  options: [
+    { value: "arch", label: "Arco" },
+    { value: "circle", label: "Cerchio" },
+    { value: "oval", label: "Ovale" },
+    { value: "rounded", label: "Angoli arrotondati" },
+    { value: "diamond", label: "Rombo" },
+    { value: "hexagon", label: "Esagono" },
+  ],
+};
+for (const b of BLOCKS) {
+  if (b.fields.some((f) => f.type === "photo" || f.type === "photos")) b.fields = [...b.fields, PHOTO_SHAPE];
 }
 
 export const DEFAULT_BLOCKS: BlockType[] = ["cover", "hero", "scratchdate", "countdown", "message", "program", "venue", "map", "transfer", "dresscode", "rsvp", "footer"];
