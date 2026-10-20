@@ -26,6 +26,7 @@ import { Canvas } from "./builder/Canvas";
 import { Inspector } from "./builder/Inspector";
 import { GuestsPanel } from "./builder/guests";
 import { useHistory } from "./builder/history";
+import { parseFragments } from "@/lib/blockFragments";
 import { ui, type Lang } from "@/lib/ui";
 import { modelCopy, themeCopy } from "@/lib/catalogCopy";
 
@@ -45,6 +46,17 @@ type Device = "desktop" | "mobile";
 type Save = "saved" | "saving" | "error";
 
 // Editor dell'invito: palette e struttura a sinistra, anteprima reale al centro, proprietà a destra.
+// Blocchi che si aggiornano da soli nell'anteprima: senza script né animazioni di apertura.
+const PATCHABLE = new Set(["hero", "message", "program", "venue", "map", "transfer", "dresscode", "footer", "date"]);
+
+// Tutto ciò che, cambiando, rende la pagina diversa nel suo insieme: se cambia uno di questi, l'anteprima si ricarica.
+function pageKey(c: InviteConfig, envelopeOn: boolean): string {
+  return JSON.stringify({
+    t: c.themeId, m: c.model, a: [...c.addons].sort(), l: c.locale, e: c.eventType, q: c.rsvpQuestions, env: envelopeOn,
+    ids: c.blocks.map((b) => `${b.id}:${b.type}:${b.hidden ? 1 : 0}`),
+  });
+}
+
 export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang }) {
   const L = ui(lang).builder;
   const catalog = initial.catalog;
@@ -132,6 +144,8 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   }, [selected]);
 
   // Anteprima: la pagina reale del motore, rigenerata dal server con la configurazione in corso.
+  // Se è cambiato solo il contenuto di qualche blocco, si aggiornano solo quei blocchi nell'anteprima, senza ricaricarla.
+  const lastRender = useRef<{ key: string; frags: Record<string, string> } | null>(null);
   useEffect(() => {
     let alive = true;
     setPreviewState("loading");
@@ -139,12 +153,25 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
       try {
         const res = await fetch(`/api/invitations/${initial.id}/preview?cover=${envelopeOn ? 1 : 0}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) });
         if (!alive) return;
-        if (res.ok) {
-          setPreview(await res.text());
-          setPreviewState("ready");
+        if (!res.ok) return setPreviewState("error");
+        const html = await res.text();
+        const frags = parseFragments(html);
+        const key = pageKey(config, envelopeOn);
+        const prev = lastRender.current;
+        const sameSkeleton = !!prev && prev.key === key && Object.keys(frags).length === Object.keys(prev.frags).length;
+        if (sameSkeleton) {
+          const changed = Object.keys(frags).filter((id) => frags[id] !== prev.frags[id]);
+          const patchable = changed.every((id) => PATCHABLE.has(config.blocks.find((b) => b.id === id)?.type ?? ""));
+          if (patchable) {
+            for (const id of changed) frame.current?.contentWindow?.postMessage({ type: "patch", id, html: frags[id] }, "*");
+          } else {
+            setPreview(html);
+          }
         } else {
-          setPreviewState("error");
+          setPreview(html);
         }
+        lastRender.current = { key, frags };
+        setPreviewState("ready");
       } catch {
         if (alive) setPreviewState("error");
       }
@@ -388,13 +415,19 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
             <strong>{theme ? themeCopy(theme.id, theme.name, lang) : "—"}</strong>
           </div>
           <div className="bl-preview-tools">
-            {hasCover && (
-              <label className={`bl-switch${showCover ? " is-on" : ""}`}>
-                <input type="checkbox" role="switch" checked={showCover} onChange={(e) => setShowCover(e.target.checked)} />
-                <span className="bl-switch-track" aria-hidden="true"><span className="bl-switch-knob" /></span>
-                <span>{L.showEnvelope}</span>
-              </label>
-            )}
+            <div className="bl-tools-col">
+              {hasCover && (
+                <label className={`bl-switch${showCover ? " is-on" : ""}`}>
+                  <input type="checkbox" role="switch" checked={showCover} onChange={(e) => setShowCover(e.target.checked)} />
+                  <span className="bl-switch-track" aria-hidden="true"><span className="bl-switch-knob" /></span>
+                  <span>{L.showEnvelope}</span>
+                </label>
+              )}
+              <div className="bl-history">
+                <button type="button" className="bl-icon" aria-label={L.undo} title={`${L.undo} (Ctrl+Z)`} disabled={locked || !history.canUndo} onClick={history.undo}><Undo2 size={16} /></button>
+                <button type="button" className="bl-icon" aria-label={L.redo} title={`${L.redo} (Ctrl+Shift+Z)`} disabled={locked || !history.canRedo} onClick={history.redo}><Redo2 size={16} /></button>
+              </div>
+            </div>
             <span className="bl-preview-state">{previewState === "loading" ? L.updating : previewState === "error" ? "—" : ""}</span>
           </div>
         </div>

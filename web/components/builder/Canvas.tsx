@@ -50,25 +50,45 @@ function missing(b: BlockInstance, config: InviteConfig, L: ReturnType<typeof ui
 export function Canvas(p: Props) {
   const L = ui(p.lang ?? "it").builder;
   const [dragging, setDragging] = useState<number | null>(null);
-  const [over, setOver] = useState<number | null>(null);
+  // Trascinamento: si parte solo dalla maniglia; la linea mostra dove cade il blocco (sopra o sotto la riga).
+  const [armed, setArmed] = useState<number | null>(null);
+  const [drop, setDrop] = useState<{ index: number; after: boolean } | null>(null);
   const [adding, setAdding] = useState(false);
 
-  function onDragStart(e: DragEvent, index: number) {
+  function resetDrag() {
+    setDragging(null);
+    setDrop(null);
+    setArmed(null);
+  }
+  function onDragStart(e: DragEvent<HTMLLIElement>, index: number) {
+    if (armed !== index) return e.preventDefault();
     setDragging(index);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", String(index));
+    // L'immagine che segue il mouse è la riga stessa, non un rettangolo generico.
+    e.dataTransfer.setDragImage(e.currentTarget, 24, 20);
   }
-  function onDrop(e: DragEvent, index: number) {
+  function onDragOver(e: DragEvent<HTMLLIElement>, index: number) {
+    e.preventDefault();
+    const r = e.currentTarget.getBoundingClientRect();
+    const after = e.clientY > r.top + r.height / 2;
+    if (drop?.index !== index || drop.after !== after) setDrop({ index, after });
+  }
+  function onDrop(e: DragEvent<HTMLLIElement>) {
     e.preventDefault();
     const from = dragging ?? Number(e.dataTransfer.getData("text/plain"));
-    if (Number.isInteger(from) && from !== index) p.onMove(from, index);
-    setDragging(null);
-    setOver(null);
+    if (Number.isInteger(from) && drop) {
+      // Il punto di inserimento è sopra o sotto la riga; spostando verso il basso va tolta la posizione lasciata libera.
+      const at = drop.after ? drop.index + 1 : drop.index;
+      const to = from < at ? at - 1 : at;
+      if (to !== from) p.onMove(from, to);
+    }
+    resetDrag();
   }
 
   return (
     <div className="bl-column">
-      <section className="bl-section bl-structure" aria-labelledby="bl-struct">
+      <section className={`bl-section bl-structure${dragging !== null ? " is-sorting" : ""}`} aria-labelledby="bl-struct">
         <header className="bl-struct-head">
           <h2 id="bl-struct" className="bl-h">{L.structure}</h2>
           <button type="button" className="bl-plus" aria-label={L.addBlock} title={L.addBlock} onClick={() => setAdding(true)}>
@@ -85,17 +105,16 @@ export function Canvas(p: Props) {
             return (
               <li
                 key={b.id}
-                draggable={!def?.locked && !def?.anchored}
+                draggable={armed === i && !def?.locked && !def?.anchored}
                 onDragStart={(e) => onDragStart(e, i)}
-                onDragOver={(e) => { e.preventDefault(); setOver(i); }}
-                onDragLeave={() => setOver(null)}
-                onDrop={(e) => onDrop(e, i)}
-                onDragEnd={() => { setDragging(null); setOver(null); }}
+                onDragOver={(e) => onDragOver(e, i)}
+                onDrop={onDrop}
+                onDragEnd={resetDrag}
                 onMouseEnter={() => p.onHover(b.id)}
                 onMouseLeave={() => p.onHover(null)}
-                className={`bl-item${def?.locked ? " is-locked" : ""}${def?.anchored ? " is-anchored" : ""}${active ? " is-on" : ""}${p.hover === b.id ? " is-hover" : ""}${b.hidden ? " is-hidden" : ""}${over === i && dragging !== null && dragging !== i ? " is-over" : ""}`}
+                className={`bl-item${def?.locked ? " is-locked" : ""}${def?.anchored ? " is-anchored" : ""}${active ? " is-on" : ""}${p.hover === b.id ? " is-hover" : ""}${b.hidden ? " is-hidden" : ""}${dragging !== null && drop?.index === i && dragging !== i ? (drop.after ? " is-drop-after" : " is-drop-before") : ""}${dragging === i ? " is-dragging" : ""}`}
               >
-                <span className="bl-grip" aria-hidden="true"><GripVertical size={16} /></span>
+                <span className="bl-grip" aria-hidden="true" onPointerDown={() => setArmed(i)} onPointerUp={() => setArmed(null)}><GripVertical size={16} /></span>
                 <button type="button" className="bl-select" onClick={() => p.onSelect(b.id)} aria-pressed={active}>
                   <span className="bl-name bl-name-row">{def && <BlockIcon type={def.type} size={16} />}<span>{name}</span></span>
                   {def?.locked && <small className="bl-lock">{L.mainBlock}</small>}

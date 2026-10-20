@@ -1549,3 +1549,18 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
   .admin-nav button.is-on { border-bottom-color: var(--brass); }
   .adm-facts { grid-template-columns: 1fr; }
 }
+
+/* Anteprima: interruttore della busta e, sotto, annulla e ripeti. */
+.bl-tools-col { display: grid; gap: 8px; justify-items: start; }
+.bl-history { display: inline-flex; gap: 4px; }
+.bl-history .bl-icon { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 999px; background: var(--paper-light); cursor: pointer; }
+.bl-history .bl-icon:disabled { opacity: .35; cursor: default; }
+.bl-history .bl-icon:not(:disabled):hover { border-color: var(--brass); color: var(--brass); }
+
+/* Lista delle sezioni: trascinamento dalla maniglia, linea del punto di inserimento, nessuna selezione del testo. */
+.bl-grip { cursor: grab; touch-action: none; }
+.bl-grip:active { cursor: grabbing; }
+.bl-structure.is-sorting { user-select: none; -webkit-user-select: none; }
+.bl-item.is-dragging { opacity: .45; }
+.bl-item.is-drop-before { box-shadow: inset 0 3px 0 var(--brass); }
+.bl-item.is-drop-after { box-shadow: inset 0 -3px 0 var(--brass); }

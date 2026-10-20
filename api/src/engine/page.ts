@@ -107,7 +107,8 @@ export function renderInvitePage(input: PageInput): string {
     const movable = !!input.builder && block.type !== "cover" && !isFixedPosition(block.type);
     const look = block.type === "cover" ? html : placeBlock(block.layout, lookWrap(block.props, html), movable);
     // display:contents: il contenitore non cambia l'impaginazione; serve solo a sapere a quale blocco appartiene ciò che c'è dentro.
-    const framed = input.builder ? `<div data-blk="${escapeHtml(block.id)}" style="display:contents">${look}</div>` : look;
+    // Il marcatore di chiusura serve al builder per ritagliare il blocco dalla pagina e aggiornarlo da solo.
+    const framed = input.builder ? `<div data-blk="${escapeHtml(block.id)}" style="display:contents">${look}</div><!--/blk-->` : look;
     if (block.type === "cover") cover += framed;
     else main += framed;
   }
@@ -184,12 +185,33 @@ const BUILDER_JS = `(function () {
     '.lay-rz{top:50%;right:3px;width:10px;height:46px;margin-top:-23px;border-radius:6px;cursor:ew-resize}' +
     '.bk-place.lay-on .lay-move,.bk-place.lay-on .lay-rz{display:block}';
   document.head.appendChild(lay);
-  var places = document.querySelectorAll('.bk-place[data-lw]');
-  for (var k = 0; k < places.length; k++) {
-    var mv = document.createElement('div'); mv.className = 'lay-move'; mv.setAttribute('data-lay', 'move'); mv.textContent = 'Sposta';
-    var rz = document.createElement('div'); rz.className = 'lay-rz'; rz.setAttribute('data-lay', 'rz');
-    places[k].appendChild(mv); places[k].appendChild(rz);
+  // Maniglie su ogni blocco spostabile; si richiamano anche quando un blocco viene aggiornato.
+  function addHandles(root) {
+    var places = root.querySelectorAll('.bk-place[data-lw]');
+    for (var k = 0; k < places.length; k++) {
+      if (places[k].querySelector('.lay-move')) continue;
+      var mv = document.createElement('div'); mv.className = 'lay-move'; mv.setAttribute('data-lay', 'move'); mv.textContent = 'Sposta';
+      var rz = document.createElement('div'); rz.className = 'lay-rz'; rz.setAttribute('data-lay', 'rz');
+      places[k].appendChild(mv); places[k].appendChild(rz);
+    }
   }
+  addHandles(document);
+  // Aggiornamento di un solo blocco: il builder manda solo il suo HTML, la pagina resta com'è (scorrimento compreso).
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || d.type !== 'patch' || e.source !== parent) return;
+    var wrap = document.querySelector('[data-blk="' + d.id + '"]');
+    if (!wrap) return;
+    wrap.innerHTML = d.html;
+    var anim = wrap.querySelectorAll('[data-anim]');
+    for (var a = 0; a < anim.length; a++) anim[a].classList.add('in');
+    addHandles(wrap);
+    if (current === d.id) {
+      var on = wrap.querySelector(':scope > .bk-place, .bk-place');
+      if (on) on.classList.add('lay-on');
+      paint();
+    }
+  });
   var drag = null;
   function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
   function applyLayout(el, l) {
@@ -199,6 +221,8 @@ const BUILDER_JS = `(function () {
   document.addEventListener('pointerdown', function (e) {
     var h = e.target && e.target.closest ? e.target.closest('[data-lay]') : null;
     if (!h || e.button > 0) return;
+    // Niente selezione del testo mentre si trascina.
+    document.documentElement.style.userSelect = 'none';
     var el = h.parentElement;
     var lw = +el.getAttribute('data-lw');
     drag = { mode: h.getAttribute('data-lay'), el: el, id: el.closest('[data-blk]').getAttribute('data-blk'),
@@ -219,11 +243,11 @@ const BUILDER_JS = `(function () {
     }
     l.x = Math.round(l.x); l.w = Math.round(l.w); l.dy = Math.round(l.dy);
     drag.last = l;
-    applyLayout(drag.el, l);
-    paint();
+    if (!drag.frame) drag.frame = requestAnimationFrame(function () { drag.frame = 0; applyLayout(drag.el, drag.last); paint(); });
   });
   function endDrag() {
     if (!drag) return;
+    document.documentElement.style.userSelect = '';
     var l = drag.last;
     var moved = l && (l.x !== 0 || l.w !== 100 || l.dy !== 0);
     // Il builder salva la posizione solo se è cambiata davvero.
