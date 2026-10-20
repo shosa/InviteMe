@@ -2,7 +2,7 @@ import type { AddonKey } from "../addons";
 import { isRecord, type FieldDef } from "./manifest";
 
 // File caricati dal cliente: solo quelli prodotti dalla pipeline ffmpeg (api/src/media.ts), mai un URL esterno.
-export const MEDIA_URL = /^\/api\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|mp4|mp3)$/;
+export const MEDIA_URL = /^\/api\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|mp4|mp3)$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME = /^\d{2}:\d{2}$/;
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -52,13 +52,13 @@ function sanitizeField(f: FieldDef, v: unknown): unknown {
     case "url":
       return typeof v === "string" && /^https:\/\/[^\s"'<>]{4,500}$/.test(v) ? v : "";
     case "photo":
-      return mediaUrl(v, "jpg");
+      return mediaUrl(v, ["jpg", "png"]);
     case "video":
-      return mediaUrl(v, "mp4");
+      return mediaUrl(v, ["mp4"]);
     case "audio":
-      return mediaUrl(v, "mp3");
+      return mediaUrl(v, ["mp3"]);
     case "photos":
-      return Array.isArray(v) ? v.map((p) => mediaUrl(p, "jpg")).filter(Boolean).slice(0, f.max ?? PHOTOS_MAX) : [];
+      return Array.isArray(v) ? v.map((p) => mediaUrl(p, ["jpg", "png"])).filter(Boolean).slice(0, f.max ?? PHOTOS_MAX) : [];
     case "list":
       return Array.isArray(v)
         ? v.filter(isRecord).slice(0, f.max ?? LIST_MAX).map((item) => sanitizeItem(f.item ?? [], item))
@@ -84,6 +84,6 @@ function text(v: unknown, max: number, f: FieldDef): string {
   return clean.slice(0, max).trim();
 }
 
-function mediaUrl(v: unknown, ext: "jpg" | "mp4" | "mp3"): string {
-  return typeof v === "string" && MEDIA_URL.test(v) && v.endsWith(`.${ext}`) ? v : "";
+function mediaUrl(v: unknown, exts: string[]): string {
+  return typeof v === "string" && MEDIA_URL.test(v) && exts.some((ext) => v.endsWith(`.${ext}`)) ? v : "";
 }
