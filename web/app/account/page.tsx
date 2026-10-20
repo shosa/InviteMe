@@ -12,7 +12,8 @@ type Row = { id: string; slug: string; status: "draft" | "paid"; title: string; 
 type Me = { user: { name: string; email: string; role: string } | null };
 
 // Dashboard del cliente: panoramica dei suoi inviti e azioni rapide per ciascuno.
-export default async function Account() {
+export default async function Account({ searchParams }: { searchParams: Promise<{ stato?: string }> }) {
+  const { stato } = await searchParams;
   let rows: Row[];
   let me: Me;
   try {
@@ -23,10 +24,11 @@ export default async function Account() {
   }
 
   const paid = rows.filter((r) => r.status === "paid").length;
-  const totals = rows.reduce((t, r) => ({ views: t.views + r.views, rsvps: t.rsvps + r.rsvps, guests: t.guests + r.guests }), { views: 0, rsvps: 0, guests: 0 });
   const lang = await getLang();
   const t = ui(lang);
-  const firstName = me.user?.name?.split(" ")[0] ?? "";
+  const filter = stato === "bozze" || stato === "attivi" ? stato : "tutti";
+  const shown = filter === "tutti" ? rows : rows.filter((r) => (filter === "attivi" ? r.status === "paid" : r.status !== "paid"));
+  const labels = lang === "en" ? { all: "All", drafts: "Drafts", active: "Active" } : { all: "Tutti", drafts: "Bozze", active: "Attivi" };
 
   return (
     <>
@@ -34,21 +36,19 @@ export default async function Account() {
       <main className="wrap dash">
         <header className="dash-head">
           <div>
-            <p className="kicker">{t.dashKicker}</p>
-            <h1>{firstName ? `${t.dashHello}, ${firstName}` : t.dashTitleFallback}</h1>
+            <h1>{t.myInvites}</h1>
+            <p className="hint">{t.kActiveDrafts(paid, rows.length - paid)}</p>
           </div>
           <a className="btn solid" href="/#modelli">{t.dashNew}</a>
         </header>
 
-        <section className="kpis" aria-label="Riepilogo">
-          <div className="kpi"><span>{t.kInvites}</span><strong>{rows.length}</strong><small>{t.kActiveDrafts(paid, rows.length - paid)}</small></div>
-          <div className="kpi"><span>{t.kViews}</span><strong>{totals.views}</strong><small>{t.kViewsSub}</small></div>
-          <div className="kpi"><span>{t.kReplies}</span><strong>{totals.rsvps}</strong><small>{t.kRepliesSub}</small></div>
-          <div className="kpi"><span>{t.kGuests}</span><strong>{totals.guests}</strong><small>{t.kGuestsSub}</small></div>
-        </section>
+        <nav className="dash-filter" aria-label={t.listTitle}>
+          <a href="/account" className={filter === "tutti" ? "is-on" : undefined} aria-current={filter === "tutti" ? "page" : undefined}>{labels.all}</a>
+          <a href="/account?stato=bozze" className={filter === "bozze" ? "is-on" : undefined} aria-current={filter === "bozze" ? "page" : undefined}>{labels.drafts}</a>
+          <a href="/account?stato=attivi" className={filter === "attivi" ? "is-on" : undefined} aria-current={filter === "attivi" ? "page" : undefined}>{labels.active}</a>
+        </nav>
 
-        <section aria-labelledby="dash-inviti">
-          <h2 id="dash-inviti" className="dash-sub">{t.listTitle}</h2>
+        <section aria-label={t.listTitle}>
           {rows.length === 0 ? (
             <div className="empty">
               <h3>{t.emptyTitle}</h3>
@@ -57,7 +57,7 @@ export default async function Account() {
             </div>
           ) : (
             <ul className="invite-cards">
-              {rows.map((r) => (
+              {shown.map((r) => (
                 <li key={r.id} className="invite-card">
                   <div className="invite-card-head">
                     <div>

@@ -4,24 +4,14 @@ import { ui } from "@/lib/ui";
 import { Models } from "@/components/Models";
 import { type Catalog } from "@inviteme/shared";
 import { apiPublic } from "@/lib/api";
-import { Typing } from "@/components/Typing";
-import { HeroScene } from "@/components/HeroScene";
-import { dateParts } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
-
-// Frasi che si scrivono a rotazione nel titolo della home.
-const HERO_PHRASES_EN = ["Your invitation, ready in an afternoon.", "One date, one link, every guest.", "Know who is coming before the day.", "Pay once, no subscriptions."];
-const HERO_PHRASES = ["Il vostro invito, pronto in un pomeriggio.", "Una data, un link, tutti gli ospiti.", "Sapete chi viene prima del giorno.", "Si paga una volta, senza abbonamenti."];
 
 export default async function Home() {
   const lang = await getLang();
   const t = ui(lang);
   const h = t.home;
-  const phrases = lang === "en" ? HERO_PHRASES_EN : HERO_PHRASES;
   const catalog = (await apiPublic<Catalog>("/api/catalog")) ?? { models: [], addons: [], themes: [], music: [] };
-  // Data d'esempio dell'hero: la scheda è fissa, la pagina invito reale si vede nelle anteprime dei modelli.
-  const hero = { title: "Elena & Marco", eventDate: "2027-06-12", eventTime: "18:00" };
 
   return (
     <>
@@ -30,7 +20,7 @@ export default async function Home() {
         <section className="hero">
           <div className="wrap hero-grid">
             <div className="hero-copy">
-              <h1 className="hero-title"><Typing phrases={phrases} /></h1>
+              <h1 className="hero-title">{lang === "en" ? "An invitation that opens like a story." : "Un invito che si apre come una storia."}</h1>
               <p className="lede">
                 {t.heroLede}
               </p>
@@ -40,7 +30,18 @@ export default async function Home() {
               </div>
               <p className="fine">{t.heroFine}</p>
             </div>
-            <HeroScene names={hero.title} day={hero.eventDate.slice(8, 10)} month={dateParts(hero.eventDate)?.month ?? ""} year={hero.eventDate.slice(0, 4)} target={`${hero.eventDate}T${hero.eventTime}`} photo="/stock/outdoor-table-angel-ayala.jpg" />
+            <div className="hero-phone" aria-hidden="true">
+              <div className="hero-phone-screen">
+                <div className="hero-phone-inner">
+                <span className="hero-phone-kicker">{lang === "en" ? "With joy" : "Con gioia"}</span>
+                <div className="hero-phone-names">Giulia<br />&amp; Luca</div>
+                <div className="hero-phone-rule" />
+                <div className="hero-phone-dates"><span>18</span><span>09</span><span>2027</span></div>
+                <p>{lang === "en" ? "We look forward to celebrating with you." : "Vi aspettiamo per festeggiare con noi."}</p>
+                <div className="hero-phone-cta">{lang === "en" ? "I confirm my attendance" : "Confermo la presenza"}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
