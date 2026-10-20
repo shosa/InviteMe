@@ -109,57 +109,69 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
       </div>
       <TemplateCarousel templates={visible} selectedId={themeId} onSelect={pickTheme} label={H.themesTitle} lang={lang} size="lg" />
 
-      <div ref={compare} className="compare">
-        <div className="compare-head">
+      <div ref={compare} className="models-compare">
+        <div className="pick-summary">
           <div className="pick">
             {styleManifest && (
               <div className="pick-phone" aria-hidden="true">
                 <iframe title={styleName} src={`/api/themes/${themeId}/demo?lang=${lang}&s=${seed}`} scrolling="no" tabIndex={-1} />
               </div>
             )}
-            <div>
+            <div className="pick-text">
               <p className="kicker">{H.compareKicker}</p>
               <h2>{styleName}</h2>
               <button type="button" className="btn outline small" onClick={() => showcase.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>{H.changeTemplate}</button>
             </div>
           </div>
-          <div>
-            <h2 className="compare-title">{H.modelsHead}</h2>
-            <p className="lede">{H.modelsLede}</p>
+          <div className="pick-blocks">
+            <h3>{T.blocks}</h3>
+            <p className="pick-blocks-text">{T.blocksText}</p>
+            <ul className="blocks-grid">
+              {BLOCKS.map((b) => {
+                const st = blockState(b, model);
+                return (
+                  <li key={b.type} className={`block-tile is-${st}`}>
+                    <span className="block-tile-name"><BlockIcon type={b.type} size={16} /><strong>{blockCopy(b.type, b.label, lang)}</strong></span>
+                    <span className="block-tile-state">{st === "base" || st === "included" ? T.inc : st === "option" ? `${T.add} +${formatPrice(addonPrice(b.feature!)?.cents ?? 0)}` : T.unavailable}</span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </div>
 
-        <div className="model-grid">
+        <h2 className="models-compare-title">{H.modelsHead}</h2>
+        <p className="lede">{H.modelsLede}</p>
+
+        <div className="plan-grid">
           {models.map((m) => {
             const copy = modelCopy(m.id, m.name, m.tagline, m.description, lang);
             const on = m.id === modelId;
             const baseBlocks = BLOCKS.filter((b) => blockState(b, m) === "included" || blockState(b, m) === "base");
-            const optional = BLOCKS.filter((b) => blockState(b, m) === "option");
             const ok = enabledThemes(catalog, m.id).some((t) => t.id === themeId);
             return (
-              <article key={m.id} className={`model-card${on ? " is-on" : ""}`} onClick={() => setModelId(m.id)}>
-                {m.id === "invitation-rsvp" && <span className="model-badge">{T.popular}</span>}
+              <article key={m.id} className={`plan-card${on ? " is-on" : ""}`} onClick={() => setModelId(m.id)}>
+                {m.id === "invitation-rsvp" && <span className="plan-badge">{T.popular}</span>}
                 <h3>{copy.name}</h3>
-                <p className="model-tagline">{copy.tagline}</p>
-                <p className="model-desc">{copy.description}</p>
-                <p className="model-perks">{T.perks}</p>
-
-                <div className="model-split">
+                <p className="plan-tagline">{copy.tagline}</p>
+                <p className="plan-desc">{copy.description}</p>
+                <p className="plan-perks">{T.perks}</p>
+                <div className="plan-split">
                   <div>
-                    <h4 className="model-sub">{T.included}</h4>
-                    <ul className="model-blocks">
+                    <h4 className="plan-sub">{T.included}</h4>
+                    <ul className="plan-blocks">
                       {baseBlocks.map((b) => (
                         <li key={b.type}><BlockIcon type={b.type} />{blockCopy(b.type, b.label, lang)}</li>
                       ))}
-                      {m.included.map((k) => {
+                      {m.included.filter((k) => !BLOCKS.some((b) => b.feature === k)).map((k) => {
                         const a = addonPrice(k);
                         return a ? <li key={k}><Check size={17} aria-hidden="true" />{addonCopy(a.key, a.label, a.description, lang).label}</li> : null;
                       })}
                     </ul>
                   </div>
                   <div>
-                    <h4 className="model-sub">{T.optional}</h4>
-                    <ul className="model-blocks is-option">
+                    <h4 className="plan-sub">{T.optional}</h4>
+                    <ul className="plan-blocks is-option">
                       {m.options.filter((k) => !m.included.includes(k)).map((k) => {
                         const a = addonPrice(k);
                         if (!a) return null;
@@ -168,34 +180,14 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
                     </ul>
                   </div>
                 </div>
-
                 {!ok && <p className="hint">{H.noStyleForModel}</p>}
-                <p className="model-price"><b>{formatPrice(m.priceCents)}</b></p>
+                <p className="plan-price">{formatPrice(m.priceCents)}</p>
                 <button type="button" className={on ? "btn solid" : "btn outline"} aria-pressed={on} onClick={(e) => { e.stopPropagation(); setModelId(m.id); }}>
                   {on ? T.chosen : T.ask}
                 </button>
               </article>
             );
           })}
-        </div>
-
-        <div className="blocks-showcase">
-          <div className="showcase-head">
-            <h2>{T.blocks}</h2>
-            <p className="lede">{T.blocksText}</p>
-          </div>
-          <ul className="blocks-grid">
-            {BLOCKS.map((b) => {
-              const st = blockState(b, model);
-              return (
-                <li key={b.type} className={`block-tile is-${st}`}>
-                  <span className="block-tile-state">{st === "base" || st === "included" ? T.inc : st === "option" ? `${T.add} +${formatPrice(addonPrice(b.feature!)?.cents ?? 0)}` : T.unavailable}</span>
-                  <span className="block-tile-name"><BlockIcon type={b.type} size={16} /><strong>{blockCopy(b.type, b.label, lang)}</strong></span>
-                  <span className="block-tile-desc">{b.description}</span>
-                </li>
-              );
-            })}
-          </ul>
         </div>
       </div>
 

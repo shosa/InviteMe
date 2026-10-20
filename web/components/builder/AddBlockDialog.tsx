@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { BLOCKS, formatPrice, getAddon, getModel, type AddonKey, type BlockType, type Catalog, type InviteConfig } from "@inviteme/shared";
 import { ui, type Lang } from "@/lib/ui";
 import { blockCopy } from "@/lib/catalogCopy";
+import { BlockIcon } from "@/lib/blockIcons";
 
 type Props = {
   catalog: Catalog;
@@ -52,7 +53,10 @@ export function AddBlockDialog(p: Props) {
             const bought = !!feature && p.config.addons.includes(feature) && !model?.included.includes(feature);
             return (
               <li key={def.type} className={`bl-card${locked ? " is-locked" : ""}`}>
-                <h3>{blockCopy(def.type, def.label, lang)}</h3>
+                <div className="bl-card-head">
+                  <span className="bl-card-icon"><BlockIcon type={def.type} size={20} /></span>
+                  <h3>{blockCopy(def.type, def.label, lang)}</h3>
+                </div>
                 <p className="hint">{def.description}</p>
                 <div className="bl-card-foot">
                   {!locked && (
