@@ -209,8 +209,9 @@ function lookWrap(props: Record<string, unknown>, html: string): string {
   if (typeof props.lookCover === "string" && props.lookCover) vars.push(`--bk-cover:${props.lookCover}`);
   const shape = typeof props.lookShape === "string" ? props.lookShape : "";
   const photo = typeof props.photoShape === "string" ? props.photoShape : "";
-  if (!vars.length && !shape && !photo) return html;
-  return `<div class="bk"${shape ? ` data-shape="${shape}"` : ""}${photo ? ` data-photo-shape="${photo}"` : ""} style="${vars.join(";")}">\n${html}</div>\n`;
+  const gallery = typeof props.galleryStyle === "string" ? props.galleryStyle : "";
+  if (!vars.length && !shape && !photo && !gallery) return html;
+  return `<div class="bk"${shape ? ` data-shape="${shape}"` : ""}${photo ? ` data-photo-shape="${photo}"` : ""}${gallery ? ` data-gallery="${gallery}"` : ""} style="${vars.join(";")}">\n${html}</div>\n`;
 }
 
 // Regole comuni a tutti i temi per l'aspetto dei blocchi. Vincono sul tema solo dove il cliente ha scelto qualcosa.
@@ -239,6 +240,21 @@ const LOOK_CSS = `
 [data-cover].wei-opening .env-flap{transform:rotateX(180deg)}
 [data-cover].wei-opening .env-seal{opacity:0;transform:translate(-50%,-50%) scale(.6)}
 [data-cover].wei-opening .env-card{transform:translateY(-8%)}
+/* Stile della galleria: si applica alle figure della galleria, qualunque sia il markup del tema. */
+.bk[data-gallery] :has(> figure){display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding-bottom:8px;grid-template-columns:none!important}
+.bk[data-gallery] :has(> figure) > figure{margin:0;flex:0 0 auto}
+.bk[data-gallery] :has(> figure) > figure img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;display:block}
+.bk[data-gallery="carousel"] :has(> figure) > figure{flex:0 0 min(68%,300px);scroll-snap-align:start}
+.bk[data-gallery="slider"] :has(> figure) > figure{flex:0 0 100%;scroll-snap-align:center}
+.bk[data-gallery="slider"] :has(> figure) > figure img{aspect-ratio:3/2}
+.bk[data-gallery="mosaic"] :has(> figure){display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-auto-rows:110px;grid-auto-flow:dense;overflow:visible;scroll-snap-type:none;gap:8px}
+.bk[data-gallery="mosaic"] :has(> figure) > figure{flex:none;scroll-snap-align:none;min-width:0}
+.bk[data-gallery="mosaic"] :has(> figure) > figure:first-child{grid-column:span 2;grid-row:span 2}
+.bk[data-gallery="mosaic"] :has(> figure) > figure img{aspect-ratio:auto;height:100%}
+.bk[data-gallery="grid"] :has(> figure){display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;overflow:visible;scroll-snap-type:none;gap:8px}
+.bk[data-gallery="grid"] :has(> figure) > figure{flex:none;min-width:0}
+.bk[data-gallery="grid"] :has(> figure) > figure img{aspect-ratio:1/1}
+@media (max-width:600px){.bk[data-gallery="mosaic"] :has(> figure),.bk[data-gallery="grid"] :has(> figure){grid-template-columns:repeat(2,minmax(0,1fr))!important}.bk[data-gallery="mosaic"] :has(> figure) > figure:first-child{grid-column:span 2;grid-row:span 1}}
 html[data-preview]{scrollbar-width:none}html[data-preview]::-webkit-scrollbar{display:none}
 [data-cover] .env-top{margin:0 0 22px;font-size:13px;letter-spacing:.18em;text-transform:uppercase;text-align:center;color:inherit}
 [data-cover] .env-card{position:relative;width:min(78vw,420px);aspect-ratio:1.45;margin:0 auto;flex:none;filter:drop-shadow(0 26px 30px rgba(0,0,0,.28))}

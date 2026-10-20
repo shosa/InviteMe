@@ -145,6 +145,18 @@ export const BLOCKS: BlockDef[] = [
     fields: [
       { key: "heading", label: "Titolo", type: "text", group: "Galleria", max: 80 },
       { key: "photos", label: "Foto", type: "photos", group: "Galleria", max: 6 },
+      {
+        key: "galleryStyle",
+        label: "Stile della galleria",
+        type: "choice",
+        group: "Galleria",
+        options: [
+          { value: "carousel", label: "Carosello" },
+          { value: "slider", label: "Slider" },
+          { value: "mosaic", label: "Mosaico" },
+          { value: "grid", label: "Griglia" },
+        ],
+      },
     ],
     defaults: { heading: "Noi due", photos: [] },
     defaultsEn: { heading: "Our story" },
