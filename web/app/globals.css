@@ -957,3 +957,56 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .typing-box > span { grid-area: 1 / 1; }
 .typing-ghost { visibility: hidden; }
 .hero-title { max-width: 14ch; }
+
+/* Mobile: nessuna colonna della pagina può allargarsi oltre lo schermo. Il carosello scorre dentro il suo spazio. */
+.models { grid-template-columns: minmax(0, 1fr); }
+.model, .model-stage, .model-body { min-width: 0; max-width: 100%; }
+.tpl-carousel, .tpl-track { min-width: 0; max-width: 100%; }
+@media (max-width: 900px) {
+  .model { grid-template-columns: minmax(0, 1fr); }
+}
+/* Telefono: la barra in alto va a capo invece di sforare; i pulsanti dell'account restano allineati a destra. */
+@media (max-width: 720px) {
+  .nav-inner { flex-wrap: wrap; row-gap: 10px; }
+  .nav-account { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+}
+/* Footer: i link vanno a capo sul telefono invece di uscire dallo schermo. */
+.foot-inner { flex-wrap: wrap; row-gap: 14px; }
+.foot-inner nav { flex-wrap: wrap; gap: 14px 22px; }
+
+/* Dashboard dell'invito: fondo nei colori del tema scelto, card bianche, popup di benvenuto. */
+.idash { background: var(--paper); min-height: 100vh; }
+.idash-hero { position: relative; overflow: hidden; background: var(--inv); color: var(--inv-ink); padding: clamp(56px, 8vw, 96px) 0 clamp(90px, 10vw, 130px); }
+.idash-hero h1 { color: inherit; font-size: clamp(2.6rem, 6vw, 4.4rem); margin: 6px 0 14px; max-width: 16ch; }
+.idash-kicker { font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.85; margin: 0; }
+.idash-when { font-size: 1.1rem; opacity: 0.9; margin: 0; }
+.idash-confetti { position: absolute; right: -40px; top: -30px; width: clamp(200px, 28vw, 340px); opacity: 0.22; color: var(--inv-ink); }
+.idash-body { margin-top: -54px; position: relative; display: grid; gap: 22px; padding-bottom: 80px; }
+.idash-card { background: #fff; border: 1px solid var(--line); border-radius: 26px; padding: 28px; display: grid; gap: 16px; color: var(--ink); text-decoration: none; }
+.idash-card h2, .idash-card h3 { margin: 0; font-size: 1.5rem; }
+.idash-pay { grid-template-columns: 1fr auto; align-items: center; background: #fff8e6; border-color: #f0d89b; }
+.idash-share .idash-link { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--paper); border-radius: 16px; padding: 12px 14px; }
+.idash-share .idash-link code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 15px; }
+.idash-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.idash-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.idash-stat { background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: 22px; display: grid; gap: 6px; }
+.idash-stat span { font-size: 13px; color: var(--ink-soft); }
+.idash-stat strong { font-family: var(--font-display), sans-serif; font-size: 2.4rem; letter-spacing: -0.03em; }
+.idash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.idash-link-card { transition: transform .2s ease, border-color .2s ease; }
+.idash-link-card:hover { transform: translateY(-2px); border-color: var(--inv); }
+.idash-go { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--brass); }
+@media (max-width: 640px) { .idash-pay { grid-template-columns: 1fr; } .idash-stats { grid-template-columns: 1fr 1fr; } }
+
+.welcome-backdrop { position: fixed; inset: 0; z-index: 1100; display: grid; place-items: center; padding: 16px; background: rgba(14, 17, 22, 0.55); }
+.welcome { width: min(100%, 520px); max-height: 92vh; overflow-y: auto; background: #fff; border-radius: 28px; padding: 30px 28px 26px; text-align: center; display: grid; gap: 12px; justify-items: center; }
+.welcome h2 { margin: 0; font-size: 1.9rem; }
+.welcome-art { position: relative; width: 200px; height: 150px; display: grid; place-items: center; color: var(--inv); }
+.welcome-art svg { color: var(--inv); }
+.welcome-confetti { position: absolute; width: 90px; height: 90px; opacity: 0.75; }
+.welcome-confetti-l { left: 0; top: 0; }
+.welcome-confetti-r { right: 0; bottom: 0; transform: scaleX(-1); }
+.welcome-title-of { margin: 0; font-weight: 600; font-size: 1.1rem; }
+.welcome-link { width: 100%; display: flex; gap: 10px; align-items: center; background: var(--paper); border-radius: 16px; padding: 10px 12px; }
+.welcome-link code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 14px; text-align: left; }
+.welcome-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }

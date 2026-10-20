@@ -221,8 +221,9 @@ const LOOK_CSS = `
 .bk[data-shape="square"] [data-scratch]{border-radius:0!important}
 .bk[data-shape="round"] [data-scratch]{border-radius:50%!important}
 .bk[data-shape="pill"] [data-scratch]{border-radius:999px!important}
+[data-cover]{display:flex;flex-direction:column;align-items:center;justify-content:center}
 [data-cover] .env-top{margin:0 0 22px;font-size:13px;letter-spacing:.18em;text-transform:uppercase;text-align:center;color:inherit}
-[data-cover] .env-card{position:relative;width:min(78vw,420px);aspect-ratio:1.45;margin:0 auto;filter:drop-shadow(0 26px 30px rgba(0,0,0,.28))}
+[data-cover] .env-card{position:relative;width:min(78vw,420px);aspect-ratio:1.45;margin:0 auto;flex:none;filter:drop-shadow(0 26px 30px rgba(0,0,0,.28))}
 [data-cover] .env{position:absolute;inset:0;overflow:hidden;border-radius:6px;background:linear-gradient(to top right,transparent 49.6%,rgba(0,0,0,.07) 50%,transparent 50.4%),linear-gradient(to top left,transparent 49.6%,rgba(0,0,0,.07) 50%,transparent 50.4%),var(--env,#f7f1e6)}
 [data-cover] .env-flap{position:absolute;left:0;right:0;top:0;height:58%;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.09)),var(--env,#f7f1e6);clip-path:polygon(0 0,100% 0,50% 100%)}
 [data-cover] .env-seal{position:absolute;left:50%;top:58%;width:24%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.35),transparent 42%),var(--seal,#8e2a22);box-shadow:0 4px 10px rgba(0,0,0,.3);color:#fff;font-size:clamp(13px,3.2vw,20px);font-weight:600;letter-spacing:.04em;text-transform:uppercase;text-align:center;line-height:1.1;padding:0 6px;box-sizing:border-box}

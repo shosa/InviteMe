@@ -20,7 +20,7 @@ function LocalCheckout({ lang }: { lang: Lang }) {
     });
     if (!res.ok) return setState("error");
     setState("done");
-    window.location.href = `/editor/${invitationId}`;
+    window.location.href = `/invito/${invitationId}?benvenuto=1`;
   }
 
   return (
