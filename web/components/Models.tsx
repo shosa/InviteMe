@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { BLOCKS, formatPrice, enabledThemes, themeCategories, type BlockDef, type Catalog, type ModelDef, type ThemeCategory } from "@inviteme/shared";
 import { CATEGORY_LIST, allLabel, categoryLabel } from "@/lib/categoryCopy";
 import { Check, Plus } from "lucide-react";
+import { BlockIcon } from "@/lib/blockIcons";
 import { TemplateCarousel } from "./TemplateCarousel";
 import { ui, type Lang } from "@/lib/ui";
 import { addonCopy, blockCopy, modelCopy, themeCopy } from "@/lib/catalogCopy";
@@ -138,10 +139,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
             return (
               <article key={m.id} className={`model-card${on ? " is-on" : ""}`} onClick={() => setModelId(m.id)}>
                 {m.id === "invitation-rsvp" && <span className="model-badge">{T.popular}</span>}
-                <div className="model-card-head">
-                  <h3>{copy.name}</h3>
-                  <p className="model-price"><b>{formatPrice(m.priceCents)}</b></p>
-                </div>
+                <h3>{copy.name}</h3>
                 <p className="model-tagline">{copy.tagline}</p>
                 <p className="model-desc">{copy.description}</p>
                 <p className="model-perks">{T.perks}</p>
@@ -149,7 +147,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
                 <h4 className="model-sub">{T.included}</h4>
                 <ul className="model-blocks">
                   {baseBlocks.map((b) => (
-                    <li key={b.type}><Check size={15} aria-hidden="true" />{blockCopy(b.type, b.label, lang)}</li>
+                    <li key={b.type}><BlockIcon type={b.type} />{blockCopy(b.type, b.label, lang)}</li>
                   ))}
                   {m.included.map((k) => {
                     const a = addonPrice(k);
@@ -171,6 +169,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
                 )}
 
                 {!ok && <p className="hint">{H.noStyleForModel}</p>}
+                <p className="model-price"><b>{formatPrice(m.priceCents)}</b></p>
                 <button type="button" className={on ? "btn solid" : "btn outline"} aria-pressed={on} onClick={(e) => { e.stopPropagation(); setModelId(m.id); }}>
                   {on ? T.chosen : T.ask}
                 </button>
@@ -190,7 +189,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
               return (
                 <li key={b.type} className={`block-tile is-${st}`}>
                   <span className="block-tile-state">{st === "base" || st === "included" ? T.inc : st === "option" ? `${T.add} +${formatPrice(addonPrice(b.feature!)?.cents ?? 0)}` : T.unavailable}</span>
-                  <strong>{blockCopy(b.type, b.label, lang)}</strong>
+                  <span className="block-tile-name"><BlockIcon type={b.type} size={16} /><strong>{blockCopy(b.type, b.label, lang)}</strong></span>
                   <span className="block-tile-desc">{b.description}</span>
                 </li>
               );

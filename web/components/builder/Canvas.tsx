@@ -5,6 +5,7 @@ import { blockDef, type AddonKey, type BlockInstance, type BlockType, type Catal
 import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, GripVertical, Plus, Trash2 } from "lucide-react";
 import { ui, type Lang } from "@/lib/ui";
 import { blockCopy } from "@/lib/catalogCopy";
+import { BlockIcon } from "@/lib/blockIcons";
 import { AddBlockDialog } from "./AddBlockDialog";
 
 type Props = {
@@ -96,7 +97,7 @@ export function Canvas(p: Props) {
               >
                 <span className="bl-grip" aria-hidden="true"><GripVertical size={16} /></span>
                 <button type="button" className="bl-select" onClick={() => p.onSelect(b.id)} aria-pressed={active}>
-                  <span className="bl-name">{name}</span>
+                  <span className="bl-name bl-name-row">{def && <BlockIcon type={def.type} size={16} />}<span>{name}</span></span>
                   {b.hidden && <small>{L.hidden}</small>}
                   {!b.hidden && hint && <small className="bl-warn">{hint}</small>}
                 </button>

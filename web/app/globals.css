@@ -1219,3 +1219,44 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .block-tile-state { font-size: 12px; margin-bottom: 4px; }
 @media (max-width: 1100px) { .compare .model-grid, .blocks-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 680px) { .compare .model-grid, .blocks-grid { grid-template-columns: minmax(0, 1fr); } .compare-head { grid-template-columns: 1fr; } }
+
+/* Confronto modelli: tre colonne affiancate, senza card, con testo grande (come nel mockup). Riepilogo blocchi compatto. */
+.compare .model-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--ink); }
+.compare .model-card { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 36px 40px 0; gap: 18px; }
+.compare .model-card + .model-card { border-left: 1px solid var(--line); }
+.compare .model-card:hover { transform: none; }
+.compare .model-card.is-on { box-shadow: none; }
+.compare .model-card h3 { font-size: 2.7rem; }
+.compare .model-card .model-price b { font-size: 3.4rem; }
+.compare .model-card .model-tagline { font-size: 1.3rem; font-weight: 600; }
+.compare .model-card .model-desc { font-size: 18px; }
+.compare .model-card .model-perks { font-size: 15px; }
+.compare .model-card .model-sub { font-size: 13px; }
+.model-blocks li, .model-blocks li::before { font-size: 18px; }
+.compare .model-card .btn { font-size: 17px; padding: 14px 26px; margin-bottom: 36px; }
+.blocks-showcase { gap: 14px; margin-top: 8px; }
+.blocks-showcase h2 { font-size: 1.7rem; }
+.blocks-showcase .lede { font-size: 16px; }
+.blocks-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.block-tile { display: inline-flex; flex-direction: row; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; }
+.block-tile strong { font-size: 15px; }
+.block-tile-desc { display: none; }
+.block-tile-state { margin: 0; font-size: 12px; }
+@media (max-width: 900px) { .compare .model-grid { grid-template-columns: minmax(0, 1fr); } .compare .model-card + .model-card { border-left: 0; border-top: 1px solid var(--line); } }
+.compare .model-card .model-price { margin: auto 0 0; }
+.compare .model-card .model-price b { display: block; }
+.block-tile-name { display: inline-flex; align-items: center; gap: 8px; }
+.block-tile-name svg { color: var(--brass); flex: none; }
+.model-blocks li svg { color: #0B6E65; }
+
+/* Dopo l'acquisto: pulsante centrale e ben visibile per confermare la modifica. */
+.confirm-edit { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; width: 100%; }
+.confirm-edit p { margin: 0; font-size: 14px; color: var(--ink-soft); max-width: 46ch; }
+.confirm-edit-btn { font: inherit; font-size: 17px; font-weight: 700; background: #14B8A6; color: #0E1116; border: 0; border-radius: 999px; padding: 16px 34px; cursor: pointer; box-shadow: 0 12px 26px -12px rgba(20,184,166,0.8); }
+.confirm-edit-btn:hover { background: #0FA596; }
+.confirm-edit-extra { font-family: var(--font-display), sans-serif; font-size: 1.4rem; font-weight: 700; }
+.bl-name-row { display: inline-flex; align-items: center; gap: 9px; }
+.bl-name-row svg { color: var(--brass); flex: none; }
+#modelli > .wrap { max-width: 1560px; }
+.block-tile { white-space: nowrap; }
+.blocks-grid { gap: 10px; }

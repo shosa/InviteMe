@@ -47,16 +47,14 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   const catalog = initial.catalog;
   const history = useHistory<InviteConfig>(initial.config);
   const config = history.present;
-  // Dopo l'acquisto l'invito si modifica una sola volta: la sessione di questa scheda decide se la modifica è ancora aperta.
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  useEffect(() => {
-    const key = `invito-edit-${initial.id}`;
-    let s = null;
-    try { s = sessionStorage.getItem(key); if (!s) { s = crypto.randomUUID(); sessionStorage.setItem(key, s); } } catch { s = crypto.randomUUID(); }
-    setSessionId(s);
-  }, [initial.id]);
-  const editable = initial.status !== "paid" || (sessionId !== null && (initial.editCount === 0 || initial.editSession === sessionId));
-  const locked = !editable;
+  // Dopo l'acquisto l'invito si modifica finché non si conferma la modifica: poi è chiuso.
+  const locked = initial.status === "paid" && initial.editCount >= 1;
+  const editable = !locked;
+  async function confirmEdit() {
+    const res = await fetch(`/api/invitations/${initial.id}/confirm-edit`, { method: "POST" });
+    if (res.ok) window.location.reload();
+    else setError("Conferma non riuscita, riprova.");
+  }
 
   const [selected, setSelected] = useState<string | null>(null);
   const [panel, setPanel] = useState<"proprieta" | "ospiti">("proprieta");
@@ -97,7 +95,7 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   async function persist(c: InviteConfig) {
     setSave("saving");
     try {
-      const res = await fetch(`/api/invitations/${initial.id}`, { method: "PUT", headers: { "Content-Type": "application/json", "X-Edit-Session": sessionId ?? "" }, body: JSON.stringify(c) });
+      const res = await fetch(`/api/invitations/${initial.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(c) });
       if (res.ok) {
         setSave("saved");
         setError(null);
@@ -410,7 +408,13 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
       {error && <p role="alert" className="form-error bl-error">{error}</p>}
 
       <footer className="bl-footer">
-        {paidAlready && extra <= 0 ? (
+        {paidAlready && editable ? (
+          <div className="confirm-edit">
+            <p>{lang === "en" ? "You can edit the invitation once. When you are done, confirm the edit to close it." : "Puoi modificare l'invito una sola volta. Quando hai finito, conferma la modifica per chiuderla."}</p>
+            <button type="button" className="confirm-edit-btn" onClick={confirmEdit}>{lang === "en" ? "Confirm edit" : "Conferma modifica"}</button>
+            {extra > 0 && <span className="confirm-edit-extra">{formatPrice(extra)}</span>}
+          </div>
+        ) : paidAlready && extra <= 0 ? (
           <div className="shared">
             <code>{shareUrl}</code>
             <button type="button" className="btn outline small" onClick={() => { navigator.clipboard?.writeText(shareUrl); toast.success("✓"); }}><Copy size={15} aria-hidden="true" />{L.copy}</button>
