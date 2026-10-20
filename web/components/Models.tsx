@@ -144,29 +144,30 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
                 <p className="model-desc">{copy.description}</p>
                 <p className="model-perks">{T.perks}</p>
 
-                <h4 className="model-sub">{T.included}</h4>
-                <ul className="model-blocks">
-                  {baseBlocks.map((b) => (
-                    <li key={b.type}><BlockIcon type={b.type} />{blockCopy(b.type, b.label, lang)}</li>
-                  ))}
-                  {m.included.map((k) => {
-                    const a = addonPrice(k);
-                    return a ? <li key={k}><Check size={15} aria-hidden="true" />{addonCopy(a.key, a.label, a.description, lang).label}</li> : null;
-                  })}
-                </ul>
-
-                {optional.length > 0 && (
-                  <>
+                <div className="model-split">
+                  <div>
+                    <h4 className="model-sub">{T.included}</h4>
+                    <ul className="model-blocks">
+                      {baseBlocks.map((b) => (
+                        <li key={b.type}><BlockIcon type={b.type} />{blockCopy(b.type, b.label, lang)}</li>
+                      ))}
+                      {m.included.map((k) => {
+                        const a = addonPrice(k);
+                        return a ? <li key={k}><Check size={17} aria-hidden="true" />{addonCopy(a.key, a.label, a.description, lang).label}</li> : null;
+                      })}
+                    </ul>
+                  </div>
+                  <div>
                     <h4 className="model-sub">{T.optional}</h4>
                     <ul className="model-blocks is-option">
                       {m.options.filter((k) => !m.included.includes(k)).map((k) => {
                         const a = addonPrice(k);
                         if (!a) return null;
-                        return <li key={k}><Plus size={15} aria-hidden="true" />{addonCopy(a.key, a.label, a.description, lang).label}<em>+ {formatPrice(a.cents)}</em></li>;
+                        return <li key={k}><Plus size={17} aria-hidden="true" /><span>{addonCopy(a.key, a.label, a.description, lang).label}</span><em>+ {formatPrice(a.cents)}</em></li>;
                       })}
                     </ul>
-                  </>
-                )}
+                  </div>
+                </div>
 
                 {!ok && <p className="hint">{H.noStyleForModel}</p>}
                 <p className="model-price"><b>{formatPrice(m.priceCents)}</b></p>
