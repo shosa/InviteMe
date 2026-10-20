@@ -186,6 +186,10 @@ const BUILDER_JS = `(function () {
     var d = e.data;
     if (d && d.type === 'highlight') { current = d.id || null; paint(); }
     if (d && d.type === 'scrollTo') window.scrollTo(0, d.y);
+    if (d && d.type === 'focus' && d.id) {
+      var f = document.querySelector('[data-blk="' + d.id + '"]');
+      if (f) (f.firstElementChild || f).scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
     if (d && d.type === 'restore') {
       // Dopo un salvataggio si torna al blocco che si stava modificando, altrimenti alla stessa posizione.
       var target = d.id && document.querySelector('[data-blk="' + d.id + '"]');

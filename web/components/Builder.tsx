@@ -76,6 +76,25 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
 
   useEffect(() => setOrigin(window.location.origin), []);
 
+  // Salva la configurazione sul server: dal salvataggio automatico e dal pulsante «Salva».
+  async function persist(c: InviteConfig) {
+    setSave("saving");
+    try {
+      const res = await fetch(`/api/invitations/${initial.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(c) });
+      if (res.ok) {
+        setSave("saved");
+        setError(null);
+      } else {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setSave("error");
+        setError(data.error ?? "Salvataggio non riuscito");
+      }
+    } catch {
+      setSave("error");
+      setError("Connessione assente: le modifiche non sono state salvate.");
+    }
+  }
+
   // Salvataggio automatico: il database riceve sempre l'ultima versione.
   useEffect(() => {
     if (firstSave) {
@@ -84,24 +103,14 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
     }
     if (locked) return;
     setSave("saving");
-    const t = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/invitations/${initial.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) });
-        if (res.ok) {
-          setSave("saved");
-          setError(null);
-        } else {
-          const data = (await res.json().catch(() => ({}))) as { error?: string };
-          setSave("error");
-          setError(data.error ?? "Salvataggio non riuscito");
-        }
-      } catch {
-        setSave("error");
-        setError("Connessione assente: le modifiche non sono state salvate.");
-      }
-    }, 650);
+    const t = setTimeout(() => persist(config), 650);
     return () => clearTimeout(t);
   }, [config, initial.id, locked]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Selezionare un blocco (dalla lista o dall'anteprima) porta l'anteprima su quel blocco.
+  useEffect(() => {
+    frame.current?.contentWindow?.postMessage({ type: "focus", id: selected }, "*");
+  }, [selected]);
 
   // Anteprima: la pagina reale del motore, rigenerata dal server con la configurazione in corso.
   useEffect(() => {
@@ -274,6 +283,9 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
             <button type="button" aria-pressed={device === "mobile"} className="bl-icon" aria-label={L.phonePreview} onClick={() => setDevice("mobile")}><Smartphone size={17} /></button>
           </div>
           {locked && <button type="button" className="bl-icon" aria-label={L.guests} onClick={() => setPanel(panel === "ospiti" ? "proprieta" : "ospiti")}><Users size={17} /></button>}
+          {!locked && (
+            <button type="button" className="btn solid small" disabled={save === "saving"} onClick={() => persist(config)}>{L.saveNow}</button>
+          )}
           <span className={`bl-save save-${save}`} aria-live="polite">{saveLabel}</span>
         </div>
       </header>
@@ -333,8 +345,8 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
               aria-label={L.scrollPreview}
               min={0}
               max={scroll.max}
-              value={scroll.max - scroll.y}
-              onChange={(e) => frame.current?.contentWindow?.postMessage({ type: "scrollTo", y: scroll.max - Number(e.target.value) }, "*")}
+              value={scroll.y}
+              onChange={(e) => frame.current?.contentWindow?.postMessage({ type: "scrollTo", y: Number(e.target.value) }, "*")}
             />
           )}
         </div>
