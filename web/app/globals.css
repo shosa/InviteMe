@@ -1395,3 +1395,9 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bar-pill.is-option { background: #FFF1D6; color: #7A4A00; }
 .bar-pill.is-na { background: var(--paper); color: var(--ink-soft); opacity: 0.6; }
 @media (max-width: 720px) { .bar-blocks { display: none; } }
+
+/* Scrollbar orizzontale delle pillole sempre visibile (anche con scrollbar sovrapposte del sistema). */
+.bar-blocks { padding-bottom: 8px; scrollbar-width: thin; scrollbar-color: #9AA2AE #E8EBEF; overflow-x: scroll; }
+.bar-blocks::-webkit-scrollbar { height: 6px; display: block; }
+.bar-blocks::-webkit-scrollbar-track { background: #E8EBEF; border-radius: 999px; }
+.bar-blocks::-webkit-scrollbar-thumb { background: #9AA2AE; border-radius: 999px; }
