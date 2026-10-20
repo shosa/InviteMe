@@ -228,12 +228,15 @@ const LOOK_CSS = `
 .dt-cell{display:grid;gap:6px;min-width:96px;padding:16px 20px;border:1px solid currentColor;border-radius:14px;opacity:.95}
 .dt-num{font-size:40px;line-height:1;font-weight:600}
 .dt-lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.75}
+.scratch,.dt-cell{container-type:inline-size}
+.scratch:nth-child(2) .sc-val,.dt-cell:nth-child(2) .dt-num{font-size:clamp(12px,17cqi,28px)!important;white-space:nowrap}
 [data-cover] .env-card{perspective:900px;transition:transform .9s cubic-bezier(.3,.7,.3,1)}
 [data-cover] .env-flap{transform-origin:50% 0;transition:transform .9s cubic-bezier(.3,.7,.3,1)}
 [data-cover] .env-seal{transition:opacity .4s ease,transform .6s ease}
 [data-cover].wei-opening .env-flap{transform:rotateX(180deg)}
 [data-cover].wei-opening .env-seal{opacity:0;transform:translate(-50%,-50%) scale(.6)}
 [data-cover].wei-opening .env-card{transform:translateY(-8%)}
+html[data-preview]{scrollbar-width:none}html[data-preview]::-webkit-scrollbar{display:none}
 [data-cover] .env-top{margin:0 0 22px;font-size:13px;letter-spacing:.18em;text-transform:uppercase;text-align:center;color:inherit}
 [data-cover] .env-card{position:relative;width:min(78vw,420px);aspect-ratio:1.45;margin:0 auto;flex:none;filter:drop-shadow(0 26px 30px rgba(0,0,0,.28))}
 [data-cover] .env{position:absolute;inset:0;overflow:visible;border-radius:6px;background:linear-gradient(to top right,transparent 49.6%,rgba(0,0,0,.07) 50%,transparent 50.4%),linear-gradient(to top left,transparent 49.6%,rgba(0,0,0,.07) 50%,transparent 50.4%),var(--env,#f7f1e6)}
