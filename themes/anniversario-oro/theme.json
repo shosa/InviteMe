@@ -72,6 +72,9 @@
     },
     "footer": {
       "signature": "Franca e Giorgio"
+    },
+    "blockSwap": {
+      "scratchdate": "date"
     }
   }
 }

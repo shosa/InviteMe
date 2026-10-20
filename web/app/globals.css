@@ -1378,3 +1378,4 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .hm-gallery-head h2 { margin: 0 0 6px; font-size: 2rem; }
 .hm-gallery-head .lede { margin: 0; }
 .hm-gallery .tpl-filters { justify-content: flex-end; }
+.plan-option-from { display: block; font-family: var(--font-text), sans-serif; font-size: 14px; font-weight: 600; color: var(--ink-soft); margin-bottom: 2px; }

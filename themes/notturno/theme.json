@@ -67,6 +67,9 @@
     },
     "video": {
       "video": "assets/placeholder-video.mp4"
+    },
+    "blockSwap": {
+      "scratchdate": "date"
     }
   }
 }

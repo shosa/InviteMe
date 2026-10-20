@@ -68,6 +68,9 @@
     },
     "footer": {
       "signature": "La famiglia Ricci"
+    },
+    "blockSwap": {
+      "scratchdate": "date"
     }
   }
 }

@@ -147,14 +147,18 @@ export function sampleConfig(manifest: ThemeManifest, lang: "it" | "en" = "it", 
   config.locale = lang;
   config.rsvpQuestions = defaultRsvp(lang);
   config.event = { ...config.event, ...sampleEventFields(sample) };
-  config.blocks = BLOCKS.map((def) => {
-    const generated = sampleProps(def.type, sample, lang) ?? {};
+  // Alcuni template mostrano la data in chiaro al posto di quella da grattare: il manifest dichiara lo scambio.
+  const swap: Record<string, string> = (manifest.demo as { blockSwap?: Record<string, string> }).blockSwap ?? {};
+  const targets = new Set(Object.values(swap));
+  config.blocks = BLOCKS.filter((def) => !targets.has(def.type)).map((def) => {
+    const type = (swap[def.type] ?? def.type) as BlockType;
+    const generated = sampleProps(type, sample, lang) ?? {};
     return {
-      id: `demo-${def.type}`,
-      type: def.type,
+      id: `demo-${type}`,
+      type,
       hidden: false,
       // I valori dello stile (immagini, filmati) restano quelli del template; i testi cambiano a ogni caricamento.
-      props: { ...JSON.parse(JSON.stringify(def.defaults)), ...(manifest.demo[def.type] ?? {}), ...generated },
+      props: { ...JSON.parse(JSON.stringify(def.defaults)), ...(manifest.demo[type] ?? {}), ...generated },
     };
   });
   return config;

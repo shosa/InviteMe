@@ -68,6 +68,9 @@
     },
     "footer": {
       "signature": "Marco"
+    },
+    "blockSwap": {
+      "scratchdate": "date"
     }
   }
 }

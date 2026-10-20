@@ -58,6 +58,9 @@
     },
     "footer": {
       "signature": "Il consiglio di amministrazione"
+    },
+    "blockSwap": {
+      "scratchdate": "date"
     }
   }
 }

@@ -97,6 +97,22 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   const optionCount = BLOCKS.filter((b) => blockState(b, model) === "option").length;
   return (
     <div className="home-showcase">
+      <section ref={gallery} className="hm-gallery" aria-labelledby="hm-gallery-title">
+        <div className="hm-gallery-head">
+          <div>
+            <h2 id="hm-gallery-title">{H.themesTitle}</h2>
+            <p className="lede">{H.themesLede}</p>
+          </div>
+          <div className="tpl-filters" role="group" aria-label={H.themesTitle}>
+            <button type="button" className={filter === "all" ? "is-on" : ""} aria-pressed={filter === "all"} onClick={() => changeFilter("all")}>{allLabel(lang)} <small>{shuffled.length}</small></button>
+            {CATEGORY_LIST.filter((c) => countOf(c) > 0).map((c) => (
+              <button key={c} type="button" className={filter === c ? "is-on" : ""} aria-pressed={filter === c} onClick={() => changeFilter(c)}>{categoryLabel(c, lang)} <small>{countOf(c)}</small></button>
+            ))}
+          </div>
+        </div>
+        <TemplateCarousel templates={visible} selectedId={themeId} onSelect={pickTheme} label={H.themesTitle} lang={lang} size="lg" />
+      </section>
+
       <section className="hm-style">
         {styleManifest && (
           <div className="pick-phone" aria-hidden="true">
@@ -112,22 +128,6 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
             <a className="btn solid" href={`/api/themes/${themeId}/demo?lang=${lang}&s=${seed}`} target="_blank" rel="noreferrer">{H.stylePreview}</a>
           </div>
         </div>
-      </section>
-
-      <section ref={gallery} className="hm-gallery" aria-labelledby="hm-gallery-title">
-        <div className="hm-gallery-head">
-          <div>
-            <h2 id="hm-gallery-title">{H.themesTitle}</h2>
-            <p className="lede">{H.themesLede}</p>
-          </div>
-          <div className="tpl-filters" role="group" aria-label={H.themesTitle}>
-            <button type="button" className={filter === "all" ? "is-on" : ""} aria-pressed={filter === "all"} onClick={() => changeFilter("all")}>{allLabel(lang)} <small>{shuffled.length}</small></button>
-            {CATEGORY_LIST.filter((c) => countOf(c) > 0).map((c) => (
-              <button key={c} type="button" className={filter === c ? "is-on" : ""} aria-pressed={filter === c} onClick={() => changeFilter(c)}>{categoryLabel(c, lang)} <small>{countOf(c)}</small></button>
-            ))}
-          </div>
-        </div>
-        <TemplateCarousel templates={visible} selectedId={themeId} onSelect={pickTheme} label={H.themesTitle} lang={lang} size="lg" />
       </section>
 
       <details className="hm-acc">
@@ -161,7 +161,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
                 {m.id === "invitation-rsvp" && <span className="plan-option-tag">{T.popular}</span>}
                 <strong>{copy.name}</strong>
                 <span className="plan-option-tagline">{copy.tagline}</span>
-                <span className="plan-option-price">{formatPrice(m.priceCents)}</span>
+                <span className="plan-option-price">{m.id === "custom" && <small className="plan-option-from">{en ? "From" : "A partire da"}</small>}{formatPrice(m.priceCents)}</span>
               </button>
             );
           })}

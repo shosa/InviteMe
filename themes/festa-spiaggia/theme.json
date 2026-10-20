@@ -68,6 +68,9 @@
     },
     "footer": {
       "signature": "Sofia e Tiziano"
+    },
+    "blockSwap": {
+      "scratchdate": "date"
     }
   }
 }
