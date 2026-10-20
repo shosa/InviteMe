@@ -4,7 +4,8 @@ import fs from "fs";
 import path from "path";
 
 // Pipeline dei file caricati dai clienti (foto, video, audio): ogni file passa da ffmpeg prima di essere salvato.
-// Il video diventa H.264 muto e ridotto, l'audio MP3 a 128 kbps, la foto JPEG con il lato lungo massimo di 1800 px.
+// Il video diventa H.264 muto e ridotto, l'audio MP3 a 128 kbps. La foto diventa JPEG con il lato lungo massimo di 2200 px;
+// PNG e WebP restano PNG, così la trasparenza non diventa uno sfondo nero o bianco.
 // Le conversioni sono in coda, una alla volta, con priorità bassa: il server è condiviso con altri servizi.
 
 export const MEDIA_DIR = process.env.MEDIA_DIR ?? path.join(process.cwd(), "data", "media");
@@ -14,6 +15,8 @@ export type MediaKind = "photo" | "video" | "audio";
 
 export const MEDIA_LIMITS: Record<MediaKind, { inputBytes: number; outputBytes: number; maxSeconds: number }> = {
   photo: { inputBytes: 30 * 1024 * 1024, outputBytes: 3 * 1024 * 1024, maxSeconds: 0 },
+  // PNG con trasparenza: più pesante del JPEG, stesso lato massimo.
+
   video: { inputBytes: 150 * 1024 * 1024, outputBytes: 15 * 1024 * 1024, maxSeconds: 90 },
   audio: { inputBytes: 40 * 1024 * 1024, outputBytes: 6 * 1024 * 1024, maxSeconds: 600 },
 };
@@ -50,7 +53,9 @@ async function run(kind: MediaKind, input: Buffer, inputExt: string, limits: (ty
   ensureMediaDirs();
   const id = randomUUID();
   const src = path.join(TMP_DIR, `${id}.${inputExt}`);
-  const out = path.join(MEDIA_DIR, `${id}.${EXT[kind]}`);
+  const outExt = keepsAlpha(kind, inputExt) ? "png" : EXT[kind];
+  const outLimit = outExt === "png" ? PNG_OUTPUT_BYTES : limits.outputBytes;
+  const out = path.join(MEDIA_DIR, `${id}.${outExt}`);
   fs.writeFileSync(src, input);
   try {
     if (limits.maxSeconds) {
@@ -59,9 +64,9 @@ async function run(kind: MediaKind, input: Buffer, inputExt: string, limits: (ty
     }
     await ffmpeg(args(kind, src, out));
     const bytes = fs.statSync(out).size;
-    if (bytes > limits.outputBytes) {
+    if (bytes > outLimit) {
       fs.rmSync(out, { force: true });
-      throw new MediaError(`Il file convertito è troppo grande (massimo ${Math.round(limits.outputBytes / 1048576)} MB): usane uno più corto o più leggero`);
+      throw new MediaError(`Il file convertito è troppo grande (massimo ${Math.round(outLimit / 1048576)} MB): usane uno più corto o più leggero`);
     }
     return { name: path.basename(out), url: `/api/media/${path.basename(out)}`, bytes };
   } catch (e) {
@@ -73,13 +78,22 @@ async function run(kind: MediaKind, input: Buffer, inputExt: string, limits: (ty
   }
 }
 
+const PNG_OUTPUT_BYTES = 8 * 1024 * 1024;
+
+// Le foto con trasparenza (PNG, WebP) restano senza perdere il canale alfa.
+function keepsAlpha(kind: MediaKind, inputExt: string): boolean {
+  return kind === "photo" && (inputExt === "png" || inputExt === "webp");
+}
+
 function args(kind: MediaKind, src: string, out: string): string[] {
   const base = ["-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-threads", "2", "-i", src];
   if (kind === "video") {
     return [...base, "-an", "-vf", "scale='min(1080,iw)':-2", "-c:v", "libx264", "-preset", "slower", "-crf", "29", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out];
   }
   if (kind === "audio") return [...base, "-vn", "-c:a", "libmp3lame", "-b:a", "128k", out];
-  return [...base, "-an", "-vf", "scale='min(1800,iw)':'min(1800,ih)':force_original_aspect_ratio=decrease", "-q:v", "3", out];
+  const scale = "scale='min(2200,iw)':'min(2200,ih)':force_original_aspect_ratio=decrease";
+  if (keepsAlpha(kind, path.extname(src).slice(1).toLowerCase())) return [...base, "-an", "-vf", scale, "-compression_level", "9", out];
+  return [...base, "-an", "-vf", scale, "-q:v", "3", out];
 }
 
 // "nice -n 19" lascia la CPU agli altri servizi: la conversione è lenta ma non deve rallentare il resto.

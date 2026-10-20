@@ -341,8 +341,33 @@ const PHOTO_SHAPE: FieldDef = {
     { value: "hexagon", label: "Esagono" },
   ],
 };
+// Adattamento: intera (senza ritagli, con lo sfondo intorno) oppure riempi (ritaglia i bordi). Predefinito: quello del tema.
+const PHOTO_FIT: FieldDef = {
+  key: "photoFit",
+  label: "Adattamento della foto",
+  type: "choice",
+  group: "Foto",
+  options: [
+    { value: "contain", label: "Intera, senza ritagli" },
+    { value: "cover", label: "Riempi, ritaglia i bordi" },
+  ],
+};
+// Centratura: quale parte della foto resta visibile quando viene ritagliata.
+const PHOTO_FOCUS: FieldDef = {
+  key: "photoFocus",
+  label: "Centratura della foto",
+  type: "choice",
+  group: "Foto",
+  options: [
+    { value: "center", label: "Al centro" },
+    { value: "top", label: "In alto" },
+    { value: "bottom", label: "In basso" },
+    { value: "left", label: "A sinistra" },
+    { value: "right", label: "A destra" },
+  ],
+};
 for (const b of BLOCKS) {
-  if (b.fields.some((f) => f.type === "photo" || f.type === "photos")) b.fields = [...b.fields, PHOTO_SHAPE];
+  if (b.fields.some((f) => f.type === "photo" || f.type === "photos")) b.fields = [...b.fields, PHOTO_SHAPE, PHOTO_FIT, PHOTO_FOCUS];
 }
 
 // Testi che il motore mette nei blocchi (etichette): diventano campi modificabili, già compilati con il testo attuale.

@@ -92,6 +92,11 @@ export function renderInvitePage(input: PageInput): string {
       merged.kindLabel = names[config.locale]?.[kind] ?? "";
     }
     let html = renderTemplate(template, merged, { missing: input.missing });
+    // Adattamento e centratura della foto del blocco: applicati al suo tag <img>, qualunque sia il template.
+    for (const f of blockDef(block.type)?.fields ?? []) {
+      if (f.type !== "photo" || typeof block.props[f.key] !== "string" || !block.props[f.key]) continue;
+      html = fitPhoto(html, String(block.props[f.key]), block.props.photoFit, block.props.photoFocus);
+    }
     // L'etichetta «Con gioia» dei template diventa il testo sopra i nomi scelto nel blocco.
     if (block.type === "hero" && typeof block.props.kicker === "string" && block.props.kicker) {
       html = html.split(escapeHtml(String((globals.t as { withJoy?: string }).withJoy ?? ""))).join(escapeHtml(block.props.kicker));
@@ -263,14 +268,14 @@ const LOOK_CSS = `
 .dt-sec{text-align:center}
 .dt-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
 .dt-col{display:grid;justify-items:center;gap:8px;flex:none}
-.dt-cell{display:grid;gap:6px;min-width:96px;padding:16px 20px;border:1px solid currentColor;border-radius:14px;opacity:.95}
-.dt-num{font-size:40px;line-height:1;font-weight:600}
+.dt-cell{display:grid;gap:6px;min-width:110px;padding:14px 8px;border:1px solid currentColor;border-radius:14px;opacity:.95}
+.dt-num{font-size:26cqi;line-height:1;font-weight:600;white-space:nowrap}
 .dt-row[data-shape="round"] .dt-cell,.bk[data-cell-shape="round"] .dt-cell{width:96px;height:96px;min-width:0;padding:0;border-radius:50%;align-content:center;justify-items:center}
 .dt-row[data-shape="pill"] .dt-cell,.bk[data-cell-shape="pill"] .dt-cell{width:108px;height:64px;min-width:0;padding:0;border-radius:999px;align-content:center;justify-items:center}
 .dt-row[data-shape="plain"] .dt-cell{border:0;padding:6px 12px}
 .dt-lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.75}
 .scratch,.dt-cell{container-type:inline-size}
-.scratch:nth-child(2) .sc-val,.dt-col:nth-child(2) .dt-num{font-size:clamp(12px,17cqi,28px)!important;white-space:nowrap}
+.scratch:nth-child(2) .sc-val{font-size:clamp(12px,17cqi,28px)!important;white-space:nowrap}
 [data-cover] .env-card{perspective:900px;transition:transform .9s cubic-bezier(.3,.7,.3,1)}
 [data-cover] .env-flap{transform-origin:50% 0;transition:transform .9s cubic-bezier(.3,.7,.3,1)}
 [data-cover] .env-seal{transition:opacity .4s ease,transform .6s ease}
@@ -323,6 +328,27 @@ html[data-preview]{scrollbar-width:none}html[data-preview]::-webkit-scrollbar{di
 `;
 
 // Per ogni lista del blocco, un flag "has<Nome>" vero se ha almeno una voce: la sezione si mostra una volta sola.
+// Posizione della foto per ogni scelta di centratura (object-position).
+const FOCUS_CSS: Record<string, string> = { center: "center", top: "center top", bottom: "center bottom", left: "left center", right: "right center" };
+const FIT_VALUES = ["contain", "cover"];
+
+// Applica adattamento e centratura al tag <img> che mostra la foto. Senza scelte il tema resta com'è.
+function fitPhoto(html: string, url: string, fit: unknown, focus: unknown): string {
+  const decls: string[] = [];
+  if (typeof fit === "string" && FIT_VALUES.includes(fit)) decls.push(`object-fit:${fit}`);
+  if (typeof focus === "string" && FOCUS_CSS[focus]) decls.push(`object-position:${FOCUS_CSS[focus]}`);
+  if (!decls.length) return html;
+  const css = decls.join(";");
+  const needle = `src="${escapeHtml(url)}"`;
+  return html.replace(/<img\b[^>]*>/g, (tag) => {
+    if (!tag.includes(needle)) return tag;
+    const existing = /\sstyle="([^"]*)"/.exec(tag);
+    // Lo stile della scelta viene dopo quello del template, così vince sul tema.
+    if (existing) return tag.replace(existing[0], ` style="${existing[1]};${css}"`);
+    return tag.replace("<img", `<img style="${css}"`);
+  });
+}
+
 function listFlags(props: Record<string, unknown>): Record<string, boolean> {
   const out: Record<string, boolean> = {};
   for (const [k, v] of Object.entries(props)) {
@@ -358,11 +384,13 @@ function questionView(q: RsvpQuestion) {
 function dateView(iso: string, locale: "it" | "en") {
   const d = new Date(`${iso}T12:00:00`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || Number.isNaN(d.getTime())) {
-    return { day: "", month: "", year: "", weekday: "", long: "", iso: "" };
+    return { day: "", month: "", monthShort: "", year: "", weekday: "", long: "", iso: "" };
   }
   const day = String(d.getDate());
   const month = MONTHS[locale][d.getMonth()];
   const year = String(d.getFullYear());
   const weekday = WEEKDAYS[locale][d.getDay()];
-  return { day, month, year, weekday, long: `${day} ${month} ${year}`, iso };
+  // Il mese abbreviato (tre lettere) entra nei riquadri della data senza uscirne.
+  const monthShort = month.slice(0, 3).replace(/^./, (c) => c.toUpperCase());
+  return { day, month, monthShort, year, weekday, long: `${day} ${month} ${year}`, iso };
 }
