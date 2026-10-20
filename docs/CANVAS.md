@@ -14,3 +14,10 @@ Obiettivo: ogni cliente può spostare e ridimensionare i blocchi dell'invito nel
 - Fatto: tipo `BlockLayout`, validazione (`sanitizeLayout`), resa nel motore (`bk-place`), test.
 - Da fare (fase 2, previa approvazione): manipolazione nel builder (trascina, maniglia di larghezza), salvataggio della posizione, anteprima aggiornata a ogni movimento.
 - Da decidere: posizione dentro i singoli elementi (testi, foto) oppure solo per blocco.
+
+## Fase 2 (fatta)
+- Nel builder, con il mouse sopra un blocco compaiono due maniglie: «Sposta» (in alto) e il bordo destro per la larghezza.
+- Il trascinamento aggiorna l'anteprima in tempo reale; al rilascio la posizione entra nella cronologia (Annulla la toglie).
+- Verificato nel browser: restringere il blocco, ricaricare l'editor e spostarlo di lato salva `x` e `w`; lo spostamento verticale salva `dy`.
+- Cover e blocco principale restano fuori. Limite noto: su un blocco a larghezza piena lo spostamento laterale non ha effetto (va prima ristretto).
+- Dopo ogni rilascio l'anteprima si ricarica: sul telefono lo scorrimento torna in alto se non è stato salvato in precedenza. Da migliorare.
