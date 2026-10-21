@@ -46,8 +46,8 @@ type Device = "desktop" | "mobile";
 type Save = "saved" | "saving" | "error";
 
 // Editor dell'invito: palette e struttura a sinistra, anteprima reale al centro, proprietà a destra.
-// Blocchi che si aggiornano da soli nell'anteprima: senza script né animazioni di apertura.
-const PATCHABLE = new Set(["hero", "message", "program", "venue", "map", "transfer", "dresscode", "footer", "date"]);
+// Blocchi che si aggiornano da soli nell'anteprima: tutti tranne la busta e la musica, che hanno stato globale della pagina.
+const PATCHABLE = new Set(["hero", "message", "program", "venue", "map", "transfer", "dresscode", "footer", "date", "gallery", "countdown", "scratchdate", "video", "rsvp"]);
 
 // Tutto ciò che, cambiando, rende la pagina diversa nel suo insieme: se cambia uno di questi, l'anteprima si ricarica.
 function pageKey(c: InviteConfig, envelopeOn: boolean): string {

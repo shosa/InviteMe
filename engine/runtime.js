@@ -25,6 +25,9 @@
     return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   };
   var all = function (root, sel) { return [].slice.call((root || document).querySelectorAll(sel)); };
+  // Comportamenti con un timer: si fermano quando il loro blocco esce dalla pagina (anteprima del builder).
+  var live = [];
+  var scratchResizeBound = false;
 
   /* ---------- 1. Rivelazione allo scroll ---------- */
   var startObserving = (function () {
@@ -242,9 +245,9 @@
   }
 
   /* ---------- 3. Gratta e scopri ---------- */
-  function initScratch() {
-    var cards = all(document, '[data-scratch]');
-    var revealBtn = document.querySelector('[data-scratch-all]');
+  function initScratch(root) {
+    var cards = all(root, '[data-scratch]');
+    var revealBtn = (root || document).querySelector('[data-scratch-all]');
     var anyScratched = false;
     if (!cards.length) return;
 
@@ -339,13 +342,16 @@
       paintFoil();
     });
 
-    // ridisegna la patina se cambia la larghezza
-    var rw = window.innerWidth;
-    window.addEventListener('resize', function () {
-      if (window.innerWidth === rw) return;
-      rw = window.innerWidth;
-      cards.forEach(function (c) { if (!c.classList.contains('done')) c._repaint(); });
-    });
+    // ridisegna la patina se cambia la larghezza (un solo ascoltatore, per tutte le carte presenti)
+    if (!scratchResizeBound) {
+      scratchResizeBound = true;
+      var rw = window.innerWidth;
+      window.addEventListener('resize', function () {
+        if (window.innerWidth === rw) return;
+        rw = window.innerWidth;
+        all(document, '[data-scratch]').forEach(function (c) { if (!c.classList.contains('done') && c._repaint) c._repaint(); });
+      });
+    }
 
     // scorciatoia per chi non se la cava col grattare
     if (revealBtn) {
@@ -358,8 +364,8 @@
   }
 
   /* ---------- 4. Conto alla rovescia ---------- */
-  function initCountdown() {
-    var boxes = all(document, '[data-countdown]');
+  function initCountdown(root) {
+    var boxes = all(root, '[data-countdown]');
     boxes.forEach(function (box) {
       var target = new Date(box.getAttribute('data-countdown'));
       if (isNaN(target.getTime())) return;
@@ -399,7 +405,8 @@
         });
       }
       tick();
-      setInterval(tick, 1000);
+      var clock = setInterval(tick, 1000);
+      live.push({ node: box, stop: function () { clearInterval(clock); } });
 
       // le cifre compaiono quando il blocco entra nello schermo
       var revealed = false;
@@ -424,8 +431,8 @@
   }
 
   /* ---------- 5. Video in loop ---------- */
-  function initLoopVideo() {
-    all(document, '[data-loop-video]').forEach(function (frame) {
+  function initLoopVideo(root) {
+    all(root, '[data-loop-video]').forEach(function (frame) {
       var video = frame.querySelector('video');
       var btn = frame.querySelector('.video-play');
       if (!video) return;
@@ -469,11 +476,11 @@
   }
 
   /* ---------- 6. Conferma di presenza ---------- */
-  function initRsvp() {
-    var popup = document.querySelector('[data-rsvp-dialog]');
-    var form = document.querySelector('[data-rsvp-form]');
+  function initRsvp(root) {
+    var popup = (root || document).querySelector('[data-rsvp-dialog]');
+    var form = (root || document).querySelector('[data-rsvp-form]');
     if (!popup || !form) return;
-    var openers = all(document, '[data-rsvp-open]');
+    var openers = all(root, '[data-rsvp-open]');
     var closeBtn = popup.querySelector('[data-rsvp-close]');
     var success = popup.querySelector('[data-rsvp-success]');
     var errore = popup.querySelector('[data-rsvp-error]');
@@ -496,7 +503,8 @@
     openers.forEach(function (b) { b.addEventListener('click', openPopup); });
     if (closeBtn) closeBtn.addEventListener('click', closePopup);
     popup.addEventListener('click', function (e) { if (e.target === popup) closePopup(); });
-    document.addEventListener('keydown', function (e) {
+    // Il focus sta nel popup quando è aperto: l'Esc arriva qui, senza ascoltatori sul documento.
+    popup.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && popup.classList.contains('is-open')) closePopup();
     });
 
@@ -576,12 +584,22 @@
     track.scrollBy({ left: btn.hasAttribute('data-gal-next') ? step : -step, behavior: 'smooth' });
   });
 
+  // Reinizializza i comportamenti dentro un solo contenitore (il builder lo usa quando cambia quel blocco).
+  function refresh(root) {
+    live = live.filter(function (e) {
+      if (e.node.isConnected) return true;
+      e.stop();
+      return false;
+    });
+    initScratch(root);
+    initCountdown(root);
+    initLoopVideo(root);
+    initRsvp(root);
+  }
+
   function boot() {
     initCover();
-    initScratch();
-    initCountdown();
-    initLoopVideo();
-    initRsvp();
+    refresh(document);
     // Nelle anteprime (carosello, demo) il contenuto è subito visibile: niente animazioni che dipendono dallo scorrimento,
     // perché dentro un telefono del carosello le transizioni non avanzano mentre il frame è fuori vista.
     var preview = document.documentElement.hasAttribute('data-preview');
@@ -594,7 +612,7 @@
   }
 
   // Il tema può agganciarsi a runtime con InviteMe.startObserving() dopo aver aggiunto nuovi elementi.
-  window.InviteMe = { startObserving: startObserving, reducedMotion: reduced };
+  window.InviteMe = { startObserving: startObserving, reducedMotion: reduced, refresh: refresh };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();

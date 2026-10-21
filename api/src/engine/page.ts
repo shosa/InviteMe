@@ -205,6 +205,8 @@ const BUILDER_JS = `(function () {
     wrap.innerHTML = d.html;
     var anim = wrap.querySelectorAll('[data-anim]');
     for (var a = 0; a < anim.length; a++) anim[a].classList.add('in');
+    // Il blocco nuovo riprende i suoi comportamenti (conto alla rovescia, gratta, video, conferma) solo al suo interno.
+    if (window.InviteMe && window.InviteMe.refresh) window.InviteMe.refresh(wrap);
     addHandles(wrap);
     if (current === d.id) {
       var on = wrap.querySelector(':scope > .bk-place, .bk-place');
