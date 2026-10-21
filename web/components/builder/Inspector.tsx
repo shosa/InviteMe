@@ -1,6 +1,6 @@
 "use client";
 
-import { BLOCK_LABELS, EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type FontId, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
+import { BLOCK_LABELS, EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type FontId, type InviteConfig, type RsvpQuestion, BACKGROUND_KINDS, BACKGROUND_LABELS, type BackgroundKind, type BackgroundSpec } from "@inviteme/shared";
 import { Fragment, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Ellipsis, Eye, EyeOff, Image as ImageIcon, LayoutGrid, Palette, Shapes, Trash2, Type } from "lucide-react";
@@ -134,6 +134,7 @@ type Props = {
   locked?: boolean;
   onSetLocale: (locale: "it" | "en") => void;
   onSetEventType: (t: EventType) => void;
+  onSetBackground: (b: BackgroundSpec | null) => void;
   onSetQuestions: (q: RsvpQuestion[]) => void;
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
@@ -244,6 +245,20 @@ export function Inspector(p: Props) {
       <section className="bl-group" aria-labelledby="bl-style">
         <h3 id="bl-style">{L.template}</h3>
         <TemplateSwitch themes={themes} currentId={p.config.themeId} locked={!!p.locked} onConfirm={p.onSetTheme} lang={p.lang} />
+        <Field label={p.lang === "en" ? "Animated background" : "Sfondo animato"}>
+          <select value={p.config.background?.kind ?? ""} onChange={(e) => p.onSetBackground(e.target.value ? { kind: e.target.value as BackgroundKind, color: p.config.background?.color } : null)}>
+            <option value="">{p.lang === "en" ? "Theme default" : "Predefinito dello stile"}</option>
+            {BACKGROUND_KINDS.map((k) => <option key={k} value={k}>{BACKGROUND_LABELS[k][p.lang === "en" ? "en" : "it"]}</option>)}
+          </select>
+        </Field>
+        {p.config.background && p.config.background.kind !== "none" && (
+          <Field label={p.lang === "en" ? "Motion colour" : "Colore del movimento"}>
+            <div className="color-row">
+              <input type="color" aria-label={p.lang === "en" ? "Motion colour" : "Colore del movimento"} value={p.config.background.color ?? "#b8924a"} onChange={(e) => p.onSetBackground({ kind: p.config.background!.kind, color: e.target.value })} />
+              <button type="button" className="link" disabled={!p.config.background.color} onClick={() => p.onSetBackground({ kind: p.config.background!.kind })}>{p.lang === "en" ? "Theme colours" : "Colori del tema"}</button>
+            </div>
+          </Field>
+        )}
       </section>
 
     </div>

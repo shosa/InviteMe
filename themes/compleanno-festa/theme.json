@@ -72,5 +72,8 @@
     "blockSwap": {
       "scratchdate": "date"
     }
+  },
+  "background": {
+    "kind": "confetti"
   }
 }

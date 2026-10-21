@@ -1,4 +1,5 @@
 import { ADDON_KEYS, isAddonKey, type AddonKey } from "../addons";
+import { BACKGROUND_KINDS, sanitizeBackground, type BackgroundSpec } from "../background";
 
 // Tipi dei campi e delle domande di conferma, condivisi da blocchi, API e builder.
 // Uno stile (tema) è una cartella con theme.json (questo manifest), theme.css e assets/. Non contiene campi:
@@ -46,6 +47,8 @@ export type ThemeManifest = {
   fonts: string[]; // fogli di stile di Google Fonts, soli URL https://fonts.googleapis.com/
   // Esempi per la demo e per le anteprime: per blocco, valori delle proprietà con percorsi "assets/…" del tema.
   demo: Record<string, Record<string, unknown>>;
+  // Sfondo animato proposto dallo stile (il cliente può cambiarlo o spegnerlo nel builder).
+  background?: BackgroundSpec;
 };
 
 // Nomi riservati al motore: un campo o una proprietà con questo nome nasconderebbe un dato di sistema.
@@ -64,7 +67,7 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
   if (!isRecord(input)) return { manifest: null, errors: [`${dir}: theme.json deve essere un oggetto`] };
   const x = input;
 
-  const allowed = ["engine", "id", "name", "description", "models", "themeColor", "fonts", "demo"];
+  const allowed = ["engine", "id", "name", "description", "models", "themeColor", "fonts", "demo", "background"];
   for (const k of Object.keys(x)) if (!allowed.includes(k)) err(`campo sconosciuto "${k}"`);
   if (x.engine !== ENGINE_VERSION) err(`engine deve essere ${ENGINE_VERSION}`);
 
@@ -82,9 +85,14 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
     return false;
   });
   const demo = validateDemo(x.demo, err);
+  let background: BackgroundSpec | undefined;
+  if (x.background !== undefined) {
+    background = sanitizeBackground(x.background);
+    if (!background) err(`background: tipo non valido (ammessi: ${BACKGROUND_KINDS.join(", ")}), colore #RRGGBB facoltativo`);
+  }
 
   if (errors.length || !id || !name) return { manifest: null, errors };
-  return { manifest: { engine: ENGINE_VERSION, id, name, description, models, themeColor, fonts, demo }, errors };
+  return { manifest: { engine: ENGINE_VERSION, id, name, description, models, themeColor, fonts, demo, ...(background ? { background } : {}) }, errors };
 }
 
 // Campi dell'evento ammessi negli esempi della demo (sezione "event"): nomi, data, luogo, testi.

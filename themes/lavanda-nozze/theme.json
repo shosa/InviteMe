@@ -70,5 +70,9 @@
     "footer": {
       "signature": "Elisa e Paolo"
     }
+  },
+  "background": {
+    "kind": "petals",
+    "color": "#9a7bb0"
   }
 }

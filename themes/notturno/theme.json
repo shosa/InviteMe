@@ -72,5 +72,9 @@
     "blockSwap": {
       "scratchdate": "date"
     }
+  },
+  "background": {
+    "kind": "sparkles",
+    "color": "#f3efe4"
   }
 }

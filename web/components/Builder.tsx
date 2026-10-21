@@ -52,7 +52,7 @@ const PATCHABLE = new Set(["hero", "message", "program", "venue", "map", "transf
 // Tutto ciò che, cambiando, rende la pagina diversa nel suo insieme: se cambia uno di questi, l'anteprima si ricarica.
 function pageKey(c: InviteConfig, envelopeOn: boolean): string {
   return JSON.stringify({
-    t: c.themeId, m: c.model, a: [...c.addons].sort(), l: c.locale, e: c.eventType, q: c.rsvpQuestions, env: envelopeOn,
+    t: c.themeId, m: c.model, a: [...c.addons].sort(), l: c.locale, e: c.eventType, q: c.rsvpQuestions, env: envelopeOn, bg: c.background ?? null,
     ids: c.blocks.map((b) => `${b.id}:${b.type}:${b.hidden ? 1 : 0}`),
   });
 }
@@ -484,6 +484,10 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
             locked={locked}
             onSetLocale={(locale) => edit((c) => ({ ...c, locale }))}
             onSetEventType={(eventType: EventType) => edit((c) => ({ ...c, eventType }))}
+            onSetBackground={(background) => edit((c) => {
+              const { background: _previous, ...rest } = c;
+              return background ? { ...rest, background } : rest;
+            })}
             onSetQuestions={(rsvpQuestions: RsvpQuestion[]) => edit((c) => ({ ...c, rsvpQuestions }), "questions")}
             onToggle={toggleBlock}
             onRemove={removeBlock}
