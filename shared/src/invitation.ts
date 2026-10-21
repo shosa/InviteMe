@@ -2,7 +2,8 @@ import { EVENT_TYPES, activeFeatures, enabledModels, enabledThemes, getModel, ge
 import type { AddonKey } from "./addons";
 import { sanitizeValues } from "./engine/values";
 import { sanitizeQuestions, type RsvpQuestion, type ThemeManifest } from "./engine/manifest";
-import { BLOCK_TYPES, EVENT_DEFAULTS, EVENT_FIELDS, blockDef, defaultBlocks, makeBlock, newBlockId, type BlockInstance, type BlockType } from "./blocks";
+import { BLOCK_TYPES, EVENT_DEFAULTS, EVENT_FIELDS, HERO_EVENT_KEYS, blockDef, defaultBlocks, makeBlock, newBlockId, type BlockInstance, type BlockType } from "./blocks";
+import { sanitizeFontMap } from "./fonts";
 
 export type { RsvpQuestion } from "./engine/manifest";
 export type { BlockInstance, BlockType } from "./blocks";
@@ -120,11 +121,14 @@ export function sanitizeBlocks(input: unknown, features: ReadonlySet<AddonKey>):
     if (def.unique && seen.has(type)) continue;
     seen.add(type);
     const id = typeof y.id === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(y.id) ? y.id : newBlockId();
+    // Font scelti per i singoli testi del blocco: solo i campi di testo (e i titoli dell'evento nell'intestazione).
+    const textKeys = [...def.fields.filter((f) => f.type === "text" || f.type === "longtext").map((f) => f.key), ...(type === "hero" ? HERO_EVENT_KEYS : [])];
+    const fonts = sanitizeFontMap(textKeys, (y.props as Record<string, unknown> | null | undefined)?.fonts);
     out.push({
       id,
       type,
       hidden: y.hidden === true,
-      props: sanitizeValues(def.fields, y.props, features),
+      props: { ...sanitizeValues(def.fields, y.props, features), ...(fonts ? { fonts } : {}) },
     });
   }
   return out;

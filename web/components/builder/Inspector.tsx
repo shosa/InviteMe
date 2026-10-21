@@ -1,10 +1,11 @@
 "use client";
 
-import { BLOCK_LABELS, EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
+import { BLOCK_LABELS, EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type FontId, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
 import { Fragment, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Ellipsis, Eye, EyeOff, Image as ImageIcon, LayoutGrid, Palette, Shapes, Trash2, Type } from "lucide-react";
 import { Field, FieldEditor, type Values } from "./fields";
+import { FontButton } from "./FontButton";
 import { TemplateSwitch } from "./TemplateSwitch";
 import { ui } from "@/lib/ui";
 import { blockCopy, fieldCopy } from "@/lib/catalogCopy";
@@ -33,6 +34,7 @@ function fieldTab(f: FieldDef): Exclude<TabKey, "all"> {
   return "other";
 }
 const TAB_ORDER: Exclude<TabKey, "all">[] = ["texts", "colors", "shapes", "media", "other"];
+const isTextField = (f: FieldDef) => f.type === "text" || f.type === "longtext";
 
 // Una riga del pannello: una proprietà del blocco, oppure un dato dell'evento (solo nell'Intestazione).
 type Item = { field: FieldDef; event: boolean };
@@ -47,6 +49,14 @@ function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typ
   const shown = tab === "all" ? items : items.filter((i) => fieldTab(i.field) === tab);
   const present = new Set(items.map((i) => fieldTab(i.field)));
   const groupLabel: Record<Exclude<TabKey, "all">, string> = { texts: L.tabTexts, colors: L.tabColors, shapes: L.tabShapes, media: L.tabMedia, other: L.tabOther };
+  // Font scelti per i singoli testi del blocco (campo → font), salvati nelle proprietà del blocco.
+  const fontsOf = (p.block!.props.fonts ?? {}) as Record<string, string>;
+  function setFont(key: string, id: FontId | null) {
+    const next = { ...fontsOf };
+    if (id) next[key] = id;
+    else delete next[key];
+    p.onSetProp(p.block!.id, "fonts", next, `${p.block!.id}:fonts:${key}`);
+  }
   const tabs: [TabKey, string, LucideIcon][] = [
     ["all", L.tabAll, LayoutGrid],
     ["texts", L.tabTexts, Type],
@@ -96,11 +106,18 @@ function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typ
               onUpload={p.onUpload}
             />
           );
-          if (!opens) return field;
+          // Ogni testo ha il suo «Aa»: il font si sceglie per quel campo solo.
+          const control = isTextField(f) ? (
+            <div className="bl-fieldwrap" key={`font:${event ? "event:" : ""}${f.key}`}>
+              {field}
+              <FontButton label={f.label} value={fontsOf[f.key]} onChange={(id) => setFont(f.key, id)} />
+            </div>
+          ) : field;
+          if (!opens) return control;
           return (
             <Fragment key={`group:${group}:${i}`}>
               <p className="bl-group">{groupLabel[group]}</p>
-              {field}
+              {control}
             </Fragment>
           );
         })}

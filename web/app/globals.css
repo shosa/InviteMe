@@ -1469,6 +1469,21 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-fields .field input, .bl-fields .field select, .bl-fields .field textarea { padding: 7px 10px; font-size: 14px; }
 .bl-fields .field input[type="color"] { height: 34px; }
 .bl-fields .hint { font-size: 12px; margin: 0; }
+/* Font per campo: il pulsante «Aa» sta in alto a destra del campo; il menu mostra ogni nome nel suo font. */
+.bl-fieldwrap { position: relative; }
+.bl-fieldwrap .field-label { padding-right: 44px; }
+.font-pick { position: absolute; top: 0; right: 0; z-index: 5; }
+.font-btn { min-width: 34px; height: 26px; padding: 0 8px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); font: 600 13px/1 var(--font-text), sans-serif; cursor: pointer; }
+.font-btn:hover, .font-btn[aria-expanded="true"] { border-color: var(--ink); }
+.font-btn.is-set { background: var(--ink); color: var(--paper-light); border-color: var(--ink); }
+.font-btn:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.font-menu { position: absolute; top: 32px; right: 0; width: 264px; max-height: 360px; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 18px 40px -20px rgba(0, 0, 0, .35); }
+.font-cat { margin: 8px 10px 2px; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.font-opt { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 10px; background: none; color: var(--ink); font-size: 15px; text-align: left; cursor: pointer; }
+.font-opt:hover { background: var(--paper); }
+.font-opt[aria-pressed="true"] { outline: 1px solid var(--ink); outline-offset: -1px; }
+.font-opt:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+.font-sample { font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
 .addr-list { list-style: none; margin: 6px 0 0; padding: 4px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 24px -16px rgba(0,0,0,0.3); max-height: 260px; overflow-y: auto; }
 .addr-list button { display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; background: none; border: 0; border-radius: 10px; padding: 10px 12px; cursor: pointer; color: var(--ink); }
 .addr-list button:hover { background: var(--paper); }

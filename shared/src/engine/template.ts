@@ -19,6 +19,8 @@ export type Filter = "lines" | "url";
 export type RenderOptions = {
   // Percorsi che non esistono nei dati: servono ai test del tema per trovare refusi nel template.
   missing?: Set<string>;
+  // Font scelto per singolo campo: il valore del campo viene avvolto con il suo stack CSS (vedi fonts.ts).
+  fonts?: Record<string, string>;
 };
 
 const TAG = /\{\{\s*([#^/!]?)\s*([^}]*?)\s*\}\}/g;
@@ -78,9 +80,13 @@ function renderNodes(nodes: TemplateNode[], scopes: unknown[], options: RenderOp
         continue;
       }
       const text = toText(value);
-      if (node.filter === "lines") out += escapeHtml(text).replace(/\r?\n/g, "<br>");
-      else if (node.filter === "url") out += escapeHtml(encodeURIComponent(text));
-      else out += escapeHtml(text);
+      let html: string;
+      if (node.filter === "lines") html = escapeHtml(text).replace(/\r?\n/g, "<br>");
+      else if (node.filter === "url") html = escapeHtml(encodeURIComponent(text));
+      else html = escapeHtml(text);
+      const stack = options.fonts && Object.prototype.hasOwnProperty.call(options.fonts, node.path) ? options.fonts[node.path] : undefined;
+      // Lo stack viene dalla libreria dei font (mai dai dati): le virgolette restano nell'attributo tra doppi apici.
+      out += stack && html ? `<span style="font-family:${stack}">${html}</span>` : html;
     } else {
       const value = lookup(node.name, scopes);
       if (value === undefined) options.missing?.add(node.name);

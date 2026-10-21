@@ -6,4 +6,5 @@ export * from "./engine/manifest";
 export * from "./engine/template";
 export * from "./engine/values";
 export * from "./blocks";
+export * from "./fonts";
 export * from "./categories";

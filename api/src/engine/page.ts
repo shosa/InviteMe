@@ -3,9 +3,13 @@ import {
   BLOCK_LABELS,
   blockDef,
   escapeHtml,
+  fontStack,
+  fontsStylesheetUrl,
+  isFontId,
   renderTemplate,
   type AddonKey,
   type BlockType,
+  type FontId,
   type InviteConfig,
   type RsvpQuestion,
   type TemplateNode,
@@ -59,6 +63,8 @@ export function renderInvitePage(input: PageInput): string {
 
   const globals = pageGlobals(input);
   let cover = "";
+  // Font scelti dal cliente per i testi: solo quelli della libreria finiscono nel foglio di stile della pagina.
+  const usedFonts = new Set<FontId>();
   let main = "";
   for (const block of config.blocks) {
     if (block.hidden || !blockDef(block.type)) continue;
@@ -91,7 +97,10 @@ export function renderInvitePage(input: PageInput): string {
       const kind = typeof block.props.kind === "string" ? block.props.kind : "";
       merged.kindLabel = names[config.locale]?.[kind] ?? "";
     }
-    let html = renderTemplate(template, merged, { missing: input.missing });
+    const fieldFonts = blockFontIds(block.props.fonts);
+    for (const id of Object.values(fieldFonts)) usedFonts.add(id);
+    const fontStacks = Object.fromEntries(Object.entries(fieldFonts).map(([key, id]) => [key, fontStack(id) ?? ""]));
+    let html = renderTemplate(template, merged, { missing: input.missing, fonts: fontStacks });
     // Adattamento e centratura della foto del blocco: applicati al suo tag <img>, qualunque sia il template.
     for (const f of blockDef(block.type)?.fields ?? []) {
       if (f.type !== "photo" || typeof block.props[f.key] !== "string" || !block.props[f.key]) continue;
@@ -116,6 +125,9 @@ export function renderInvitePage(input: PageInput): string {
   const title = String(config.event.title ?? "");
   const description = String(config.event.hosts ?? "") || title;
   const fonts = m.fonts.map((f) => `<link rel="stylesheet" href="${escapeHtml(f)}">`).join("\n");
+  // Nell'anteprima del builder c'è tutta la libreria, così ogni cambio di font si vede senza ricaricare la pagina.
+  const fontSheet = input.builder ? fontsStylesheetUrl() : usedFonts.size ? fontsStylesheetUrl([...usedFonts]) : "";
+  const fontLink = fontSheet ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="${escapeHtml(fontSheet)}">` : "";
   const payload = JSON.stringify({ slug, locale: config.locale, title, rsvp: globals.rsvp }).replace(/</g, "\\u003c");
 
   return `<!doctype html>
@@ -130,6 +142,7 @@ export function renderInvitePage(input: PageInput): string {
 <meta name="description" content="${escapeHtml(description.slice(0, 160))}">
 <meta name="theme-color" content="${escapeHtml(m.themeColor)}">
 ${fonts ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n${fonts}` : ""}
+${fontLink}
 <style>
 ${css}
 </style>
@@ -163,6 +176,13 @@ function pageGlobals(input: PageInput): Record<string, unknown> {
     t: labelsFor(config.locale),
     preview: !!input.preview,
   };
+}
+
+// Font di ogni campo del blocco: solo id della libreria, gli altri valori vengono scartati.
+function blockFontIds(v: unknown): Record<string, FontId> {
+  const out: Record<string, FontId> = {};
+  if (v && typeof v === "object") for (const [key, id] of Object.entries(v)) if (isFontId(id)) out[key] = id;
+  return out;
 }
 
 // Solo nell'anteprima del builder: evidenzia il blocco sotto il mouse (o quello scelto nella lista) e lo segnala al builder.
