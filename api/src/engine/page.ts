@@ -1,8 +1,6 @@
 import {
   ADDON_KEYS,
   BLOCK_LABELS,
-  type BlockLayout,
-  isFixedPosition,
   blockDef,
   escapeHtml,
   renderTemplate,
@@ -103,9 +101,7 @@ export function renderInvitePage(input: PageInput): string {
     if (block.type === "hero" && typeof block.props.kicker === "string" && block.props.kicker) {
       html = html.split(escapeHtml(String((globals.t as { withJoy?: string }).withJoy ?? ""))).join(escapeHtml(block.props.kicker));
     }
-    // Nell'anteprima del builder ogni blocco spostabile ha il suo contenitore, anche senza posizione salvata.
-    const movable = !!input.builder && block.type !== "cover" && !isFixedPosition(block.type);
-    const look = block.type === "cover" ? html : placeBlock(block.layout, lookWrap(block.props, html), movable);
+    const look = block.type === "cover" ? html : lookWrap(block.props, html);
     // display:contents: il contenitore non cambia l'impaginazione; serve solo a sapere a quale blocco appartiene ciò che c'è dentro.
     // Il marcatore di chiusura serve al builder per ritagliare il blocco dalla pagina e aggiornarlo da solo.
     const framed = input.builder ? `<div data-blk="${escapeHtml(block.id)}" style="display:contents">${look}</div><!--/blk-->` : look;
@@ -177,25 +173,6 @@ const BUILDER_JS = `(function () {
   box.style.cssText = 'position:fixed;pointer-events:none;display:none;z-index:2147483000;border:2px solid #14b8a6;border-radius:6px;background:rgba(20,184,166,.10)';
   document.body.appendChild(box);
   var current = null;
-  // Posizione libera: maniglie per spostare (in alto) e per cambiare la larghezza (a destra).
-  var lay = document.createElement('style');
-  lay.textContent = '.bk-place.lay-on{outline:1px dashed #14b8a6;outline-offset:4px}' +
-    '.lay-move,.lay-rz{position:absolute;display:none;background:#14b8a6;color:#fff;z-index:50;touch-action:none;font:600 12px system-ui,sans-serif}' +
-    '.lay-move{top:-14px;left:50%;transform:translateX(-50%);padding:3px 12px;border-radius:999px;cursor:grab;white-space:nowrap}' +
-    '.lay-rz{top:50%;right:3px;width:10px;height:46px;margin-top:-23px;border-radius:6px;cursor:ew-resize}' +
-    '.bk-place.lay-on .lay-move,.bk-place.lay-on .lay-rz{display:block}';
-  document.head.appendChild(lay);
-  // Maniglie su ogni blocco spostabile; si richiamano anche quando un blocco viene aggiornato.
-  function addHandles(root) {
-    var places = root.querySelectorAll('.bk-place[data-lw]');
-    for (var k = 0; k < places.length; k++) {
-      if (places[k].querySelector('.lay-move')) continue;
-      var mv = document.createElement('div'); mv.className = 'lay-move'; mv.setAttribute('data-lay', 'move'); mv.textContent = 'Sposta';
-      var rz = document.createElement('div'); rz.className = 'lay-rz'; rz.setAttribute('data-lay', 'rz');
-      places[k].appendChild(mv); places[k].appendChild(rz);
-    }
-  }
-  addHandles(document);
   // Aggiornamento di un solo blocco: il builder manda solo il suo HTML, la pagina resta com'è (scorrimento compreso).
   window.addEventListener('message', function (e) {
     var d = e.data;
@@ -207,59 +184,8 @@ const BUILDER_JS = `(function () {
     for (var a = 0; a < anim.length; a++) anim[a].classList.add('in');
     // Il blocco nuovo riprende i suoi comportamenti (conto alla rovescia, gratta, video, conferma) solo al suo interno.
     if (window.InviteMe && window.InviteMe.refresh) window.InviteMe.refresh(wrap);
-    addHandles(wrap);
-    if (current === d.id) {
-      var on = wrap.querySelector(':scope > .bk-place, .bk-place');
-      if (on) on.classList.add('lay-on');
-      paint();
-    }
+    if (current === d.id) paint();
   });
-  var drag = null;
-  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
-  function applyLayout(el, l) {
-    el.style.left = l.x + '%'; el.style.width = l.w + '%'; el.style.marginTop = l.dy + 'px';
-    el.setAttribute('data-lx', l.x); el.setAttribute('data-lw', l.w); el.setAttribute('data-ldy', l.dy);
-  }
-  document.addEventListener('pointerdown', function (e) {
-    var h = e.target && e.target.closest ? e.target.closest('[data-lay]') : null;
-    if (!h || e.button > 0) return;
-    // Niente selezione del testo mentre si trascina.
-    document.documentElement.style.userSelect = 'none';
-    var el = h.parentElement;
-    var lw = +el.getAttribute('data-lw');
-    drag = { mode: h.getAttribute('data-lay'), el: el, id: el.closest('[data-blk]').getAttribute('data-blk'),
-      x: +el.getAttribute('data-lx'), w: lw, dy: +el.getAttribute('data-ldy'), sx: e.clientX, sy: e.clientY,
-      // La larghezza della box è w% del contenitore: da qui si ricava la larghezza della pagina.
-      pageW: el.getBoundingClientRect().width * 100 / lw };
-    h.setPointerCapture(e.pointerId);
-    e.preventDefault(); e.stopPropagation();
-  }, true);
-  document.addEventListener('pointermove', function (e) {
-    if (!drag) return;
-    var dxPct = (e.clientX - drag.sx) / drag.pageW * 100;
-    var l;
-    if (drag.mode === 'move') {
-      l = { x: clamp(drag.x + dxPct, 0, 100 - drag.w), w: drag.w, dy: clamp(drag.dy + (e.clientY - drag.sy), -200, 400) };
-    } else {
-      l = { x: drag.x, w: clamp(drag.w + dxPct, 20, 100 - drag.x), dy: drag.dy };
-    }
-    l.x = Math.round(l.x); l.w = Math.round(l.w); l.dy = Math.round(l.dy);
-    drag.last = l;
-    if (!drag.frame) drag.frame = requestAnimationFrame(function () { drag.frame = 0; applyLayout(drag.el, drag.last); paint(); });
-  });
-  function endDrag() {
-    if (!drag) return;
-    document.documentElement.style.userSelect = '';
-    var l = drag.last;
-    var moved = l && (l.x !== 0 || l.w !== 100 || l.dy !== 0);
-    // Il builder salva la posizione solo se è cambiata davvero.
-    if (l && (l.x !== drag.x || l.w !== drag.w || l.dy !== drag.dy)) {
-      parent.postMessage({ type: 'layout', id: drag.id, layout: moved ? l : null }, '*');
-    }
-    drag = null;
-  }
-  document.addEventListener('pointerup', endDrag);
-  document.addEventListener('pointercancel', endDrag);
   function owner(el) { return el && el.closest ? el.closest('[data-blk]') : null; }
   function bounds(wrap) {
     var r = null;
@@ -283,11 +209,7 @@ const BUILDER_JS = `(function () {
   }
   function setCurrent(id, notify) {
     if (id === current) return;
-    var old = document.querySelector('.bk-place.lay-on');
-    if (old) old.classList.remove('lay-on');
     current = id;
-    var on = id && document.querySelector('[data-blk="' + id + '"] > .bk-place');
-    if (on) on.classList.add('lay-on');
     paint();
     if (notify) parent.postMessage({ type: 'hover', id: id }, '*');
   }
@@ -328,14 +250,6 @@ const BUILDER_JS = `(function () {
     }
   });
 })();`;
-
-// Posizione libera del blocco: si sposta e si restringe restando nel flusso della pagina. Senza posizione non cambia nulla,
-// tranne nell'anteprima del builder, dove il contenitore serve per trascinare il blocco.
-function placeBlock(layout: BlockLayout | undefined, html: string, movable = false): string {
-  if (!layout && !movable) return html;
-  const l = layout ?? { x: 0, w: 100, dy: 0 };
-  return `<div class="bk-place" style="position:relative;left:${l.x}%;width:${l.w}%;margin-top:${l.dy}px" data-lx="${l.x}" data-lw="${l.w}" data-ldy="${l.dy}">\n${html}</div>\n`;
-}
 
 // Aspetto scelto dal cliente per un blocco (sfondo, testo, forma e copertura del gratta). Senza scelte il blocco non viene toccato.
 // I valori sono già validati (esadecimali e opzioni note), quindi possono stare in uno stile inline.

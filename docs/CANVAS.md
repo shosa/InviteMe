@@ -21,3 +21,7 @@ Obiettivo: ogni cliente può spostare e ridimensionare i blocchi dell'invito nel
 - Verificato nel browser: restringere il blocco, ricaricare l'editor e spostarlo di lato salva `x` e `w`; lo spostamento verticale salva `dy`.
 - Cover e blocco principale restano fuori. Limite noto: su un blocco a larghezza piena lo spostamento laterale non ha effetto (va prima ristretto).
 - Dopo ogni rilascio l'anteprima si ricarica: sul telefono lo scorrimento torna in alto se non è stato salvato in precedenza. Da migliorare.
+
+## Revocato
+- Lo spostamento libero dei blocchi (maniglie «Sposta» e bordo di larghezza, campi `layout` con `x`, `w`, `dy`) è stato tolto su richiesta: i blocchi tornano in colonna, come prima. Le posizioni già salvate vengono ignorate e scartate al prossimo salvataggio.
+- L'affiancamento dei blocchi non è previsto; se servirà, sarà una scelta nuova (fasce orizzontali o posizione libera).

@@ -301,30 +301,12 @@ export const BLOCKS: BlockDef[] = [
   },
 ];
 
-// Posizione libera di un blocco nel flusso della pagina: x e w in percentuale della larghezza, dy in pixel.
-// La pagina resta a scorrimento, quindi il blocco si sposta senza uscire dal suo posto nella sequenza.
-export type BlockLayout = { x: number; w: number; dy: number };
-
 export type BlockInstance = {
   id: string;
   type: BlockType;
   hidden?: boolean;
   props: Record<string, unknown>;
-  layout?: BlockLayout;
 };
-
-// Valida una posizione: nulla se assente o non valida, mai valori fuori dai limiti.
-export function sanitizeLayout(v: unknown): BlockLayout | undefined {
-  if (!v || typeof v !== "object") return undefined;
-  const o = v as Record<string, unknown>;
-  const num = (k: string) => (typeof o[k] === "number" && Number.isFinite(o[k]) ? (o[k] as number) : NaN);
-  const w = Math.min(100, Math.max(20, num("w")));
-  const x = Math.min(100 - w, Math.max(0, num("x")));
-  const dy = Math.min(400, Math.max(-200, num("dy")));
-  if ([w, x, dy].some(Number.isNaN)) return undefined;
-  if (w === 100 && x === 0 && dy === 0) return undefined;
-  return { x: Math.round(x), w: Math.round(w), dy: Math.round(dy) };
-}
 
 export const blockDef = (type: string): BlockDef | undefined => BLOCKS.find((b) => b.type === type);
 // Blocchi che non cambiano posizione: il principale e la busta.

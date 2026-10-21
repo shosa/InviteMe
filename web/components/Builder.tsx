@@ -18,7 +18,6 @@ import {
   type RsvpQuestion,
   blockDef,
   isFixedPosition,
-  type BlockLayout,
 } from "@inviteme/shared";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Eye, Monitor, Redo2, Smartphone, Undo2, Users } from "lucide-react";
@@ -213,11 +212,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (e.source !== frame.current?.contentWindow) return;
-      const d = e.data as { type?: string; id?: unknown; y?: unknown; max?: unknown; layout?: unknown } | null;
-      if (d?.type === "layout" && typeof d.id === "string" && editable) {
-        const l = d.layout as BlockLayout | null;
-        setLayoutRef.current(d.id, l && typeof l === "object" ? l : null);
-      }
+      const d = e.data as { type?: string; id?: unknown; y?: unknown; max?: unknown } | null;
       if (d?.type === "hover") setHover(typeof d.id === "string" ? d.id : null);
       if (d?.type === "scroll" && typeof d.y === "number") {
         const y: number = d.y;
@@ -281,19 +276,6 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
       return withActiveFeatures({ ...c, model: id, addons: c.addons.filter((a) => m?.options.includes(a)), themeId });
     });
   }
-  // Posizione libera trascinata nell'anteprima: null la toglie (torna il flusso normale). Entra nella cronologia.
-  function setLayout(id: string, layout: BlockLayout | null) {
-    edit((c) => ({
-      ...c,
-      blocks: c.blocks.map((b) => {
-        if (b.id !== id) return b;
-        const { layout: _previous, ...rest } = b;
-        return layout ? { ...rest, layout } : rest;
-      }),
-    }), `layout:${id}`);
-  }
-  const setLayoutRef = useRef(setLayout);
-  setLayoutRef.current = setLayout;
   function moveBlock(from: number, to: number) {
     edit((c) => {
       const list = [...c.blocks];
