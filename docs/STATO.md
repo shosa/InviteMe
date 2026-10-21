@@ -98,3 +98,14 @@ Aggiornato a ogni checkpoint. Leggerlo prima di toccare il codice.
 - **Shopify e Resend**: le chiavi vanno in `.env` in produzione. Finché mancano, valgono solo la demo e l'invio email disattivato.
 - **Materiale personale negli asset**: `invitereference` usa foto e audio della coppia di InviteReference. Va sostituito prima di vendere lo stile a clienti reali.
 - **Rilascio sui container live**: non fatto. Richiede il tuo ok esplicito.
+
+## Ultime modifiche (builder, motore, stili)
+
+- **Sfondi animati**: confetti, bolle, petali, scintille, onde, neve. Il cliente li sceglie nel pannello generale (con colore facoltativo); lo stile può proporne uno nel `theme.json` (chiave `background`). Canvas dietro i contenuti, fermo fuori schermo e con «riduci movimento». Adattati cinque stili: compleanno-festa, festa-spiaggia, lavanda-nozze, battesimo-celeste, notturno. Verificati nel browser: tutti e sei i tipi si muovono senza errori.
+- **Font per campo** con il pulsante «Aa» dentro il campo; libreria di 15 font Google (OFL).
+- **Pixabay**: ricerca con i filtri dell'API (tipo, orientamento, colore incluso «sfondo trasparente», categoria, ordine, dimensione minima, scelta della redazione). Chiave dall'ambiente (`PIXABAY_API_KEY`).
+- **Dress code**: lista di colori con pallino e nome visibile, nel template di default.
+- **Selettori di colore** a pallino, senza padding.
+- **Layout libero tolto**: i blocchi tornano in colonna.
+- **Documentazione per la generazione di stili**: `docs/MOTORE.md` (motore, registro dei blocchi, sfondi, font) e `docs/TEMI.md` (contratto per chi scrive uno stile, classi, validazione, richiesta modello).
+- Da verificare: deploy (non fatto, serve il tuo ok), sfondi animati su telefono reale, ricerca Pixabay con la chiave nel container.
