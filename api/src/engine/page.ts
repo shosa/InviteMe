@@ -210,6 +210,9 @@ const BUILDER_JS = `(function () {
   function bounds(wrap) {
     var r = null;
     for (var i = 0; i < wrap.children.length; i++) {
+      // Le finestre fisse (il popup della conferma copre tutto lo schermo, anche da nascosto) non sono parte del blocco.
+      var cs = window.getComputedStyle(wrap.children[i]);
+      if (cs.position === 'fixed' || cs.visibility === 'hidden' || cs.display === 'none') continue;
       var b = wrap.children[i].getBoundingClientRect();
       if (!b.width && !b.height) continue;
       if (!r) r = { l: b.left, t: b.top, r: b.right, b: b.bottom };
