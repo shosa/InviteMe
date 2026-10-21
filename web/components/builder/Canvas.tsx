@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type DragEvent } from "react";
+import { useState, type PointerEvent } from "react";
 import { blockDef, isFixedPosition, type AddonKey, type BlockInstance, type BlockType, type Catalog, type InviteConfig } from "@inviteme/shared";
 import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, GripVertical, Plus, Trash2 } from "lucide-react";
 import { ui, type Lang } from "@/lib/ui";
@@ -27,6 +27,25 @@ type Props = {
   lang?: Lang;
 };
 
+// Trascinamento dal vivo: la riga presa segue il cursore e le altre si spostano per farle posto.
+type Box = { top: number; height: number };
+type Drag = {
+  from: number; // riga presa
+  to: number; // posizione in cui cade
+  startY: number;
+  dy: number; // quanto il cursore si è spostato
+  boxes: Box[]; // posizioni delle righe all'inizio del trascinamento
+  settling: boolean; // la riga va nel suo posto prima del salvataggio
+};
+
+// Quanto si sposta la riga j per fare posto alla riga trascinata.
+function shiftOf(j: number, d: Drag): number {
+  if (j === d.from) return 0;
+  if (d.from < j && j <= d.to) return d.boxes[j - 1].top - d.boxes[j].top;
+  if (d.to <= j && j < d.from) return d.boxes[j + 1].top - d.boxes[j].top;
+  return 0;
+}
+
 // Cosa manca perché il blocco mostri qualcosa: la mappa senza indirizzo non si vede, la galleria senza foto è vuota.
 function missing(b: BlockInstance, config: InviteConfig, L: ReturnType<typeof ui>["builder"]): string | null {
   const p = b.props;
@@ -49,46 +68,54 @@ function missing(b: BlockInstance, config: InviteConfig, L: ReturnType<typeof ui
 // Colonna sinistra: la struttura dell'invito è la parte principale. I blocchi nuovi si scelgono dalla finestra del «+».
 export function Canvas(p: Props) {
   const L = ui(p.lang ?? "it").builder;
-  const [dragging, setDragging] = useState<number | null>(null);
-  // Trascinamento: si parte solo dalla maniglia; la linea mostra dove cade il blocco (sopra o sotto la riga).
-  const [armed, setArmed] = useState<number | null>(null);
-  const [drop, setDrop] = useState<{ index: number; after: boolean } | null>(null);
+  const [drag, setDrag] = useState<Drag | null>(null);
   const [adding, setAdding] = useState(false);
 
-  function resetDrag() {
-    setDragging(null);
-    setDrop(null);
-    setArmed(null);
+  // Si trascina dalla maniglia, e solo i blocchi che possono cambiare posizione.
+  function canDrag(b: BlockInstance): boolean {
+    const def = blockDef(b.type);
+    return !def?.locked && !def?.anchored && !isFixedPosition(b.type);
   }
-  function onDragStart(e: DragEvent<HTMLLIElement>, index: number) {
-    if (armed !== index) return e.preventDefault();
-    setDragging(index);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(index));
-    // L'immagine che segue il mouse è la riga stessa, non un rettangolo generico.
-    e.dataTransfer.setDragImage(e.currentTarget, 24, 20);
-  }
-  function onDragOver(e: DragEvent<HTMLLIElement>, index: number) {
+  function onGripDown(e: PointerEvent<HTMLSpanElement>, i: number) {
+    if (e.button !== 0 || !canDrag(p.blocks[i])) return;
+    const list = e.currentTarget.closest(".bl-list");
+    if (!list) return;
+    const boxes = Array.from(list.children).map((el) => {
+      const r = el.getBoundingClientRect();
+      return { top: r.top, height: r.height };
+    });
+    e.currentTarget.setPointerCapture(e.pointerId);
     e.preventDefault();
-    const r = e.currentTarget.getBoundingClientRect();
-    const after = e.clientY > r.top + r.height / 2;
-    if (drop?.index !== index || drop.after !== after) setDrop({ index, after });
+    setDrag({ from: i, to: i, startY: e.clientY, dy: 0, boxes, settling: false });
   }
-  function onDrop(e: DragEvent<HTMLLIElement>) {
-    e.preventDefault();
-    const from = dragging ?? Number(e.dataTransfer.getData("text/plain"));
-    if (Number.isInteger(from) && drop) {
-      // Il punto di inserimento è sopra o sotto la riga; spostando verso il basso va tolta la posizione lasciata libera.
-      const at = drop.after ? drop.index + 1 : drop.index;
-      const to = from < at ? at - 1 : at;
-      if (to !== from) p.onMove(from, to);
-    }
-    resetDrag();
+  function onGripMove(e: PointerEvent<HTMLSpanElement>) {
+    setDrag((d) => {
+      if (!d || d.settling) return d;
+      const dy = e.clientY - d.startY;
+      // La riga cade dove sta il suo centro: conta quante altre righe hanno il centro sopra quello.
+      const center = d.boxes[d.from].top + d.boxes[d.from].height / 2 + dy;
+      let to = 0;
+      d.boxes.forEach((b, j) => {
+        if (j !== d.from && b.top + b.height / 2 < center) to++;
+      });
+      return { ...d, dy, to };
+    });
+  }
+  // Al rilascio la riga scivola nel suo posto, poi il riordino viene salvato nella storia del builder.
+  function onGripUp() {
+    if (!drag || drag.settling) return;
+    const d = drag;
+    const slot = d.boxes[d.to].top - d.boxes[d.from].top;
+    setDrag({ ...d, dy: slot, settling: true });
+    window.setTimeout(() => {
+      if (d.to !== d.from) p.onMove(d.from, d.to);
+      setDrag(null);
+    }, 170);
   }
 
   return (
     <div className="bl-column">
-      <section className={`bl-section bl-structure${dragging !== null ? " is-sorting" : ""}`} aria-labelledby="bl-struct">
+      <section className={`bl-section bl-structure${drag ? " is-sorting" : ""}`} aria-labelledby="bl-struct">
         <header className="bl-struct-head">
           <h2 id="bl-struct" className="bl-h">{L.structure}</h2>
           <button type="button" className="bl-plus" aria-label={L.addBlock} title={L.addBlock} onClick={() => setAdding(true)}>
@@ -102,19 +129,26 @@ export function Canvas(p: Props) {
             const name = def ? blockCopy(def.type, def.label, p.lang ?? "it") : b.type;
             const active = p.selected === b.id;
             const hint = missing(b, p.config, L);
+            const lifted = drag?.from === i;
+            const style = drag ? { transform: `translateY(${lifted ? drag.dy : shiftOf(i, drag)}px)` } : undefined;
             return (
               <li
                 key={b.id}
-                draggable={armed === i && !def?.locked && !def?.anchored}
-                onDragStart={(e) => onDragStart(e, i)}
-                onDragOver={(e) => onDragOver(e, i)}
-                onDrop={onDrop}
-                onDragEnd={resetDrag}
+                style={style}
                 onMouseEnter={() => p.onHover(b.id)}
                 onMouseLeave={() => p.onHover(null)}
-                className={`bl-item${def?.locked ? " is-locked" : ""}${def?.anchored ? " is-anchored" : ""}${active ? " is-on" : ""}${p.hover === b.id ? " is-hover" : ""}${b.hidden ? " is-hidden" : ""}${dragging !== null && drop?.index === i && dragging !== i ? (drop.after ? " is-drop-after" : " is-drop-before") : ""}${dragging === i ? " is-dragging" : ""}`}
+                className={`bl-item${def?.locked ? " is-locked" : ""}${def?.anchored ? " is-anchored" : ""}${active ? " is-on" : ""}${p.hover === b.id ? " is-hover" : ""}${b.hidden ? " is-hidden" : ""}${lifted ? " is-lifted" : ""}${drag && !lifted ? " is-moving" : ""}${lifted && drag?.settling ? " is-settling" : ""}`}
               >
-                <span className="bl-grip" aria-hidden="true" onPointerDown={() => setArmed(i)} onPointerUp={() => setArmed(null)}><GripVertical size={16} /></span>
+                <span
+                  className="bl-grip"
+                  aria-hidden="true"
+                  onPointerDown={(e) => onGripDown(e, i)}
+                  onPointerMove={onGripMove}
+                  onPointerUp={onGripUp}
+                  onPointerCancel={onGripUp}
+                >
+                  <GripVertical size={16} />
+                </span>
                 <button type="button" className="bl-select" onClick={() => p.onSelect(b.id)} aria-pressed={active}>
                   <span className="bl-name bl-name-row">{def && <BlockIcon type={def.type} size={16} />}<span>{name}</span></span>
                   {def?.locked && <small className="bl-lock">{L.mainBlock}</small>}

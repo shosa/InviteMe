@@ -1,7 +1,7 @@
 "use client";
 
 import { BLOCK_LABELS, EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Ellipsis, Eye, EyeOff, Image as ImageIcon, LayoutGrid, Palette, Shapes, Trash2, Type } from "lucide-react";
 import { Field, FieldEditor, type Values } from "./fields";
@@ -46,6 +46,7 @@ function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typ
   }, [def]);
   const shown = tab === "all" ? items : items.filter((i) => fieldTab(i.field) === tab);
   const present = new Set(items.map((i) => fieldTab(i.field)));
+  const groupLabel: Record<Exclude<TabKey, "all">, string> = { texts: L.tabTexts, colors: L.tabColors, shapes: L.tabShapes, media: L.tabMedia, other: L.tabOther };
   const tabs: [TabKey, string, LucideIcon][] = [
     ["all", L.tabAll, LayoutGrid],
     ["texts", L.tabTexts, Type],
@@ -65,8 +66,11 @@ function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typ
         ))}
       </div>
       <div className="bl-fields">
-        {shown.map(({ field: f, event }) =>
-          event ? (
+        {shown.map(({ field: f, event }, i) => {
+          const group = fieldTab(f);
+          // Nella scheda «Tutto» ogni gruppo ha la sua intestazione, al primo campo che lo apre.
+          const opens = tab === "all" && (i === 0 || fieldTab(shown[i - 1].field) !== group);
+          const field = event ? (
             <FieldEditor
               key={`event:${f.key}`}
               copy={(k, l) => fieldCopy("event", k, l, p.lang ?? "it")}
@@ -91,8 +95,15 @@ function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typ
               onChange={(v) => p.onSetProp(p.block!.id, f.key, v, `${p.block!.id}:${f.key}`)}
               onUpload={p.onUpload}
             />
-          ),
-        )}
+          );
+          if (!opens) return field;
+          return (
+            <Fragment key={`group:${group}:${i}`}>
+              <p className="bl-group">{groupLabel[group]}</p>
+              {field}
+            </Fragment>
+          );
+        })}
       </div>
     </>
   );

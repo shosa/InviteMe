@@ -703,7 +703,13 @@ td a { color: var(--ink); }
 .bl-item.is-on { outline: 2px solid var(--brass); outline-offset: -1px; }
 .bl-item.is-hidden .bl-name { color: var(--ink-soft); text-decoration: line-through; }
 .bl-item.is-over { border-top: 3px solid var(--brass); }
-.bl-grip { color: var(--ink-soft); cursor: grab; display: flex; }
+.bl-grip { color: var(--ink-soft); cursor: grab; display: flex; touch-action: none; }
+/* Trascinamento dal vivo: la riga presa segue il cursore, le altre scorrono per farle posto. */
+.bl-item { position: relative; }
+.bl-item.is-moving { transition: transform .18s ease; }
+.bl-item.is-settling { transition: transform .16s ease; }
+.bl-item.is-lifted { z-index: 3; background: #fff; box-shadow: 0 14px 28px -14px rgba(0, 0, 0, .4); }
+.bl-structure.is-sorting, .bl-structure.is-sorting * { cursor: grabbing !important; user-select: none; }
 .bl-select { background: none; border: 0; text-align: left; font: inherit; color: var(--ink); cursor: pointer; padding: 8px 4px; display: flex; flex-direction: column; min-width: 0; }
 .bl-name { font-size: 15px; }
 .bl-select small { font-size: 11px; color: var(--ink-soft); }
@@ -1420,6 +1426,10 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 
 /* Pannello proprietà: un divisore tra ogni campo modificabile. */
 .bl-fields > * + * { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+/* Intestazioni dei gruppi nella scheda Tutto: piccole, senza il separatore del campo che seguono. */
+.bl-fields > .bl-group { border-top: 0; padding-top: 0; margin: 14px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.bl-fields > .bl-group + * { border-top: 0; margin-top: 4px; padding-top: 0; }
+.bl-fields > .bl-group:first-child { margin-top: 0; }
 /* Campi compatti: meno scorrimento, stessa leggibilità. */
 .bl-fields { gap: 6px; }
 .bl-fields .stack { gap: 8px; }
