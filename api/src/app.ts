@@ -29,7 +29,7 @@ import { previewShell } from "./engine/previewShell";
 import { renderInvitePage } from "./engine/page";
 import { RUNTIME_PATH, sampleConfig } from "./engine/themes";
 import { MEDIA_DIR, MediaError, convertMedia, ensureMediaDirs, INPUT_TYPES, type MediaKind } from "./media";
-import { StockError, importStock, searchStock } from "./pixabay";
+import { StockError, importStock, parseStockFilters, searchStock } from "./pixabay";
 import {
   SESSION_COOKIE,
   adminAllowed,
@@ -477,16 +477,13 @@ export async function buildApp() {
   });
 
   // Foto da Pixabay: la ricerca e l'importazione passano dal server, che tiene la chiave.
-  app.get<{ Params: { id: string }; Querystring: { q?: string; page?: string; lang?: string } }>("/api/invitations/:id/stock/search", async (req, reply) => {
+  app.get<{ Params: { id: string }; Querystring: Record<string, string> }>("/api/invitations/:id/stock/search", async (req, reply) => {
     const user = await requireUser(req, reply);
     if (!user) return;
     const inv = await ownedInvitation(req.params.id, user.id);
     if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
-    const q = String(req.query.q ?? "").trim();
-    if (q.length < 2 || q.length > 100) return reply.code(400).send({ error: "Scrivi almeno 2 lettere" });
-    const page = Math.min(20, Math.max(1, Number.parseInt(String(req.query.page ?? "1"), 10) || 1));
     try {
-      return { photos: await searchStock(q, page, req.query.lang === "en" ? "en" : "it") };
+      return { photos: await searchStock(parseStockFilters(req.query)) };
     } catch (e) {
       if (e instanceof StockError) return reply.code(e.status).send({ error: e.message });
       throw e;

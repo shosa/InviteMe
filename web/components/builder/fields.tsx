@@ -22,6 +22,7 @@ export function FieldEditor({
   onUpload,
   copy,
   standard,
+  addon,
 }: {
   field: FieldDef;
   value: unknown;
@@ -32,6 +33,7 @@ export function FieldEditor({
   onUpload: (kind: "photo" | "video" | "audio", file: File) => Promise<string | null>;
   copy?: (key: string, label: string) => string;
   standard?: string; // etichetta della scelta «predefinito» per colori e opzioni
+  addon?: ReactNode; // controllo accanto al testo, dentro lo stesso campo (es. il pulsante del font)
 }) {
   const fieldLabel = copy ? copy(field.key, field.label) : field.label;
   if (field.key === "address") return <AddressField label={fieldLabel} value={typeof value === "string" ? value : ""} onChange={(v) => onChange(v)} />;
@@ -44,9 +46,9 @@ export function FieldEditor({
 
   switch (field.type) {
     case "text":
-      return <Field label={label} wide><input value={text} maxLength={max ?? 200} onChange={(e) => onChange(e.target.value)} /></Field>;
+      return textField(label, <input aria-label={label} value={text} maxLength={max ?? 200} onChange={(e) => onChange(e.target.value)} />, addon);
     case "longtext":
-      return <Field label={label} wide><textarea rows={4} maxLength={max ?? 1500} value={text} onChange={(e) => onChange(e.target.value)} /></Field>;
+      return textField(label, <textarea aria-label={label} rows={4} maxLength={max ?? 1500} value={text} onChange={(e) => onChange(e.target.value)} />, addon);
     case "color":
       return (
         <Field label={label}>
@@ -214,6 +216,20 @@ function UploadButton({ kind, busy, multiple, onFiles }: { kind: "photo" | "vide
       }} />
       <span className="upload-inner"><Upload size={18} aria-hidden="true" />{working ? "Converto il file…" : kind === "photo" ? "Carica foto" : kind === "video" ? "Carica video" : "Carica audio"}</span>
     </label>
+  );
+}
+
+// Campo di testo: con un controllo accanto (il pulsante del font) l'input e il controllo stanno nella stessa riga.
+function textField(label: string, control: ReactNode, addon?: ReactNode) {
+  if (!addon) return <Field label={label} wide>{control}</Field>;
+  return (
+    <div className="field wide">
+      <span>{label}</span>
+      <div className="field-control">
+        {control}
+        {addon}
+      </div>
+    </div>
   );
 }
 

@@ -80,6 +80,8 @@ function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typ
           const group = fieldTab(f);
           // Nella scheda «Tutto» ogni gruppo ha la sua intestazione, al primo campo che lo apre.
           const opens = tab === "all" && (i === 0 || fieldTab(shown[i - 1].field) !== group);
+          // Ogni testo ha il suo «Aa», dentro il campo: il font si sceglie per quel campo solo.
+          const addon = isTextField(f) ? <FontButton label={f.label} value={fontsOf[f.key]} onChange={(id) => setFont(f.key, id)} /> : undefined;
           const field = event ? (
             <FieldEditor
               key={`event:${f.key}`}
@@ -91,6 +93,7 @@ function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typ
               library={p.catalog.music}
               onChange={(v) => p.onSetEvent(f.key, v, `event:${f.key}`)}
               onUpload={p.onUpload}
+              addon={addon}
             />
           ) : (
             <FieldEditor
@@ -104,20 +107,14 @@ function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typ
               library={p.catalog.music}
               onChange={(v) => p.onSetProp(p.block!.id, f.key, v, `${p.block!.id}:${f.key}`)}
               onUpload={p.onUpload}
+              addon={addon}
             />
           );
-          // Ogni testo ha il suo «Aa»: il font si sceglie per quel campo solo.
-          const control = isTextField(f) ? (
-            <div className="bl-fieldwrap" key={`font:${event ? "event:" : ""}${f.key}`}>
-              {field}
-              <FontButton label={f.label} value={fontsOf[f.key]} onChange={(id) => setFont(f.key, id)} />
-            </div>
-          ) : field;
-          if (!opens) return control;
+          if (!opens) return field;
           return (
             <Fragment key={`group:${group}:${i}`}>
               <p className="bl-group">{groupLabel[group]}</p>
-              {control}
+              {field}
             </Fragment>
           );
         })}

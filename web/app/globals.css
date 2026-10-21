@@ -735,7 +735,17 @@ td a { color: var(--ink); }
 .stock-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin: 4px 0 12px; }
 .stock-search input { min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 2px; background: var(--paper-light); font: inherit; font-size: 14px; }
 .stock-error { color: #a35a00; margin: 0 0 10px; }
-.stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.stock-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.stock-filters { min-width: 0; margin: 0 0 12px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; }
+.stock-filters legend { padding: 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.stock-seg { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.stock-seg button { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
+.stock-seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper-light); border-color: var(--ink); }
+.stock-grid-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
+.stock-grid-filters label { display: grid; gap: 4px; font-size: 12px; color: var(--ink-soft); min-width: 0; }
+.stock-grid-filters select { min-width: 0; padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper-light); color: var(--ink); font: inherit; font-size: 13px; }
+.stock-filter-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+.stock-check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink); }
 .stock-item { position: relative; padding: 0; border: 1px solid var(--line); background: var(--paper); aspect-ratio: 4 / 3; overflow: hidden; cursor: pointer; }
 .stock-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .stock-item:hover:not(:disabled) { outline: 2px solid var(--brass); outline-offset: -2px; }
@@ -885,7 +895,11 @@ td a { color: var(--ink); }
 
 /* Campo colore del builder: selettore nativo più «Predefinito» per tornare al colore del tema. */
 .color-row { display: flex; align-items: center; gap: 12px; }
-.color-row input[type="color"] { width: 44px; height: 32px; padding: 2px; border: 1px solid var(--line); background: var(--paper-light); cursor: pointer; }
+/* Selettore colore a pallino: il colore riempie il cerchio, senza bordo interno né padding. */
+.color-row input[type="color"] { flex: none; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 50%; overflow: hidden; background: none; cursor: pointer; }
+.color-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.color-row input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.color-row input[type="color"]::-moz-color-swatch { border: 0; border-radius: 50%; }
 
 /* Console admin, scheda Template: telefoni con l'anteprima, nome e interruttore. */
 .tpl-admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(252px, 1fr)); gap: 28px 20px; }
@@ -1467,17 +1481,18 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-fields .field { gap: 4px; font-size: 13px; }
 .bl-fields .field-label { font-size: 13px; }
 .bl-fields .field input, .bl-fields .field select, .bl-fields .field textarea { padding: 7px 10px; font-size: 14px; }
-.bl-fields .field input[type="color"] { height: 34px; }
+.bl-fields .color-row input[type="color"] { width: 30px; height: 30px; }
 .bl-fields .hint { font-size: 12px; margin: 0; }
-/* Font per campo: il pulsante «Aa» sta in alto a destra del campo; il menu mostra ogni nome nel suo font. */
-.bl-fieldwrap { position: relative; }
-.bl-fieldwrap .field-label { padding-right: 44px; }
-.font-pick { position: absolute; top: 0; right: 0; z-index: 5; }
-.font-btn { min-width: 34px; height: 26px; padding: 0 8px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); font: 600 13px/1 var(--font-text), sans-serif; cursor: pointer; }
+/* Font per campo: il pulsante «Aa» è quadrato e sta sul bordo destro del campo, nella stessa riga dell'input. */
+.field-control { display: flex; align-items: stretch; min-width: 0; }
+.field-control > input, .field-control > textarea { flex: 1; min-width: 0; }
+.field-control > input, .field-control > textarea { border-right: 0; }
+.font-pick { position: relative; flex: none; display: flex; }
+.font-btn { width: 44px; padding: 0; border: 1px solid var(--line); border-radius: 0 2px 2px 0; background: var(--paper-light); color: var(--ink); font: 600 14px/1 var(--font-text), sans-serif; cursor: pointer; }
 .font-btn:hover, .font-btn[aria-expanded="true"] { border-color: var(--ink); }
 .font-btn.is-set { background: var(--ink); color: var(--paper-light); border-color: var(--ink); }
-.font-btn:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
-.font-menu { position: absolute; top: 32px; right: 0; width: 264px; max-height: 360px; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 18px 40px -20px rgba(0, 0, 0, .35); }
+.font-btn:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+.font-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; width: 264px; max-height: 360px; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 18px 40px -20px rgba(0, 0, 0, .35); }
 .font-cat { margin: 8px 10px 2px; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
 .font-opt { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 10px; background: none; color: var(--ink); font-size: 15px; text-align: left; cursor: pointer; }
 .font-opt:hover { background: var(--paper); }

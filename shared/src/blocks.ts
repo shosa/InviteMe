@@ -57,6 +57,12 @@ export const EVENT_DEFAULTS: Record<string, string> = {
   address: "",
 };
 
+// Un colore del dress code: il pallino e il suo nome (facoltativo, per chi legge con lo screen reader e per il ricordo).
+const DRESS_COLOR: FieldDef[] = [
+  { key: "hex", label: "Colore", type: "color", group: "Colore" },
+  { key: "name", label: "Nome", type: "text", group: "Colore", max: 30 },
+];
+
 const PROGRAM_ITEM: FieldDef[] = [
   { key: "time", label: "Orario", type: "text", group: "Voce", max: 10 },
   { key: "label", label: "Che cosa", type: "text", group: "Voce", max: 80 },
@@ -252,9 +258,18 @@ export const BLOCKS: BlockDef[] = [
     fields: [
       { key: "heading", label: "Titolo", type: "text", group: "Dress code", max: 80 },
       { key: "dress", label: "Dress code", type: "text", group: "Dress code", max: 60 },
+      { key: "colors", label: "Colori", type: "list", group: "Dress code", max: 6, item: DRESS_COLOR },
     ],
-    defaults: { heading: "Dress code", dress: "Black tie" },
-    defaultsEn: { heading: "Dress code", dress: "Black tie" },
+    defaults: {
+      heading: "Dress code",
+      dress: "Black tie",
+      colors: [{ hex: "#1d1b19", name: "Nero" }, { hex: "#ffffff", name: "Bianco" }, { hex: "#b8924a", name: "Oro" }],
+    },
+    defaultsEn: {
+      heading: "Dress code",
+      dress: "Black tie",
+      colors: [{ hex: "#1d1b19", name: "Black" }, { hex: "#ffffff", name: "White" }, { hex: "#b8924a", name: "Gold" }],
+    },
   },
   {
     type: "video",
