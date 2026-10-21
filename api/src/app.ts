@@ -17,6 +17,7 @@ import {
   hasRsvp,
   makeSlug,
   sanitizeConfig,
+  addonsCents,
   totalCents,
   type AddonKey,
   type Catalog,
@@ -58,6 +59,23 @@ type Row = Record<string, any>;
 const RUNTIME = fs.readFileSync(RUNTIME_PATH, "utf8");
 
 const textOf = (config: InviteConfig, key: string) => String(config.event[key] ?? "");
+
+// Funzioni già pagate di un invito: le funzioni tolte e riaggiunte restano pagate, quindi gratuite.
+const purchasedOf = (inv: { purchased_addons?: unknown; config?: unknown }) =>
+  new Set<string>((inv.purchased_addons as string[] | null) ?? (inv.config as InviteConfig).addons ?? []);
+// Funzioni in bozza che non sono ancora state pagate: servono un pagamento prima della conferma.
+const pendingOf = (inv: { purchased_addons?: unknown; config?: unknown }) =>
+  (inv.config as InviteConfig).addons.filter((a) => !purchasedOf(inv).has(a));
+// Attributo del checkout Shopify (sta nelle note dell'ordine oppure nelle proprietà della riga).
+function orderAttr(order: { note_attributes?: { name: string; value: string }[]; line_items?: { properties?: { name: string; value: string }[] }[] }, name: string): string | undefined {
+  const fromNotes = order.note_attributes?.find((a) => a.name === name)?.value;
+  if (fromNotes) return fromNotes;
+  for (const item of order.line_items ?? []) {
+    const v = item.properties?.find((x) => x.name === name)?.value;
+    if (v) return v;
+  }
+  return undefined;
+}
 const titleOf = (config: InviteConfig) => textOf(config, "title");
 const isMediaKind = (v: string): v is MediaKind => v === "photo" || v === "video" || v === "audio";
 
@@ -278,9 +296,7 @@ export async function buildApp() {
       // Dopo l'acquisto: si modifica finché non si conferma; la conferma chiude la modifica. Il template non cambia più.
       if (inv.edit_count >= 1) return reply.code(409).send({ error: "Modifica già confermata: l'invito non si modifica più" });
       if (config.themeId !== (inv.config as InviteConfig).themeId) return reply.code(409).send({ error: "Dopo l'acquisto il template non si cambia" });
-      // Le funzioni pagate restano acquistate: se tolte e riaggiunte in bozza sono gratuite.
-      const bought = new Set<string>(inv.purchased_addons ?? (inv.config as InviteConfig).addons ?? []);
-      if (config.addons.some((a) => !bought.has(a))) return reply.code(409).send({ error: "Per aggiungere una funzione serve un nuovo acquisto" });
+      // Funzioni nuove: restano in bozza finché non sono pagate (vedi confirm-edit e checkout). Quelle già pagate sono gratuite.
     }
     await pool.query("UPDATE invitations SET config = $1 WHERE id = $2", [JSON.stringify(config), inv.id]);
     return { ok: true };
@@ -294,6 +310,12 @@ export async function buildApp() {
     if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
     if (inv.status !== "paid") return reply.code(409).send({ error: "L'invito non è ancora pagato" });
     if (inv.edit_count >= 1) return reply.code(409).send({ error: "Modifica già confermata" });
+    // Funzioni nuove in bozza: prima va pagata la differenza, altrimenti la pubblicazione non le includerebbe.
+    const pending = pendingOf(inv);
+    if (pending.length) {
+      const c = await loadCatalog();
+      return reply.code(409).send({ error: "Per le funzioni nuove serve il pagamento", code: "payment_required", amountCents: addonsCents(c, inv.config.model, pending) });
+    }
     // Conferma = pubblicazione: la bozza diventa la versione che vedono gli ospiti, e la modifica si chiude.
     await pool.query("UPDATE invitations SET edit_count = 1, published_config = config WHERE id = $1", [inv.id]);
     return { ok: true, editCount: 1 };
@@ -554,13 +576,19 @@ export async function buildApp() {
     const b = (req.body ?? {}) as { invitationId?: string };
     const inv = b.invitationId && UUID.test(b.invitationId) ? await ownedInvitation(b.invitationId, user.id) : null;
     if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
-    if (inv.status === "paid") return reply.code(409).send({ error: "Invito già pagato" });
+    // Invito già pagato: si paga solo la differenza delle funzioni nuove (ordine «upgrade»), non il modello.
+    const upgrade = inv.status === "paid";
+    if (upgrade && inv.edit_count >= 1) return reply.code(409).send({ error: "Modifica già confermata: l'invito non si modifica più" });
+    const pending = upgrade ? pendingOf(inv) : [];
+    if (upgrade && pending.length === 0) return reply.code(409).send({ error: "Nessuna funzione da pagare" });
     if (!shopifyConfigured() && !localCheckoutAllowed()) {
       return reply.code(503).send({ error: "I pagamenti non sono ancora attivi su questo server" });
     }
     const c = await loadCatalog();
-    const selected = [...activeFeatures(c, inv.config.model, inv.config.addons)].filter((k) => inv.config.addons.includes(k));
-    const amount = totalCents(c, inv.config.model, inv.config.addons);
+    const selected = upgrade
+      ? pending
+      : [...activeFeatures(c, inv.config.model, inv.config.addons)].filter((k) => inv.config.addons.includes(k));
+    const amount = upgrade ? addonsCents(c, inv.config.model, pending) : totalCents(c, inv.config.model, inv.config.addons);
     try {
       const checkout = await createCheckout({
         invitationId: inv.id,
@@ -568,10 +596,11 @@ export async function buildApp() {
         addons: selected,
         totalCents: amount,
         origin: appUrl(),
+        kind: upgrade ? "upgrade" : "initial",
       });
       await pool.query(
-        "INSERT INTO orders (id, invitation_id, amount_cents, currency, source, status, checkout_url) VALUES ($1, $2, $3, 'EUR', $4, 'pending', $5)",
-        [randomUUID(), inv.id, amount, checkout.source, checkout.checkoutUrl],
+        "INSERT INTO orders (id, invitation_id, amount_cents, currency, source, status, checkout_url, kind, addons) VALUES ($1, $2, $3, 'EUR', $4, 'pending', $5, $6, $7)",
+        [randomUUID(), inv.id, amount, checkout.source, checkout.checkoutUrl, upgrade ? "upgrade" : "initial", JSON.stringify(selected)],
       );
       await track("checkout_started", inv.id);
       return { checkoutUrl: checkout.checkoutUrl };
@@ -588,10 +617,32 @@ export async function buildApp() {
     const b = (req.body ?? {}) as { invitationId?: string };
     const inv = b.invitationId && UUID.test(b.invitationId) ? await ownedInvitation(b.invitationId, user.id) : null;
     if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
+    if (inv.status === "paid") {
+      // Già pagato: si chiude l'ordine di aggiornamento in attesa, non l'acquisto.
+      const { rows } = await pool.query("SELECT addons, amount_cents FROM orders WHERE invitation_id = $1 AND kind = 'upgrade' AND status = 'pending' ORDER BY created_at DESC LIMIT 1", [inv.id]);
+      if (!rows[0]) return reply.code(409).send({ error: "Nessun pagamento in attesa" });
+      await applyUpgrade(inv.id, rows[0].addons ?? [], rows[0].amount_cents, "local", randomUUID());
+      return { ok: true };
+    }
     const c = await loadCatalog();
     await markPaid(inv.id, `TEST-${Date.now()}`, totalCents(c, inv.config.model, inv.config.addons), "local");
     return { ok: true };
   });
+
+  // Aggiornamento dopo l'acquisto: le funzioni pagate diventano acquistate. La versione pubblicata e lo stato non cambiano:
+  // la bozza va pubblicata con la conferma.
+  async function applyUpgrade(invitationId: string, addons: string[], amountCents: number, source: "shopify" | "local", orderId: string) {
+    const { rows } = await pool.query("SELECT purchased_addons, config FROM invitations WHERE id = $1", [invitationId]);
+    const owned = new Set<string>(rows[0]?.purchased_addons ?? rows[0]?.config?.addons ?? []);
+    for (const a of addons) owned.add(a);
+    await pool.query("UPDATE invitations SET purchased_addons = $2 WHERE id = $1", [invitationId, JSON.stringify([...owned])]);
+    await pool.query("UPDATE orders SET status = 'paid' WHERE invitation_id = $1 AND kind = 'upgrade' AND status = 'pending'", [invitationId]);
+    await pool.query(
+      "INSERT INTO orders (id, invitation_id, amount_cents, currency, source, status, kind, addons) VALUES ($1, $2, $3, 'EUR', $4, 'paid', 'upgrade', $5) ON CONFLICT (id) DO NOTHING",
+      [orderId, invitationId, amountCents, source, JSON.stringify(addons)],
+    );
+    await track("upgrade_paid", invitationId);
+  }
 
   async function markPaid(invitationId: string, orderRef: string, amountCents: number, source: "shopify" | "local") {
     // Al pagamento si registra cosa è stato acquistato e la versione che va online.
@@ -632,9 +683,16 @@ export async function buildApp() {
       line_items?: { properties?: { name: string; value: string }[] }[];
     };
     const invitationId = invitationIdFromOrder(order);
+    const amountCents = Math.round(Number(order.total_price) * 100);
     if (invitationId && UUID.test(invitationId)) {
-      const { rows } = await pool.query("SELECT id FROM invitations WHERE id = $1", [invitationId]);
-      if (rows[0]) await markPaid(invitationId, order.name, Math.round(Number(order.total_price) * 100), "shopify");
+      const { rows } = await pool.query("SELECT id, status FROM invitations WHERE id = $1", [invitationId]);
+      if (rows[0]?.status === "paid") {
+        // Già pagato: conta solo un ordine di aggiornamento che dichiara le funzioni nuove.
+        if (orderAttr(order, "kind") === "upgrade") {
+          const addons = (orderAttr(order, "addons") ?? "").split(",").filter((k) => k && k !== "none");
+          await applyUpgrade(invitationId, addons, amountCents, "shopify", String(order.id));
+        }
+      } else if (rows[0]) await markPaid(invitationId, order.name, amountCents, "shopify");
     }
     await pool.query(
       `INSERT INTO orders (id, invitation_id, amount_cents, currency, source, status) VALUES ($1, $2, $3, $4, 'shopify', 'paid')

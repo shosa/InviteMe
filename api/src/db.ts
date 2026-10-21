@@ -79,6 +79,9 @@ ALTER TABLE invitations ADD COLUMN IF NOT EXISTS edit_session text;
 ALTER TABLE invitations ADD COLUMN IF NOT EXISTS purchased_addons jsonb;
 ALTER TABLE invitations ADD COLUMN IF NOT EXISTS published_config jsonb;
 UPDATE invitations SET purchased_addons = config->'addons', published_config = config WHERE status = 'paid' AND purchased_addons IS NULL;
+-- Ordini: acquisto iniziale oppure «upgrade» (funzioni nuove aggiunte dopo l'acquisto), con le funzioni pagate.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS kind text NOT NULL DEFAULT 'initial';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS addons jsonb;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub text;
 CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_idx ON users (google_sub) WHERE google_sub IS NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'));

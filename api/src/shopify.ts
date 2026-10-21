@@ -17,7 +17,7 @@ export const demoMode = () => !shopifyConfigured() && process.env.DEMO_MODE === 
 export const localCheckoutAllowed = () =>
   demoMode() || process.env.NODE_ENV !== "production" || process.env.ALLOW_LOCAL_CHECKOUT === "true";
 
-export type CheckoutInput = { invitationId: string; slug: string; addons: string[]; totalCents: number; origin: string };
+export type CheckoutInput = { invitationId: string; slug: string; addons: string[]; totalCents: number; origin: string; kind?: "initial" | "upgrade" };
 
 export async function createCheckout(input: CheckoutInput): Promise<{ checkoutUrl: string; source: "shopify" | "local" }> {
   if (!shopifyConfigured()) {
@@ -39,6 +39,7 @@ export async function createCheckout(input: CheckoutInput): Promise<{ checkoutUr
     { key: "slug", value: input.slug },
     { key: "addons", value: input.addons.join(",") || "none" },
     { key: "totalCents", value: String(input.totalCents) },
+    { key: "kind", value: input.kind ?? "initial" },
   ];
   const res = await fetch(`https://${domain}/api/${API_VERSION}/graphql.json`, {
     method: "POST",

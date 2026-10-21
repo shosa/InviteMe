@@ -76,10 +76,19 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   // Dopo l'acquisto l'invito si modifica finché non si conferma la modifica: poi è chiuso.
   const locked = initial.status === "paid" && initial.editCount >= 1;
   const editable = !locked;
+  // Conferma = pubblicazione. Prima si salva la bozza (così la conferma vede l'ultima versione); se ci sono funzioni
+  // nuove da pagare, il server lo dice e si va al checkout della differenza, senza perdere la bozza.
   async function confirmEdit() {
+    setError(null);
+    if (!(await persist(config))) return;
     const res = await fetch(`/api/invitations/${initial.id}/confirm-edit`, { method: "POST" });
-    if (res.ok) window.location.reload();
-    else setError("Conferma non riuscita, riprova.");
+    if (res.ok) return window.location.reload();
+    const data = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+    if (res.status === 409 && data.code === "payment_required") {
+      setSummary(false);
+      return checkout();
+    }
+    setError(data.error ?? "Conferma non riuscita, riprova.");
   }
 
   const [selected, setSelected] = useState<string | null>(null);
@@ -129,21 +138,23 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   useEffect(() => setOrigin(window.location.origin), []);
 
   // Salva la configurazione sul server: dal salvataggio automatico e dal pulsante «Salva».
-  async function persist(c: InviteConfig) {
+  async function persist(c: InviteConfig): Promise<boolean> {
     setSave("saving");
     try {
       const res = await fetch(`/api/invitations/${initial.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(c) });
       if (res.ok) {
         setSave("saved");
         setError(null);
-      } else {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        setSave("error");
-        setError(data.error ?? "Salvataggio non riuscito");
+        return true;
       }
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      setSave("error");
+      setError(data.error ?? "Salvataggio non riuscito");
+      return false;
     } catch {
       setSave("error");
       setError("Connessione assente: le modifiche non sono state salvate.");
+      return false;
     }
   }
 
@@ -516,12 +527,15 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
             </header>
             <p><strong>{lang === "en" ? "Purchased" : "Acquistato"}:</strong> {getModel(catalog, initial.config.model)?.name ?? initial.config.model}{initial.purchasedAddons.length ? ` · ${initial.purchasedAddons.map((k) => getAddon(catalog, k)?.label ?? k).join(", ")}` : ""}</p>
             <p><strong>{lang === "en" ? "In the draft" : "Nella bozza"}:</strong> {config.addons.length ? config.addons.map((k) => getAddon(catalog, k)?.label ?? k).join(", ") : lang === "en" ? "no extra functions" : "nessuna funzione extra"}</p>
+            {extra > 0 && <p><strong>{lang === "en" ? "To pay now" : "Da pagare ora"}:</strong> {formatPrice(extra)} {lang === "en" ? "for the new functions" : "per le funzioni nuove"}</p>}
             <p className="confirm-warning">{lang === "en"
               ? "After confirming, the invitation can no longer be edited. Until then it stays a draft: you can edit it as many times as you want, and guests keep seeing the previous version."
               : "Dopo la conferma l'invito non si potrà più modificare. Fino ad allora resta una bozza: puoi modificarla quante volte vuoi, e gli ospiti vedono ancora la versione precedente."}</p>
             <div className="bl-modal-actions">
               <button type="button" className="btn outline" onClick={() => setSummary(false)}>{lang === "en" ? "Back to draft" : "Torna alla bozza"}</button>
-              <button type="button" className="btn solid" onClick={confirmEdit}>{lang === "en" ? "Confirm and close the edit" : "Conferma e chiudi la modifica"}</button>
+              <button type="button" className="btn solid" onClick={confirmEdit} disabled={checkingOut}>{extra > 0
+                ? (lang === "en" ? "Pay the difference and confirm" : "Paga la differenza e conferma")
+                : (lang === "en" ? "Confirm and close the edit" : "Conferma e chiudi la modifica")}</button>
             </div>
           </div>
         </div>
