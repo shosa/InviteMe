@@ -68,7 +68,7 @@ export function PixabayDialog({ invitationId, onClose, onPick }: Props) {
         </header>
         <form className="stock-search" onSubmit={onSubmit}>
           <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Es. fiori, mare, lanterne" aria-label="Cerca una foto" autoFocus />
-          <button className="btn" type="submit" disabled={busy !== null}>{busy === "search" ? "Cerco…" : "Cerca"}</button>
+          <button className="btn solid" type="submit" disabled={busy !== null}>{busy === "search" ? "Cerco…" : "Cerca"}</button>
         </form>
         {error && <p className="hint stock-error" role="alert">{error}</p>}
         <div className="stock-grid">

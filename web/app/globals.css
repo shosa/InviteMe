@@ -743,6 +743,16 @@ td a { color: var(--ink); }
 .stock-wait { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(255, 255, 255, .7); font-size: 13px; font-weight: 600; }
 .stock-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
 .stock-foot .hint { margin: 0; }
+.stock-search .btn { min-height: 46px; padding: 0 22px; }
+.stock-item { border-radius: 14px; }
+.stock-item img { border-radius: 14px; }
+/* Foto di un campo: upload e Pixabay affiancati, stessi tile tratteggiati; in editor la misura è quella del pannello. */
+.media-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.media-actions > .upload { min-width: 0; padding: 16px 8px; font-size: 13px; line-height: 1.25; text-align: center; }
+.media-actions > .media-stock { font: inherit; color: inherit; background: transparent; cursor: pointer; }
+.media-actions > .media-stock:hover { background: var(--paper); }
+.media-actions .upload-inner { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+.media-remove { justify-self: start; margin-top: 2px; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) { .bl-spin { animation-duration: 2.4s; } }
 .bl-frame.is-desktop { width: min(100% - 40px, 960px); }
 

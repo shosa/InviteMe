@@ -4,7 +4,7 @@ import { AddressField } from "./AddressField";
 
 import { useState, type ChangeEvent, type ReactNode } from "react";
 import { emptyValue, type Catalog, type FieldDef } from "@inviteme/shared";
-import { Upload } from "lucide-react";
+import { Search, Upload } from "lucide-react";
 import { Accordion } from "../ui/Accordion";
 import { PixabayDialog, useStockInvitation } from "./PixabayDialog";
 
@@ -183,16 +183,18 @@ function MediaSlot({ label, help, kind, url, busy, onUpload, onChange }: {
       )}
       {url && kind === "video" && <video className="media-preview" src={url} muted controls playsInline />}
       {url && kind === "audio" && <audio controls preload="none" src={url} />}
-      <div className="row">
+      <div className="media-actions">
         <UploadButton kind={kind} busy={busy} onFiles={async (files) => {
           const next = await onUpload(kind, files[0]);
           if (next) onChange(next);
         }} />
         {kind === "photo" && invitationId && (
-          <button type="button" className="btn outline" onClick={() => setSearching(true)}>Cerca su Pixabay</button>
+          <button type="button" className="upload media-stock" onClick={() => setSearching(true)}>
+            <span className="upload-inner"><Search size={18} aria-hidden="true" />Cerca su Pixabay</span>
+          </button>
         )}
-        {url && <button type="button" className="link" onClick={() => onChange("")}>Rimuovi</button>}
       </div>
+      {url && <button type="button" className="link media-remove" onClick={() => onChange("")}>Rimuovi</button>}
       {searching && invitationId && (
         <PixabayDialog invitationId={invitationId} onClose={() => setSearching(false)} onPick={(u) => onChange(u)} />
       )}
