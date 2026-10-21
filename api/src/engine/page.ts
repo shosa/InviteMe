@@ -297,15 +297,15 @@ function lookWrap(props: Record<string, unknown>, html: string): string {
 }
 
 // Regole comuni a tutti i temi per l'aspetto dei blocchi. Vincono sul tema solo dove il cliente ha scelto qualcosa.
-// Rivelazione laterale mentre si scorre: ogni elemento con data-anim entra da sinistra o da destra, in proporzione
-// alla posizione di scorrimento. Vale per tutti gli stili, dopo il loro CSS. Solo dove il browser supporta le timeline di
+// Scorrimento laterale legato alla posizione: ogni elemento con data-anim scorre dolcemente da sinistra o da destra
+// (alternati). La dissolvenza resta quella dello stile (classe `in`, a tempo): il movimento non la sostituisce. Vale per tutti gli stili, dopo il loro CSS. Solo dove il browser supporta le timeline di
 // scorrimento; altrove restano le animazioni dello stile e del runtime. Nell'anteprima e nella demo non c'è movimento.
 // Le gallerie a scorrimento orizzontale restano fuori: la loro posizione non segue lo scorrimento verticale.
 const REVEAL_CSS = `@supports (animation-timeline: view()){@media (prefers-reduced-motion: no-preference){
-html:not([data-preview]) [data-anim]:not([data-rv="off"]){animation:rv-in linear both;animation-timeline:view();animation-range:entry 6% entry 70%}
-html:not([data-preview]) [data-anim]:not([data-rv="off"]):nth-child(even){animation-name:rv-in-r}
-@keyframes rv-in{from{opacity:0;transform:translateX(-44px)}to{opacity:1;transform:none}}
-@keyframes rv-in-r{from{opacity:0;transform:translateX(44px)}to{opacity:1;transform:none}}
+html:not([data-preview]) [data-anim]:not([data-rv="off"]){animation:rv-slide linear both;animation-timeline:view();animation-range:entry 0% cover 50%}
+html:not([data-preview]) [data-anim]:not([data-rv="off"]):nth-child(even){animation-name:rv-slide-r}
+@keyframes rv-slide{from{transform:translateX(-24px)}to{transform:none}}
+@keyframes rv-slide-r{from{transform:translateX(24px)}to{transform:none}}
 }}`;
 
 // Sfondo animato: un livello fisso dietro tutto il contenuto, senza interazione. Il movimento ridotto lo ferma nel runtime.
