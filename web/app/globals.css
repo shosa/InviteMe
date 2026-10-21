@@ -1481,7 +1481,7 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-fields .field { gap: 4px; font-size: 13px; }
 .bl-fields .field-label { font-size: 13px; }
 .bl-fields .field input, .bl-fields .field select, .bl-fields .field textarea { padding: 7px 10px; font-size: 14px; }
-.bl-fields .color-row input[type="color"] { width: 30px; height: 30px; }
+.bl-fields .color-row input[type="color"] { width: 30px; height: 30px; padding: 0; }
 .bl-fields .hint { font-size: 12px; margin: 0; }
 /* Font per campo: il pulsante «Aa» è quadrato e sta sul bordo destro del campo, nella stessa riga dell'input. */
 .field-control { display: flex; align-items: stretch; min-width: 0; }
