@@ -29,6 +29,7 @@ import { useHistory } from "./builder/history";
 import { parseFragments } from "@/lib/blockFragments";
 import { ui, type Lang } from "@/lib/ui";
 import { modelCopy, themeCopy } from "@/lib/catalogCopy";
+import { StockContext } from "./builder/PixabayDialog";
 
 export type Manage = {
   id: string;
@@ -57,7 +58,16 @@ function pageKey(c: InviteConfig, envelopeOn: boolean): string {
   });
 }
 
+// L'invito aperto è disponibile a tutto l'editor (ricerca foto Pixabay nei campi).
 export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang }) {
+  return (
+    <StockContext.Provider value={initial.id}>
+      <BuilderEditor initial={initial} lang={lang} />
+    </StockContext.Provider>
+  );
+}
+
+function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   const L = ui(lang).builder;
   const catalog = initial.catalog;
   const history = useHistory<InviteConfig>(initial.config);

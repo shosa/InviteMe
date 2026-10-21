@@ -12,6 +12,7 @@ export const BLOCK_TYPES = [
   "countdown",
   "message",
   "gallery",
+  "image",
   "program",
   "venue",
   "map",
@@ -165,6 +166,16 @@ export const BLOCKS: BlockDef[] = [
     ],
     defaults: { heading: "Noi due", photos: [] },
     defaultsEn: { heading: "Our story" },
+  },
+  {
+    type: "image",
+    label: "Immagine",
+    description: "Una foto a larghezza piena, caricata o scelta da Pixabay, con didascalia facoltativa.",
+    fields: [
+      { key: "photo", label: "Foto", type: "photo", group: "Immagine" },
+      { key: "caption", label: "Didascalia", type: "text", group: "Immagine", max: 120 },
+    ],
+    defaults: { photo: "", caption: "" },
   },
   {
     type: "program",

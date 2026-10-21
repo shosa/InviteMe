@@ -730,6 +730,19 @@ td a { color: var(--ink); }
 .bl-veil { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
 .bl-spin { width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(23, 36, 42, .16); border-top-color: var(--brass); animation: bl-spin .8s linear infinite; }
 @keyframes bl-spin { to { transform: rotate(360deg); } }
+/* Ricerca foto Pixabay: campo di ricerca e griglia di anteprime, una foto alla volta si salva. */
+.stock-modal { width: min(680px, 94vw); max-height: 86vh; overflow-y: auto; }
+.stock-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin: 4px 0 12px; }
+.stock-search input { min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 2px; background: var(--paper-light); font: inherit; font-size: 14px; }
+.stock-error { color: #a35a00; margin: 0 0 10px; }
+.stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.stock-item { position: relative; padding: 0; border: 1px solid var(--line); background: var(--paper); aspect-ratio: 4 / 3; overflow: hidden; cursor: pointer; }
+.stock-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.stock-item:hover:not(:disabled) { outline: 2px solid var(--brass); outline-offset: -2px; }
+.stock-item:disabled { cursor: progress; opacity: .6; }
+.stock-wait { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(255, 255, 255, .7); font-size: 13px; font-weight: 600; }
+.stock-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.stock-foot .hint { margin: 0; }
 @media (prefers-reduced-motion: reduce) { .bl-spin { animation-duration: 2.4s; } }
 .bl-frame.is-desktop { width: min(100% - 40px, 960px); }
 

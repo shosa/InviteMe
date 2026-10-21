@@ -28,6 +28,8 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:-}
+      # Ricerca foto Pixabay: la chiave si imposta in .env (o nell'ambiente), mai nel repository.
+      PIXABAY_API_KEY: ${PIXABAY_API_KEY:-}
       SHOPIFY_STORE_DOMAIN: ${SHOPIFY_STORE_DOMAIN:-}
       SHOPIFY_STOREFRONT_TOKEN: ${SHOPIFY_STOREFRONT_TOKEN:-}
       SHOPIFY_VARIANT_ID: ${SHOPIFY_VARIANT_ID:-}

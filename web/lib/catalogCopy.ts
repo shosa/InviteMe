@@ -27,6 +27,7 @@ export const ADDON_COPY_EN: Record<string, { label: string; description: string 
   music: { label: "Background music", description: "A track from the library, or your own file" },
   countdown: { label: "Countdown", description: "Days, hours, minutes and seconds to the date" },
   gallery: { label: "Photo gallery", description: "Up to 6 photos instead of 3" },
+  image: { label: "Image", description: "A full-width photo, uploaded or from Pixabay, with an optional caption" },
 };
 
 export function modelCopy(id: string, name: string, tagline: string, description: string, lang: Lang) {
@@ -48,6 +49,7 @@ export const BLOCK_COPY_EN: Record<string, string> = {
   countdown: "Countdown",
   message: "Message",
   gallery: "Gallery",
+  image: "Image",
   program: "Programme",
   venue: "Location",
   map: "Map",

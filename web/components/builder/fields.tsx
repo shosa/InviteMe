@@ -6,6 +6,7 @@ import { useState, type ChangeEvent, type ReactNode } from "react";
 import { emptyValue, type Catalog, type FieldDef } from "@inviteme/shared";
 import { Upload } from "lucide-react";
 import { Accordion } from "../ui/Accordion";
+import { PixabayDialog, useStockInvitation } from "./PixabayDialog";
 
 export type Values = Record<string, unknown>;
 export type MediaKind = "photo" | "video" | "audio";
@@ -170,6 +171,8 @@ function MediaSlot({ label, help, kind, url, busy, onUpload, onChange }: {
   onUpload: (kind: "photo" | "video" | "audio", file: File) => Promise<string | null>;
   onChange: (v: unknown) => void;
 }) {
+  const invitationId = useStockInvitation();
+  const [searching, setSearching] = useState(false);
   return (
     <div className="stack">
       <span className="field-label">{label}</span>
@@ -185,8 +188,14 @@ function MediaSlot({ label, help, kind, url, busy, onUpload, onChange }: {
           const next = await onUpload(kind, files[0]);
           if (next) onChange(next);
         }} />
+        {kind === "photo" && invitationId && (
+          <button type="button" className="btn outline" onClick={() => setSearching(true)}>Cerca su Pixabay</button>
+        )}
         {url && <button type="button" className="link" onClick={() => onChange("")}>Rimuovi</button>}
       </div>
+      {searching && invitationId && (
+        <PixabayDialog invitationId={invitationId} onClose={() => setSearching(false)} onPick={(u) => onChange(u)} />
+      )}
     </div>
   );
 }
