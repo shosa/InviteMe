@@ -78,6 +78,14 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
   const [save, setSave] = useState<Save>("saved");
   const [preview, setPreview] = useState("");
   const [previewState, setPreviewState] = useState<"ready" | "loading" | "error">("loading");
+  // Ricaricamento completo dell'anteprima: la pagina vecchia resta sfocata con lo spinner finché la nuova non è caricata.
+  const [refreshing, setRefreshing] = useState(false);
+  function swapPreview(html: string) {
+    setRefreshing(true);
+    setPreview(html);
+    // Sicurezza: se il documento non cambia (stesso HTML) l'evento di caricamento non arriva, quindi si rimette a fuoco comunque.
+    window.setTimeout(() => setRefreshing(false), 3000);
+  }
   const [busy, setBusy] = useState<string | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -153,7 +161,10 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
       try {
         const res = await fetch(`/api/invitations/${initial.id}/preview?cover=${envelopeOn ? 1 : 0}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) });
         if (!alive) return;
-        if (!res.ok) return setPreviewState("error");
+        if (!res.ok) {
+          setRefreshing(false);
+          return setPreviewState("error");
+        }
         const html = await res.text();
         const frags = parseFragments(html);
         const key = pageKey(config, envelopeOn);
@@ -165,15 +176,18 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
           if (patchable) {
             for (const id of changed) frame.current?.contentWindow?.postMessage({ type: "patch", id, html: frags[id] }, "*");
           } else {
-            setPreview(html);
+            swapPreview(html);
           }
         } else {
-          setPreview(html);
+          swapPreview(html);
         }
         lastRender.current = { key, frags };
         setPreviewState("ready");
       } catch {
-        if (alive) setPreviewState("error");
+        if (alive) {
+          setRefreshing(false);
+          setPreviewState("error");
+        }
       }
     }, 420);
     return () => {
@@ -428,10 +442,10 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
                 <button type="button" className="bl-icon" aria-label={L.redo} title={`${L.redo} (Ctrl+Shift+Z)`} disabled={locked || !history.canRedo} onClick={history.redo}><Redo2 size={16} /></button>
               </div>
             </div>
-            <span className="bl-preview-state">{previewState === "loading" ? L.updating : previewState === "error" ? "—" : ""}</span>
+            <span className="bl-preview-state">{previewState === "error" ? "—" : ""}</span>
           </div>
         </div>
-        <div className={`bl-frame is-${device}`}>
+        <div className={`bl-frame is-${device}${refreshing ? " is-refreshing" : ""}`}>
           {preview ? (
             <iframe
               ref={frame}
@@ -441,11 +455,13 @@ export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang
               onLoad={() => {
                 frame.current?.contentWindow?.postMessage({ type: "restore", id: selected, y: scrollY.current }, "*");
                 frame.current?.contentWindow?.postMessage({ type: "highlight", id: hover }, "*");
+                setRefreshing(false);
               }}
             />
           ) : (
             <p className="hint">{L.loadingPreview}</p>
           )}
+          {refreshing && <div className="bl-veil" role="status" aria-label={L.updating}><span className="bl-spin" /></div>}
           {device === "mobile" && scroll.max > 0 && (
             <input
               type="range"

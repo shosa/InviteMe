@@ -723,6 +723,14 @@ td a { color: var(--ink); }
 .bl-frame { flex: 1; min-height: 0; margin: 0 auto 18px; width: min(100%, 440px); background: var(--paper); box-shadow: 0 30px 60px -36px rgba(23, 36, 42, .5); }
 .bl-frame.is-mobile { width: 390px; }
 .bl-frame iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--paper); }
+/* Ricaricamento dell'anteprima: sfocato con lo spinner al centro, poi di nuovo a fuoco. */
+.bl-frame { position: relative; }
+.bl-frame iframe { transition: filter .4s ease, opacity .4s ease; }
+.bl-frame.is-refreshing iframe { filter: blur(6px); opacity: .6; }
+.bl-veil { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.bl-spin { width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(23, 36, 42, .16); border-top-color: var(--brass); animation: bl-spin .8s linear infinite; }
+@keyframes bl-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .bl-spin { animation-duration: 2.4s; } }
 .bl-frame.is-desktop { width: min(100% - 40px, 960px); }
 
 .bl-right { grid-area: right; overflow-y: auto; border-left: 1px solid var(--line); background: var(--paper-light); padding: 22px 22px 40px; }
