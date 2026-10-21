@@ -121,7 +121,7 @@ Il contenitore `.bk` (vedi «Aspetto dei blocchi») avvolge un blocco solo se il
 |---|---|
 | `data-cover`, `data-cover-video`, `data-cover-tap`, `data-cover-label` | busta che si apre al tocco |
 | `data-base-audio`, `data-music`, `data-music-toggle` | audio di apertura e musica |
-| `data-anim="fadeinup\|fadein\|zoomin\|fadeinright"` | rivelazione allo scroll (classe `in`). Con `style="--d:.2s"` si ritarda |
+| `data-anim="fadeinup\|fadein\|zoomin\|fadeinright"` | rivelazione allo scroll (classe `in`). Con `style="--d:.2s"` si ritarda. Dove il browser lo supporta, il motore aggiunge a ogni `data-anim` una rivelazione laterale legata allo scorrimento (da sinistra e da destra, alternati): non serve scriverla nello stile. Gli elementi in un carosello orizzontale si rivelano scorrendolo |
 | `data-scratch`, `data-scratch-all` | casella da grattare (classe `done`) |
 | `data-countdown="AAAA-MM-GGTHH:mm"`, `data-cd="days\|hours\|minutes\|seconds"` | conto alla rovescia |
 | `data-countdown-before`, `data-countdown-after` | elementi mostrati prima e dopo la data |

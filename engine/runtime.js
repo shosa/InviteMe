@@ -731,6 +731,17 @@
     track.scrollBy({ left: btn.hasAttribute('data-gal-next') ? step : -step, behavior: 'smooth' });
   });
 
+  // Gli elementi dentro un contenitore che scorre in orizzontale (carosello, programma a scorrimento) non seguono lo scorrimento
+  // verticale della pagina: il motore non applica loro la rivelazione laterale (vedi data-rv="off" in page.ts).
+  function markScrollers(root) {
+    all(root, '[data-anim]').forEach(function (el) {
+      for (var a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+        var ov = getComputedStyle(a).overflowX;
+        if ((ov === 'auto' || ov === 'scroll') && a.scrollWidth > a.clientWidth + 1) { el.setAttribute('data-rv', 'off'); break; }
+      }
+    });
+  }
+
   // Reinizializza i comportamenti dentro un solo contenitore (il builder lo usa quando cambia quel blocco).
   function refresh(root) {
     live = live.filter(function (e) {
@@ -743,6 +754,7 @@
     initLoopVideo(root);
     initRsvp(root);
     initBackgrounds(root);
+    markScrollers(root);
   }
 
   function boot() {
