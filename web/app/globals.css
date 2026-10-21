@@ -720,7 +720,7 @@ td a { color: var(--ink); }
 .bl-frame.is-desktop { width: min(100% - 40px, 960px); }
 
 .bl-right { grid-area: right; overflow-y: auto; border-left: 1px solid var(--line); background: var(--paper-light); padding: 22px 22px 40px; }
-.bl-inspector { display: flex; flex-direction: column; gap: 24px; }
+.bl-inspector { display: flex; flex-direction: column; gap: 16px; }
 .bl-insp-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .bl-insp-head h2 { margin: 2px 0 6px; font-size: 1.5rem; }
 .bl-kicker { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin: 0; }
@@ -1419,13 +1419,21 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 }
 
 /* Pannello proprietà: un divisore tra ogni campo modificabile. */
-.bl-fields > * + * { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
+.bl-fields > * + * { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+/* Campi compatti: meno scorrimento, stessa leggibilità. */
+.bl-fields { gap: 6px; }
+.bl-fields .stack { gap: 8px; }
+.bl-fields .field { gap: 4px; font-size: 13px; }
+.bl-fields .field-label { font-size: 13px; }
+.bl-fields .field input, .bl-fields .field select, .bl-fields .field textarea { padding: 7px 10px; font-size: 14px; }
+.bl-fields .field input[type="color"] { height: 34px; }
+.bl-fields .hint { font-size: 12px; margin: 0; }
 .addr-list { list-style: none; margin: 6px 0 0; padding: 4px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 24px -16px rgba(0,0,0,0.3); max-height: 260px; overflow-y: auto; }
 .addr-list button { display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; background: none; border: 0; border-radius: 10px; padding: 10px 12px; cursor: pointer; color: var(--ink); }
 .addr-list button:hover { background: var(--paper); }
 
 /* Pannello proprietà: più largo, campi nei limiti, domande RSVP senza sforare. */
-.bl-app { grid-template-columns: 360px minmax(0, 1fr) 420px; }
+.bl-app { grid-template-columns: 360px minmax(0, 1fr) 470px; }
 .bl-right { min-width: 0; overflow-x: hidden; }
 .bl-back { font: inherit; font-size: 13px; font-weight: 600; background: none; border: 0; color: var(--brass); cursor: pointer; padding: 0 0 8px; text-align: left; }
 .bl-questions, .bl-question { min-width: 0; max-width: 100%; }

@@ -3,7 +3,7 @@
 import { BLOCK_LABELS, EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type InviteConfig, type RsvpQuestion } from "@inviteme/shared";
 import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Ellipsis, Eye, EyeOff, LayoutGrid, Palette, Shapes, Trash2, Type } from "lucide-react";
+import { Ellipsis, Eye, EyeOff, Image as ImageIcon, LayoutGrid, Palette, Shapes, Trash2, Type } from "lucide-react";
 import { Field, FieldEditor, type Values } from "./fields";
 import { TemplateSwitch } from "./TemplateSwitch";
 import { ui } from "@/lib/ui";
@@ -20,16 +20,19 @@ function templateValue(p: Props, def: BlockDef, key: string): unknown {
   return (p.config.locale === "en" ? def.defaultsEn?.[key] : undefined) ?? def.defaults[key];
 }
 
-// Gruppi di proprietà, nell'ordine in cui compaiono nelle schede: testi, colori, forme, altro.
-type TabKey = "all" | "texts" | "colors" | "shapes" | "other";
+// Gruppi di proprietà, nell'ordine in cui compaiono nelle schede: testi, colori, forme, immagini, altro.
+type TabKey = "all" | "texts" | "colors" | "shapes" | "media" | "other";
 const SHAPE_KEYS = ["cellShape", "galleryStyle", "lookShape", "photoShape"];
+const MEDIA_TYPES = ["photo", "photos", "video", "audio"];
+const MEDIA_KEYS = ["photoFit", "photoFocus"];
 function fieldTab(f: FieldDef): Exclude<TabKey, "all"> {
   if (["text", "longtext", "url", "date", "time", "number"].includes(f.type)) return "texts";
   if (f.type === "color") return "colors";
   if (f.type === "choice" && SHAPE_KEYS.includes(f.key)) return "shapes";
+  if (MEDIA_TYPES.includes(f.type) || MEDIA_KEYS.includes(f.key)) return "media";
   return "other";
 }
-const TAB_ORDER: Exclude<TabKey, "all">[] = ["texts", "colors", "shapes", "other"];
+const TAB_ORDER: Exclude<TabKey, "all">[] = ["texts", "colors", "shapes", "media", "other"];
 
 // Una riga del pannello: una proprietà del blocco, oppure un dato dell'evento (solo nell'Intestazione).
 type Item = { field: FieldDef; event: boolean };
@@ -48,6 +51,7 @@ function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typ
     ["texts", L.tabTexts, Type],
     ["colors", L.tabColors, Palette],
     ["shapes", L.tabShapes, Shapes],
+    ["media", L.tabMedia, ImageIcon],
     ["other", L.tabOther, Ellipsis],
   ];
   return (
