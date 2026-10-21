@@ -5,6 +5,7 @@ import {
   activeFeatures,
   enabledThemes,
   formatPrice,
+  getAddon,
   getModel,
   makeBlock,
   newBlockId,
@@ -38,6 +39,7 @@ export type Manage = {
   guests: { email: string; sentAt: string }[];
   editCount: number;
   editSession: string | null;
+  purchasedAddons: AddonKey[];
   catalog: Catalog;
 };
 
@@ -98,6 +100,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [summary, setSummary] = useState(false);
   const [origin, setOrigin] = useState("");
   const [guests, setGuests] = useState(initial.guests);
   const [firstSave, setFirstSave] = useState(true);
@@ -116,7 +119,8 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   const total = useMemo(() => totalCents(catalog, config.model, config.addons), [catalog, config.model, config.addons]);
   // Quanto è già stato pagato: il prezzo compare dopo l'acquisto solo per le funzioni aggiunte e non ancora pagate.
   const paidAlready = initial.status === "paid";
-  const paidTotal = useMemo(() => totalCents(catalog, initial.config.model, initial.config.addons), [catalog, initial.config]);
+  // Il pagato sono le funzioni acquistate: quelle tolte in bozza restano pagate e si riattivano gratis.
+  const paidTotal = useMemo(() => totalCents(catalog, initial.config.model, initial.purchasedAddons), [catalog, initial.config.model, initial.purchasedAddons]);
   const extra = paidAlready ? total - paidTotal : 0;
   const block = config.blocks.find((b) => b.id === selected) ?? null;
   const title = String(config.event.title ?? "") || L.unnamed;
@@ -502,11 +506,33 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
 
       {error && <p role="alert" className="form-error bl-error">{error}</p>}
 
+      {summary && paidAlready && editable && (
+        <div className="bl-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setSummary(false); }} onKeyDown={(e) => { if (e.key === "Escape") setSummary(false); }}>
+          <div className="bl-modal confirm-summary" role="dialog" aria-modal="true" aria-labelledby="confirm-summary-title">
+            <header className="bl-modal-head">
+              <div>
+                <h2 id="confirm-summary-title">{lang === "en" ? "Summary before confirming" : "Riepilogo prima della conferma"}</h2>
+              </div>
+            </header>
+            <p><strong>{lang === "en" ? "Purchased" : "Acquistato"}:</strong> {getModel(catalog, initial.config.model)?.name ?? initial.config.model}{initial.purchasedAddons.length ? ` · ${initial.purchasedAddons.map((k) => getAddon(catalog, k)?.label ?? k).join(", ")}` : ""}</p>
+            <p><strong>{lang === "en" ? "In the draft" : "Nella bozza"}:</strong> {config.addons.length ? config.addons.map((k) => getAddon(catalog, k)?.label ?? k).join(", ") : lang === "en" ? "no extra functions" : "nessuna funzione extra"}</p>
+            <p className="confirm-warning">{lang === "en"
+              ? "After confirming, the invitation can no longer be edited. Until then it stays a draft: you can edit it as many times as you want, and guests keep seeing the previous version."
+              : "Dopo la conferma l'invito non si potrà più modificare. Fino ad allora resta una bozza: puoi modificarla quante volte vuoi, e gli ospiti vedono ancora la versione precedente."}</p>
+            <div className="bl-modal-actions">
+              <button type="button" className="btn outline" onClick={() => setSummary(false)}>{lang === "en" ? "Back to draft" : "Torna alla bozza"}</button>
+              <button type="button" className="btn solid" onClick={confirmEdit}>{lang === "en" ? "Confirm and close the edit" : "Conferma e chiudi la modifica"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <footer className="bl-footer">
         {paidAlready && editable ? (
           <div className="confirm-edit">
             <p>{lang === "en" ? "You can edit the invitation once. When you are done, confirm the edit to close it." : "Puoi modificare l'invito una sola volta. Quando hai finito, conferma la modifica per chiuderla."}</p>
-            <button type="button" className="confirm-edit-btn" onClick={confirmEdit}>{lang === "en" ? "Confirm edit" : "Conferma modifica"}</button>
+            <button type="button" className="confirm-edit-btn" onClick={() => setSummary(true)}>{lang === "en" ? "Confirm edit" : "Conferma modifica"}</button>
+            <button type="button" className="link confirm-edit-summary" onClick={() => setSummary(true)}>{lang === "en" ? "Summary" : "Riepilogo"}</button>
             {extra > 0 && <span className="confirm-edit-extra">{formatPrice(extra)}</span>}
           </div>
         ) : paidAlready && extra <= 0 ? (

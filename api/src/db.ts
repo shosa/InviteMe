@@ -74,6 +74,11 @@ ALTER TABLE invitations ADD COLUMN IF NOT EXISTS planner jsonb NOT NULL DEFAULT 
 -- Dopo l'acquisto l'invito si modifica una sola volta: la prima modifica salvata lo consuma e apre una sessione.
 ALTER TABLE invitations ADD COLUMN IF NOT EXISTS edit_count integer NOT NULL DEFAULT 0;
 ALTER TABLE invitations ADD COLUMN IF NOT EXISTS edit_session text;
+-- Cosa è stato pagato (le funzioni restano acquistate anche se tolte e riaggiunte) e la versione pubblicata agli ospiti.
+-- La bozza è la colonna config: le modifiche dopo l'acquisto non arrivano agli ospiti finché non si conferma.
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS purchased_addons jsonb;
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS published_config jsonb;
+UPDATE invitations SET purchased_addons = config->'addons', published_config = config WHERE status = 'paid' AND purchased_addons IS NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub text;
 CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_idx ON users (google_sub) WHERE google_sub IS NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'));

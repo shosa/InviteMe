@@ -753,6 +753,11 @@ td a { color: var(--ink); }
 .stock-wait { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(255, 255, 255, .7); font-size: 13px; font-weight: 600; }
 .stock-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
 .stock-foot .hint { margin: 0; }
+/* Riepilogo prima della conferma della modifica: l'avviso è visibile, i pulsanti restano in fondo. */
+.confirm-summary { width: min(520px, 94vw); }
+.confirm-warning { padding: 12px 14px; border-left: 3px solid #a35a00; background: #fdf6ec; color: var(--ink); font-size: 14px; }
+.bl-modal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.confirm-edit-summary { font-size: 13px; }
 .stock-search .btn { min-height: 46px; padding: 0 22px; }
 .stock-item { border-radius: 14px; }
 .stock-item img { border-radius: 14px; }

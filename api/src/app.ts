@@ -250,6 +250,7 @@ export async function buildApp() {
       planner: inv.planner ?? {},
       editCount: inv.edit_count ?? 0,
       editSession: inv.edit_session ?? null,
+      purchasedAddons: (inv.purchased_addons ?? inv.config.addons ?? []) as string[],
       catalog: c,
       hasRsvp: hasRsvp(c, inv.config),
     };
@@ -277,7 +278,8 @@ export async function buildApp() {
       // Dopo l'acquisto: si modifica finché non si conferma; la conferma chiude la modifica. Il template non cambia più.
       if (inv.edit_count >= 1) return reply.code(409).send({ error: "Modifica già confermata: l'invito non si modifica più" });
       if (config.themeId !== (inv.config as InviteConfig).themeId) return reply.code(409).send({ error: "Dopo l'acquisto il template non si cambia" });
-      const bought = new Set((inv.config as InviteConfig).addons ?? []);
+      // Le funzioni pagate restano acquistate: se tolte e riaggiunte in bozza sono gratuite.
+      const bought = new Set<string>(inv.purchased_addons ?? (inv.config as InviteConfig).addons ?? []);
       if (config.addons.some((a) => !bought.has(a))) return reply.code(409).send({ error: "Per aggiungere una funzione serve un nuovo acquisto" });
     }
     await pool.query("UPDATE invitations SET config = $1 WHERE id = $2", [JSON.stringify(config), inv.id]);
@@ -292,7 +294,8 @@ export async function buildApp() {
     if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
     if (inv.status !== "paid") return reply.code(409).send({ error: "L'invito non è ancora pagato" });
     if (inv.edit_count >= 1) return reply.code(409).send({ error: "Modifica già confermata" });
-    await pool.query("UPDATE invitations SET edit_count = 1 WHERE id = $1", [inv.id]);
+    // Conferma = pubblicazione: la bozza diventa la versione che vedono gli ospiti, e la modifica si chiude.
+    await pool.query("UPDATE invitations SET edit_count = 1, published_config = config WHERE id = $1", [inv.id]);
     return { ok: true, editCount: 1 };
   });
 
@@ -386,7 +389,8 @@ export async function buildApp() {
     const inv = rows[0];
     if (!inv) return reply.code(404).type("text/html; charset=utf-8").send(NOT_FOUND_PAGE);
     const c = await loadCatalog();
-    const html = renderFor(c, inv.slug, inv.config as InviteConfig);
+    // Agli ospiti va la versione pubblicata; le modifiche in bozza restano private fino alla conferma.
+    const html = renderFor(c, inv.slug, (inv.published_config ?? inv.config) as InviteConfig);
     if (!html) return reply.code(410).type("text/html; charset=utf-8").send(NOT_FOUND_PAGE);
     await pool.query("UPDATE invitations SET views = views + 1 WHERE id = $1", [inv.id]);
     await track("invitation_viewed", inv.id);
@@ -590,7 +594,8 @@ export async function buildApp() {
   });
 
   async function markPaid(invitationId: string, orderRef: string, amountCents: number, source: "shopify" | "local") {
-    await pool.query("UPDATE invitations SET status = 'paid', order_ref = $2 WHERE id = $1", [invitationId, orderRef]);
+    // Al pagamento si registra cosa è stato acquistato e la versione che va online.
+    await pool.query("UPDATE invitations SET status = 'paid', order_ref = $2, purchased_addons = config->'addons', published_config = config WHERE id = $1", [invitationId, orderRef]);
     await pool.query(
       `UPDATE orders SET status = 'paid' WHERE invitation_id = $1 AND status = 'pending'`,
       [invitationId],
