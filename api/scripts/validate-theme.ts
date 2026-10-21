@@ -6,8 +6,10 @@ import { loadTheme, THEMES_DIR } from "../src/engine/themes";
 import { blockPartials } from "../src/engine/blocks";
 
 const args = process.argv.slice(2);
+// npm esegue lo script dalla cartella del pacchetto (api/): i percorsi si risolvono da dove si è lanciato il comando.
+const from = process.env.INIT_CWD ?? process.cwd();
 const dirs = args.length
-  ? args.map((a) => path.resolve(a))
+  ? args.map((a) => path.resolve(from, a))
   : fs.readdirSync(THEMES_DIR).map((n) => path.join(THEMES_DIR, n)).filter((d) => fs.statSync(d).isDirectory() && !path.basename(d).startsWith("_"));
 
 let failed = 0;
