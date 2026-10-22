@@ -1,7 +1,7 @@
 {{^preview}}
 <div data-cover role="button" tabindex="0" aria-label="{{t.openInviteAria}} {{title}}">
   {{#topText}}<p class="env-top">{{topText}}</p>{{/topText}}
-  {{#coverVideo}}<video data-cover-video playsinline muted preload="auto" src="{{coverVideo}}" aria-label="{{t.coverVideoAria}}"></video>{{/coverVideo}}
+  {{#coverVideo}}<video data-cover-video playsinline muted disablepictureinpicture disableremoteplayback preload="auto" src="{{coverVideo}}" aria-label="{{t.coverVideoAria}}"></video>{{/coverVideo}}
   {{^coverVideo}}
   <div class="env-card">
     <div class="env"{{#envelopeColor}} style="--env:{{envelopeColor}}"{{/envelopeColor}}>

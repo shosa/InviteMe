@@ -1,6 +1,6 @@
 # Asset prompts — Avorio botanico
 
-Prompt pronti per generare in ChatGPT gli asset coordinati al filmato `avorio-botanico-apertura.mp4`.
+Prompt pronti per generare in ChatGPT gli asset coordinati al filmato di apertura, la busta-video del tema (`themes/avorio-botanico/assets/apertura.mp4`, dichiarata in `envelope` nel `theme.json`). Per il filmato stesso, le regole sono in `docs/TEMI.md`, sezione «Busta-video».
 
 ## Riferimenti da allegare
 

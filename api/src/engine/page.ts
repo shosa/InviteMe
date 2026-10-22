@@ -66,8 +66,10 @@ export function renderInvitePage(input: PageInput): string {
   // Font scelti dal cliente per i testi: solo quelli della libreria finiscono nel foglio di stile della pagina.
   const usedFonts = new Set<FontId>();
   let main = "";
-  for (const block of config.blocks) {
-    if (block.hidden || !blockDef(block.type)) continue;
+  for (const instance of config.blocks) {
+    if (instance.hidden || !blockDef(instance.type)) continue;
+    // Busta-video del tema: il filmato è dello stile, il blocco Busta non ha proprietà modificabili.
+    const block = instance.type === "cover" && m.envelope ? { ...instance, props: { coverVideo: m.envelope.video } } : instance;
     const template = partials.get(block.type as BlockType);
     if (!template) continue;
     // Un campo vuoto non cancella il valore dell'evento quando la proprietà esiste anche tra i dati dell'evento (nomi, riga sotto i nomi).
@@ -148,7 +150,7 @@ export function renderInvitePage(input: PageInput): string {
 ${fonts ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n${fonts}` : ""}
 ${fontLink}
 <style>
-${css}${bgCss}${REVEAL_CSS}
+${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : ""}
 </style>
 </head>
 <body class="theme-${escapeHtml(m.id)}">
@@ -307,6 +309,12 @@ html:not([data-preview]) [data-anim]:not([data-rv="off"]):nth-child(even){animat
 @keyframes rv-slide{from{transform:translateX(-24px)}to{transform:none}}
 @keyframes rv-slide-r{from{transform:translateX(24px)}to{transform:none}}
 }}`;
+
+// Busta-video: il filmato è parte dell'invito, senza controlli del browser. «Tocca per aprire» sta a tre quarti dell'altezza.
+const ENVELOPE_CSS = `[data-cover-video]{pointer-events:none}
+[data-cover-video]::-webkit-media-controls,[data-cover-video]::-webkit-media-controls-enclosure{display:none!important}
+[data-cover-video]::-webkit-media-controls-start-playback-button{display:none!important}
+[data-cover] [data-cover-tap]{position:absolute;top:75%;left:50%;transform:translate(-50%,-50%);margin:0;z-index:3}`;
 
 // Sfondo animato: un livello fisso dietro tutto il contenuto, senza interazione. Il movimento ridotto lo ferma nel runtime.
 const BG_CSS = `.bg-fx{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:block}`;

@@ -49,6 +49,8 @@ export type ThemeManifest = {
   demo: Record<string, Record<string, unknown>>;
   // Sfondo animato proposto dallo stile (il cliente può cambiarlo o spegnerlo nel builder).
   background?: BackgroundSpec;
+  // Busta-video: il filmato del tema apre l'invito al posto della busta disegnata. Il blocco Busta non ha proprietà.
+  envelope?: { video: string };
 };
 
 // Nomi riservati al motore: un campo o una proprietà con questo nome nasconderebbe un dato di sistema.
@@ -67,7 +69,7 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
   if (!isRecord(input)) return { manifest: null, errors: [`${dir}: theme.json deve essere un oggetto`] };
   const x = input;
 
-  const allowed = ["engine", "id", "name", "description", "models", "themeColor", "fonts", "demo", "background"];
+  const allowed = ["engine", "id", "name", "description", "models", "themeColor", "fonts", "demo", "background", "envelope"];
   for (const k of Object.keys(x)) if (!allowed.includes(k)) err(`campo sconosciuto "${k}"`);
   if (x.engine !== ENGINE_VERSION) err(`engine deve essere ${ENGINE_VERSION}`);
 
@@ -91,8 +93,29 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
     if (!background) err(`background: tipo non valido (ammessi: ${BACKGROUND_KINDS.join(", ")}), colore #RRGGBB facoltativo`);
   }
 
+  let envelope: { video: string } | undefined;
+  if (x.envelope !== undefined) {
+    const video = isRecord(x.envelope) && typeof x.envelope.video === "string" ? x.envelope.video : "";
+    if (/^assets\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(video)) envelope = { video };
+    else err("envelope: { video: \"assets/nome.mp4\" } (filmato mp4 o webm del tema, senza audio)");
+  }
+
   if (errors.length || !id || !name) return { manifest: null, errors };
-  return { manifest: { engine: ENGINE_VERSION, id, name, description, models, themeColor, fonts, demo, ...(background ? { background } : {}) }, errors };
+  return {
+    manifest: {
+      engine: ENGINE_VERSION,
+      id,
+      name,
+      description,
+      models,
+      themeColor,
+      fonts,
+      demo,
+      ...(background ? { background } : {}),
+      ...(envelope ? { envelope } : {}),
+    },
+    errors,
+  };
 }
 
 // Campi dell'evento ammessi negli esempi della demo (sezione "event"): nomi, data, luogo, testi.

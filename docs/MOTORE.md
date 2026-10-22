@@ -27,9 +27,9 @@ config (jsonb)  →  sanitizeConfig              tutti i dati ripuliti: nessun c
 | `shared/src/engine/values.ts` | Validazione dei valori (testi, date, colori, liste, URL dei media) |
 | `shared/src/fonts.ts` | Libreria dei font per i testi (solo id ammessi) |
 | `shared/src/background.ts` | Sfondi animati: tipi ammessi e validazione |
-| `api/src/engine/page.ts` | Compone la pagina: blocchi, CSS, runtime, sfondo, font, builder |
+| `api/src/engine/page.ts` | Compone la pagina: blocchi, CSS, runtime, sfondo, font, builder, busta-video del tema |
 | `api/src/engine/themes.ts` | Carica e valida gli stili da `themes/`, sostituzioni di blocco, esempi della demo |
-| `engine/runtime.js` | Comportamenti nel browser: busta, audio, gratta, countdown, video, popup RSVP, sfondo animato |
+| `engine/runtime.js` | Comportamenti nel browser: busta (anche busta-video), audio, gratta, countdown, video, popup RSVP, sfondo animato |
 | `engine/blocks/*.html` | Un template per tipo di blocco (il default, usato da tutti gli stili) |
 | `themes/<id>/` | Uno stile: `theme.json`, `theme.css`, `assets/`, eventualmente `blocks/` |
 
@@ -57,7 +57,7 @@ Il registro è in `shared/src/blocks.ts`. Ogni tipo ha un template di default in
 
 | Tipo | Nome | Proprietà (tipo) | Vincoli |
 |---|---|---|---|
-| `cover` | Busta | `topText`, `sealText` (testo), `envelopeColor`, `sealColor` (colore), `coverVideo` (video), `coverSound` (audio), `tapLabel` (testo) | unica, sempre prima, non spostabile |
+| `cover` | Busta | `topText`, `sealText` (testo), `envelopeColor`, `sealColor` (colore), `coverVideo` (video), `coverSound` (audio), `tapLabel` (testo). Con `envelope` nel manifest del tema: nessuna proprietà, il filmato è dello stile | unica, sempre prima, non spostabile |
 | `hero` | Intestazione | `kicker`, `occasion` (testo), `couplePhoto` (foto), `scrollLabel` (testo) + nomi, data, ora, sottotitolo dell'evento | unica, bloccata (non eliminabile) |
 | `scratchdate` | Data da grattare | `dateTitle`, `dayLabel`, `monthLabel`, `yearLabel`, `revealLabel` (testi), `lookShape` (square/round/pill), `lookCover` (colore) | unica |
 | `date` | Data | `dateTitle` (testo), `cellShape` (box/round/pill/plain), `showLabels` (sì/no) | unica |
@@ -131,6 +131,8 @@ Un livello di movimento dietro tutto il contenuto della pagina. Tipi (in `shared
 - Gli stili non possono contenere `@import`, `expression(`, `<script>`, `<style>`; le risorse esterne ammesse sono solo Google Fonts e Google Maps.
 
 ## Media
+
+**Busta-video.** Se il manifest dello stile dichiara `envelope`, la busta è il filmato dello stile (`envelope.video`): `page.ts` sostituisce le proprietà del blocco Busta con quel solo file, e il builder mostra un avviso al posto dei campi. Il filmato parte al tocco, senza audio; a fine filmato il runtime sfuma l'invito (900 ms, sezione 2). Con «riduci movimento» il filmato è saltato. Regole per i filmati in `docs/TEMI.md`, sezione «Busta-video».
 
 Foto, video e audio caricati dal cliente passano da ffmpeg (`api/src/media.ts`): video H.264 senza audio, massimo 90 secondi e 15 MB; audio MP3 128 kbps. Le foto hanno il lato lungo massimo 2200 px; le PNG e le WebP restano PNG per conservare la trasparenza (massimo 8 MB in uscita), le altre diventano JPEG. Le conversioni sono in coda, una alla volta.
 

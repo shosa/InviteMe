@@ -60,6 +60,7 @@ export function loadTheme(dir: string): ThemeLoad {
   for (const ref of css.matchAll(/assets\/[A-Za-z0-9._-]+/g)) {
     if (!fs.existsSync(path.join(dir, ref[0]))) errors.push(`${name}: asset mancante ${ref[0]}`);
   }
+  if (manifest?.envelope && !fs.existsSync(path.join(dir, manifest.envelope.video))) errors.push(`${name}: busta-video mancante (${manifest.envelope.video})`);
   for (const [block, props] of Object.entries(manifest?.demo ?? {})) {
     for (const v of Object.values(props)) {
       for (const f of Array.isArray(v) ? v : [v]) {

@@ -43,7 +43,7 @@ themes/<id>/
 }
 ```
 
-Solo queste chiavi sono ammesse (qualunque altra è un errore): `engine`, `id`, `name`, `description`, `models`, `themeColor`, `fonts`, `demo`, `background`.
+Solo queste chiavi sono ammesse (qualunque altra è un errore): `engine`, `id`, `name`, `description`, `models`, `themeColor`, `fonts`, `demo`, `background`, `envelope`.
 
 | Chiave | Obbligatoria | Regola |
 |---|---|---|
@@ -56,6 +56,7 @@ Solo queste chiavi sono ammesse (qualunque altra è un errore): `engine`, `id`, 
 | `fonts` | no | solo URL `https://fonts.googleapis.com/css2?…` (non altri host) |
 | `background` | no | sfondo animato proposto: `{ "kind": …, "color": "#RRGGBB" }`. `kind` è uno di `confetti`, `bubbles`, `petals`, `sparkles`, `waves`, `snow`, `none`. `color` è facoltativo. Vedi «Sfondi animati» |
 | `demo` | no | per ogni tipo di blocco, i valori dell'esempio (vedi sotto) |
+| `envelope` | no | busta-video: `{ "video": "assets/apertura.mp4" }`. Il filmato apre l'invito al posto della busta disegnata. Vedi «Busta-video» |
 
 ### Esempi (`demo`)
 
@@ -67,7 +68,7 @@ Diciassette tipi. Il registro completo (con vincoli e lunghezze) è in `shared/s
 
 | Tipo | Nome | Proprietà dell'esempio (`demo`) | Unico | Funzione |
 |---|---|---|---|---|
-| `cover` | Busta | `topText`, `sealText`, `coverVideo` (file), `coverSound` (file), `tapLabel` | sì | — |
+| `cover` | Busta | `topText`, `sealText`, `coverVideo` (file), `coverSound` (file), `tapLabel`. Con `envelope` nel manifest: nessuna proprietà, la busta è il filmato dello stile | sì | — |
 | `hero` | Intestazione | `kicker`, `occasion`, `couplePhoto` (foto), `scrollLabel` | sì | — |
 | `scratchdate` | Data da grattare | `dateTitle`, `dayLabel`, `monthLabel`, `yearLabel`, `revealLabel` | sì | — |
 | `date` | Data | `dateTitle`, `showLabels` | sì | — |
@@ -180,6 +181,42 @@ Regole per lo stile:
 - Non aggiungere un proprio canvas o script per simulare il movimento: il motore lo fa già, e il runtime lo ferma quando non è visibile.
 - Il movimento è decorativo: non deve mai contenere informazioni (date, nomi, indirizzi) né distrarre dal testo.
 
+## Busta-video
+
+Uno stile può aprire l'invito con un filmato invece che con la busta disegnata. Basta dichiararlo nel manifest:
+
+```json
+"envelope": { "video": "assets/apertura.mp4" }
+```
+
+Effetti:
+- Il blocco Busta **non ha proprietà modificabili**: il cliente non vede campi, il motore ignora i valori salvati (testo, sigillo, colori, filmato, suono). Il filmato è dello stile.
+- Il filmato parte al tocco, senza audio. A fine filmato l'invito sfuma dentro la pagina (circa 0,9 s): la dissolvenza la fa il motore, non il file.
+- Con «riduci movimento» il filmato è saltato e l'invito compare subito. Se il filmato non parte o si blocca, l'invito si apre lo stesso.
+- Il file deve esistere in `assets/`, con estensione `.mp4` o `.webm`; il validatore lo controlla.
+
+### Come fare il filmato
+
+Il filmato è la busta che si apre. Regole:
+- **Formato**: MP4 H.264, `yuv420p`, senza audio, con `+faststart` (si vede prima di essere scaricato tutto). In alternativa WebM VP9.
+- **Proporzione**: verticale 9:16, 1080×1920, come lo schermo del telefono. Tieni il soggetto centrale: su schermi più larghi il filmato è ritagliato ai lati.
+- **Durata**: 4–8 secondi, massimo 90. Più è lungo, più l'ospite aspetta prima di vedere il suo invito.
+- **Peso**: meno di 4 MB.
+- **Primo fotogramma**: la busta chiusa, ferma, con il testo o il sigillo già al suo posto. Prima del tocco l'ospite vede questo fotogramma.
+- **Ultimo fotogramma**: la busta aperta, o la scena finale, con **carta chiara e calma** (il colore di sfondo dello stile). Il motore sfuma da qui all'invito: un nero o un bianco pieno alla fine danno uno stacco brusco.
+- **Nessun dato di persone**: niente nomi, date, volti, testi o loghi reali nel filmato. Il nome del cliente non è nel file.
+- **Nessun loop, nessun fade nel file**: il filmato finisce fermo sull'ultimo fotogramma; la dissolvenza la fa il motore.
+
+Comando di esempio per ottenere un file adatto da un sorgente:
+
+```sh
+ffmpeg -i sorgente.mov -an -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p \
+  -vf "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920" \
+  -movflags +faststart assets/apertura.mp4
+```
+
+Controllo: `ffprobe -v error -show_entries format=duration:stream=codec_name,width,height -of default=nw=1 assets/apertura.mp4` (deve dare `h264`, 1080×1920, durata sotto i 90 s).
+
 ## Sostituzioni di blocco (`blocks/`)
 
 Quando uno stile vuole un markup diverso per un blocco, mette `themes/<id>/blocks/<tipo>.html`. Il file sostituisce il template di default **solo per quel tipo**. Regole:
@@ -195,7 +232,7 @@ Per la maggior parte degli stili non serve: basta il CSS. Usa una sostituzione q
 - Ornamenti, cornici e fregi: SVG preferibili, o PNG con sfondo trasparente.
 - Foto e illustrazioni dello stile (solo se non sono di persone reali): JPEG, lato lungo massimo 2000 px, meno di 400 KB ciascuna.
 - Audio o video dello stile: solo con diritti chiari. Di default lo stile non include musica: la sceglie il cliente.
-- Per i video: H.264 senza audio, massimo 90 secondi.
+- Per i video: H.264 senza audio, massimo 90 secondi. La busta-video segue le regole della sezione «Busta-video».
 - Nei template e nel CSS i percorsi sono `assets/nome.file`: il motore li porta sul percorso pubblico dello stile.
 
 ## Validazione
@@ -206,7 +243,7 @@ npm run validate-theme -w @inviteme/api                      # tutti
 npm run test -w @inviteme/api
 ```
 
-Il validatore controlla, in ordine: il manifest (chiavi ammesse, tipi, `themeColor`, `fonts`, `background`, `demo`); la presenza di `theme.json` e `theme.css`; gli host citati nel CSS (ammessi: Google Fonts, Google Maps, w3.org); l'uso di `@import`, `expression(`, `<style>`, `<script>`; `url()` solo verso `assets/` o `data:image/`; le sostituzioni di blocco; i file citati e presenti; una prova di rendering della demo con tutti i blocchi, che non deve lasciare segnaposti senza dato.
+Il validatore controlla, in ordine: il manifest (chiavi ammesse, tipi, `themeColor`, `fonts`, `background`, `envelope`, `demo`); la presenza di `theme.json` e `theme.css`; gli host citati nel CSS (ammessi: Google Fonts, Google Maps, w3.org); l'uso di `@import`, `expression(`, `<style>`, `<script>`; `url()` solo verso `assets/` o `data:image/`; le sostituzioni di blocco; i file citati e presenti; una prova di rendering della demo con tutti i blocchi, che non deve lasciare segnaposti senza dato.
 
 ## Flusso di lavoro
 
@@ -225,7 +262,8 @@ Il validatore controlla, in ordine: il manifest (chiavi ammesse, tipi, `themeCol
 - [ ] il validatore passa senza errori
 - [ ] nessun dato di persone in asset, esempi o nomi di file
 - [ ] tutte le classi dei blocchi sono stilizzate, anche la versione mobile
-- [ ] la busta funziona con e senza filmato
+- [ ] la busta funziona con e senza filmato; con busta-video il filmato finisce su carta chiara e sfuma nell'invito
+- [ ] con busta-video: il blocco Busta non mostra campi nel builder
 - [ ] il popup RSVP si apre, valida i campi obbligatori e si chiude con Esc
 - [ ] il Dress code mostra i pallini e i nomi dei colori
 - [ ] 390 px senza scorrimento orizzontale; contrasto AA

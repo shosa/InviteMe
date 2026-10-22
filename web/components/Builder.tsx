@@ -492,6 +492,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
             config={config}
             catalog={catalog}
             block={block}
+            videoEnvelope={!!theme?.envelope}
             busy={busy}
             onSetProp={setProp}
             onSetEvent={setEvent}

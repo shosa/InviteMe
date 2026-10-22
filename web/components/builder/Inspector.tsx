@@ -132,6 +132,7 @@ type Props = {
   onSetEvent: (key: string, value: unknown, group?: string) => void;
   onSetTheme: (id: string) => void;
   locked?: boolean;
+  videoEnvelope?: boolean; // il tema apre l'invito con un filmato: la Busta non ha proprietà
   onSetLocale: (locale: "it" | "en") => void;
   onSetEventType: (t: EventType) => void;
   onSetBackground: (b: BackgroundSpec | null) => void;
@@ -167,7 +168,9 @@ export function Inspector(p: Props) {
             </button>
           </div>
         </header>
-        {def.fields.length === 0 && p.block.type !== "map" ? (
+        {p.block.type === "cover" && p.videoEnvelope ? (
+          <p className="hint">{L.envelopeHint}</p>
+        ) : def.fields.length === 0 && p.block.type !== "map" ? (
           <p className="hint">{L.blockHint}</p>
         ) : (
           <BlockFields key={p.block.id} p={p} def={def} L={L} />

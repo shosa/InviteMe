@@ -24,6 +24,19 @@ describe("manifest degli stili", () => {
   });
 });
 
+describe("busta-video", () => {
+  it("accetta un filmato del tema come busta", () => {
+    const r = validateManifest({ ...base, envelope: { video: "assets/apertura.mp4" } });
+    assert.deepEqual(r.errors, []);
+    assert.deepEqual(r.manifest?.envelope, { video: "assets/apertura.mp4" });
+  });
+
+  it("rifiuta percorsi esterni o formati non video", () => {
+    assert.ok(validateManifest({ ...base, envelope: { video: "https://x.test/a.mp4" } }).errors.length > 0);
+    assert.ok(validateManifest({ ...base, envelope: { video: "assets/busta.png" } }).errors.length > 0);
+  });
+});
+
 describe("blocchi dell'invito", () => {
   const block = (type: string, extra: Partial<BlockInstance> = {}): BlockInstance => ({ id: `id-${type}-${Math.random().toString(36).slice(2, 6)}`, type: type as BlockInstance["type"], props: {}, ...extra });
   const all = new Set(["rsvp", "program", "map", "music", "countdown", "gallery"] as const);
