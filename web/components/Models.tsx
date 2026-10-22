@@ -43,6 +43,8 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
     if (!next.some((t) => t.id === themeId)) setThemeId(next[0]?.id ?? "");
   }
   const [modelId, setModelId] = useState(models[0]?.id ?? "");
+  // La barra del carrello compare solo dopo una scelta dell'utente (uno stile o un modello), non alla prima apertura.
+  const [picked, setPicked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const gallery = useRef<HTMLElement>(null);
@@ -68,6 +70,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
 
   // Scelto un template dal carosello: l'anteprima si aggiorna e la pagina scorre alla scelta del modello.
   function pickTheme(id: string) {
+    setPicked(true);
     setThemeId(id);
     requestAnimationFrame(() => modelsSection.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
@@ -152,7 +155,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
             const copy = modelCopy(m.id, m.name, m.tagline, m.description, lang);
             const on = m.id === modelId;
             return (
-              <button key={m.id} type="button" role="radio" aria-checked={on} className={`plan-option${on ? " is-on" : ""}`} onClick={() => setModelId(m.id)}>
+              <button key={m.id} type="button" role="radio" aria-checked={on} className={`plan-option${on ? " is-on" : ""}`} onClick={() => { setPicked(true); setModelId(m.id); }}>
                 {m.id === "invitation-rsvp" && <span className="plan-option-tag">{T.popular}</span>}
                 <strong>{copy.name}</strong>
                 <span className="plan-option-tagline">{copy.tagline}</span>
@@ -196,7 +199,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
 
       {error && <p role="alert" className="form-error models-error">{error}</p>}
 
-      {model && (
+      {model && picked && (
         <div className="order-bar" role="region" aria-label={H.orderBarLabel}>
           <div className="order-bar-item">
             <span className="order-bar-label">{H.styleLabel}</span>

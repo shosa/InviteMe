@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { ThemeManifest } from "@inviteme/shared";
-import { themeCopy } from "@/lib/catalogCopy";
+import { themeCopy, themeDescCopy } from "@/lib/catalogCopy";
 import { ui, type Lang } from "@/lib/ui";
 
 // Tempo tra una diapositiva e la successiva, e pausa dopo un'interazione dell'utente.
@@ -123,7 +123,7 @@ export function TemplateCarousel({ templates, selectedId, onSelect, label, lang 
               <div className="tpl-meta">
                 <h3>{name}</h3>
                 {on && <span className="tpl-chosen">{L.tplChosen}</span>}
-                <p>{t.description}</p>
+                <p>{themeDescCopy(t.id, t.description, lang)}</p>
               </div>
             </article>
           );

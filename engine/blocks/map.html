@@ -1,6 +1,6 @@
 {{#address}}
 <section class="sec map-sec">
-  <div class="map-frame" data-anim="zoomin">
+  <div class="map-frame" data-anim="zoomin"{{#mapShape}} data-map-shape="{{mapShape}}"{{/mapShape}}>
     <iframe src="https://www.google.com/maps?q={{venue | url}}%20{{address | url}}&output=embed" title="{{t.mapTitle}}" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
     <img class="fl map-fl" src="assets/floral-corner.png" alt="" aria-hidden="true">
   </div>

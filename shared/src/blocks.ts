@@ -237,8 +237,22 @@ export const BLOCKS: BlockDef[] = [
     description: "Mappa del luogo con il link alle indicazioni.",
     feature: "map",
     unique: true,
-    fields: [],
-    defaults: {},
+    fields: [
+      {
+        key: "mapShape",
+        label: "Forma della mappa",
+        type: "choice",
+        group: "Mappa",
+        options: [
+          { value: "theme", label: "Come lo stile" },
+          { value: "square", label: "Quadrato" },
+          { value: "arch", label: "Arco" },
+          { value: "circle", label: "Cerchio" },
+          { value: "rounded", label: "Angoli arrotondati" },
+        ],
+      },
+    ],
+    defaults: { mapShape: "theme" },
   },
   {
     type: "transfer",

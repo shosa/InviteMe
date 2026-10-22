@@ -67,7 +67,7 @@ Il registro è in `shared/src/blocks.ts`. Ogni tipo ha un template di default in
 | `image` | Immagine | `photo` (foto), `caption` (testo) | — |
 | `program` | Programma | `heading` (testo), `items` (lista fino a 8: `time`, `label`) | funzione `program` |
 | `venue` | Location | `heading`, `venue` (testo), `kind` (villa, chiesa, ristorante, giardino, hotel, sala, spiaggia, altro), `photo` (foto) | unica |
-| `map` | Mappa | — (l'indirizzo è nei dati dell'evento) | unica, funzione `map` |
+| `map` | Mappa | `mapShape` (forma: `theme`, `square`, `arch`, `circle`, `rounded`); l'indirizzo è nei dati dell'evento | unica, funzione `map` |
 | `transfer` | Come arrivare | `heading`, `body` (testo lungo, 800) | — |
 | `dresscode` | Dress code | `heading`, `dress` (testo), `colors` (lista fino a 6: `hex` colore, `name` testo) | — |
 | `video` | Video | `heading` (testo), `video` (video) | — |

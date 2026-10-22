@@ -63,7 +63,7 @@ export function FieldEditor({
         <Field label={label}>
           <select value={text} onChange={(e) => onChange(e.target.value)}>
             <option value="">{standard ?? "Default"}</option>
-            {(field.options ?? []).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {(field.options ?? []).map((o) => <option key={o.value} value={o.value}>{copy ? copy(`${field.key}.${o.value}`, o.label) : o.label}</option>)}
           </select>
         </Field>
       );

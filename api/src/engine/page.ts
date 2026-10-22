@@ -411,6 +411,17 @@ html[data-preview]{scrollbar-width:none}html[data-preview]::-webkit-scrollbar{di
 .bk[data-photo-shape="rounded"] img:not(.fl):not(.orn){border-radius:28px!important}
 .bk[data-photo-shape="diamond"] img:not(.fl):not(.orn){clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .bk[data-photo-shape="hexagon"] img:not(.fl):not(.orn){clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+/* Mappa: la forma scelta nel builder vince sul contorno dello stile (anche ad arco), così il contenitore non viene tagliato. */
+.map-frame[data-map-shape]:not([data-map-shape="theme"]) { padding:0!important; overflow:hidden }
+.map-frame[data-map-shape]:not([data-map-shape="theme"]) iframe { width:100%!important; height:100%!important; position:absolute; inset:0 }
+.map-frame[data-map-shape="square"] { aspect-ratio:1/1; position:relative }
+.map-frame[data-map-shape="arch"] { aspect-ratio:4/5; position:relative; border-radius:999px 999px 0 0!important }
+.map-frame[data-map-shape="arch"] iframe { border-radius:999px 999px 0 0!important }
+.map-frame[data-map-shape="circle"] { aspect-ratio:1/1; position:relative; border-radius:50%!important }
+.map-frame[data-map-shape="circle"] iframe { border-radius:50%!important }
+.map-frame[data-map-shape="rounded"] { aspect-ratio:1/1; position:relative; border-radius:28px!important }
+.map-frame[data-map-shape="rounded"] iframe { border-radius:28px!important }
+.map-frame[data-map-shape] .map-fl { display:none }
 [data-music-toggle]{position:fixed!important;right:18px!important;bottom:18px!important;top:auto!important;left:auto!important;z-index:9000!important;width:52px!important;height:52px!important;border-radius:50%!important;border:0!important;background:#0E1116!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:0!important;box-shadow:0 10px 28px rgba(0,0,0,.25)!important;cursor:pointer}
 [data-music-toggle] svg{width:20px!important;height:20px!important;fill:#FFFFFF!important}
 `;

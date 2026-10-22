@@ -104,7 +104,7 @@ Diciassette tipi. Il registro completo (con vincoli e lunghezze) è in `shared/s
 | `image` | Immagine | `photo` (foto), `caption` | no | — |
 | `program` | Programma | `heading`, `items` (orario + testo, fino a 8) | no | program |
 | `venue` | Location | `heading`, `venue`, `kind`, `photo` | sì | — |
-| `map` | Mappa | — | sì | map |
+| `map` | Mappa | `mapShape` (forma: `theme`, `square`, `arch`, `circle`, `rounded`) | sì | map |
 | `transfer` | Come arrivare | `heading`, `body` | no | — |
 | `dresscode` | Dress code | `heading`, `dress`, `colors` (fino a 6: `hex`, `name`) | no | — |
 | `video` | Video | `heading`, `video` (file) | no | — |

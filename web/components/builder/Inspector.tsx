@@ -8,7 +8,7 @@ import { Field, FieldEditor, type Values } from "./fields";
 import { FontButton } from "./FontButton";
 import { TemplateSwitch } from "./TemplateSwitch";
 import { ui } from "@/lib/ui";
-import { blockCopy, fieldCopy } from "@/lib/catalogCopy";
+import { blockCopy, blockDescCopy, fieldCopy } from "@/lib/catalogCopy";
 
 // Luogo e indirizzo: con il blocco Mappa si modificano lì, non nel pannello Evento.
 const LOCATION_KEYS = ["address"];
@@ -156,7 +156,7 @@ export function Inspector(p: Props) {
           <div>
             <p className="bl-kicker">{L.block}</p>
             <h2>{blockCopy(def.type, def.label, p.lang ?? "it")}</h2>
-            <p className="hint">{def.description}</p>
+            <p className="hint">{blockDescCopy(def.type, def.description, p.lang ?? "it")}</p>
           </div>
           {p.onBack && <button type="button" className="bl-back" onClick={p.onBack}>← {L.eventDetails}</button>}
           <div className="bl-insp-actions">

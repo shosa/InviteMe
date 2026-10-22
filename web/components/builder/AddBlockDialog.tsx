@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { BLOCKS, formatPrice, getAddon, getModel, type AddonKey, type BlockType, type Catalog, type InviteConfig } from "@inviteme/shared";
 import { ui, type Lang } from "@/lib/ui";
-import { blockCopy } from "@/lib/catalogCopy";
+import { blockCopy, blockDescCopy } from "@/lib/catalogCopy";
 import { BlockIcon } from "@/lib/blockIcons";
 
 type Props = {
@@ -57,7 +57,7 @@ export function AddBlockDialog(p: Props) {
                   <span className="bl-card-icon"><BlockIcon type={def.type} size={20} /></span>
                   <h3>{blockCopy(def.type, def.label, lang)}</h3>
                 </div>
-                <p className="hint">{def.description}</p>
+                <p className="hint">{blockDescCopy(def.type, def.description, lang)}</p>
                 <div className="bl-card-foot">
                   {!locked && (
                     <button type="button" className="btn solid small" disabled={taken} onClick={() => p.onAdd(def.type)}>

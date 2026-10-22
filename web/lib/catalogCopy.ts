@@ -85,6 +85,58 @@ const FIELD_COPY_EN: Record<string, string> = {
   intro: "Intro text",
   signature: "Signature",
   "transfer.body": "Directions",
+  "lookBg": "Background colour",
+  "lookInk": "Text colour",
+  "lookCover": "Cover colour",
+  "lookShape": "Shape",
+  "photoShape": "Photo shape",
+  "photoFit": "Photo fit",
+  "photoFocus": "Photo focus",
+  "cover.topText": "Text above the envelope",
+  "cover.sealText": "Seal text",
+  "cover.envelopeColor": "Envelope colour",
+  "cover.sealColor": "Seal colour",
+  "cover.tapLabel": "Text to open the envelope",
+  "hero.kicker": "Text above the names",
+  "hero.scrollLabel": "Scroll text",
+  "scratchdate.dateTitle": "Date title",
+  "scratchdate.dayLabel": "Day label",
+  "scratchdate.monthLabel": "Month label",
+  "scratchdate.yearLabel": "Year label",
+  "scratchdate.revealLabel": "Reveal text",
+  "date.dateTitle": "Date title",
+  "date.cellShape": "Cell shape",
+  "date.showLabels": "Show labels",
+  "gallery.galleryStyle": "Gallery style",
+  "image.caption": "Caption",
+  "venue.kind": "Type",
+  "dresscode.dress": "Dress code",
+  "dresscode.colors": "Colours",
+  "rsvp.openLabel": "Button to open",
+  "rsvp.submitLabel": "Send button",
+  "rsvp.thanksLabel": "Thank-you message",
+  "mapShape": "Map shape",
+  "mapShape.theme": "As the style",
+  "mapShape.square": "Square",
+  "mapShape.arch": "Arch",
+  "mapShape.circle": "Circle",
+  "mapShape.rounded": "Rounded corners",
+  "photoShape.arch": "Arch",
+  "photoShape.circle": "Circle",
+  "photoShape.oval": "Oval",
+  "photoShape.rounded": "Rounded corners",
+  "photoShape.diamond": "Diamond",
+  "photoShape.hexagon": "Hexagon",
+  "photoFit.contain": "Whole photo, no crop",
+  "photoFit.cover": "Fill, crop the edges",
+  "photoFocus.center": "Centre",
+  "photoFocus.top": "Top",
+  "photoFocus.bottom": "Bottom",
+  "photoFocus.left": "Left",
+  "photoFocus.right": "Right",
+  "galleryStyle.slider": "Slider",
+  "galleryStyle.mosaic": "Mosaic",
+  "galleryStyle.grid": "Grid",
 };
 
 const THEME_COPY_EN: Record<string, string> = {
@@ -109,6 +161,9 @@ const THEME_COPY_EN: Record<string, string> = {
   "redazione": "Author's page",
   "rivista": "Paper pages",
   "velo": "Veil of mist",
+  "avorio-botanico": "Botanical ivory",
+  "acquarello-blu": "Blue watercolour",
+  "nozze-in-fiore": "Flowers in bloom",
 };
 
 export function blockCopy(type: string, label: string, lang: Lang) {
@@ -123,4 +178,60 @@ export function fieldCopy(type: string, key: string, label: string, lang: Lang) 
 
 export function themeCopy(id: string, name: string, lang: Lang) {
   return lang === "en" ? (THEME_COPY_EN[id] ?? name) : name;
+}
+
+// Descrizioni in inglese dei blocchi e degli stili (quelle in italiano sono nel catalogo).
+const BLOCK_DESC_EN: Record<string, string> = {
+  "cover": "An envelope that opens with a tap, with optional video and sound.",
+  "hero": "Names, date and time of the event, subtitle and main photo.",
+  "scratchdate": "Day, month and year to reveal with your finger.",
+  "date": "Day, month and year in plain sight, always visible.",
+  "countdown": "Days, hours, minutes and seconds to the date.",
+  "message": "A free text with a title.",
+  "gallery": "Up to six photos in a grid.",
+  "image": "A full-width photo, uploaded or chosen from Pixabay, with an optional caption.",
+  "program": "The day's timings on a timeline.",
+  "venue": "Name and type of the place; the address is set in the Map.",
+  "map": "Map of the place with a link to directions.",
+  "transfer": "Shuttle, parking, directions.",
+  "dresscode": "A dress code, highlighted.",
+  "video": "A silent looping video that plays when it enters the screen.",
+  "music": "Background music: it starts when the envelope opens, with a button to stop it.",
+  "rsvp": "Reply form in a popup, with the questions you set up.",
+  "footer": "Sign-off at the bottom of the page.",
+};
+
+const THEME_DESC_EN: Record<string, string> = {
+  "acquarello-blu": "A blue and light-blue watercolour that flows behind the invitation: transparent paper, blue flowers and lots of light. For weddings, anniversaries and spring ceremonies.",
+  "anniversario-oro": "Burgundy background and antique gold details, card panels. For fifty years of marriage and big milestones.",
+  "argento-anniversario": "Twenty-five years together: a silver arch frame on white paper. For wedding anniversaries and family celebrations.",
+  "autunno-cena": "Red leaves, pumpkins and candles on dark panels. For autumn dinners, birthdays and family gatherings.",
+  "avorio-botanico": "Ivory paper, pink and sage flowers, gold details and a cinematic opening with a romantic feel.",
+  "baby-shower": "Pastels, clouds and white flowers: a column of names and a scrolling programme. For baby showers and births.",
+  "battesimo-celeste": "Sky and clouds in soft blues: a column of names and a scrolling programme. For christenings and first communions.",
+  "compleanno-festa": "Warm, lively colours, cake and candles in front, big rounded titles. For birthdays and parties with friends.",
+  "festa-spiaggia": "Sand, sea and cobalt blue, big titles and a column layout. For beach weddings, hen parties and summer parties.",
+  "gala-aziendale": "Typography only on white, corporate blue and simple tables. For gala dinners, awards and company events.",
+  "giardino": "Full-page forest-green background, card panels and mosaic photos. For outdoor evening events.",
+  "invitereference": "Arch frame, gold ornaments on pink paper: a scratch-off date and a timeline programme.",
+  "laurea-giulia": "Midnight blue and gold, classic lettering and the list of the day's stops. For graduations and big study milestones.",
+  "lavanda-nozze": "Fields of lavender in soft violet, an arch frame and delicate flowers. For country weddings and outdoor ceremonies.",
+  "matrimonio-citta": "City lights at night, rose gold and geometric lines. For urban ceremonies and receptions in palaces.",
+  "matrimonio-lago": "A column of names over water and mountains, scrolling programme. For weddings by the lake and in the valleys.",
+  "minimo": "Typography only: no ornaments, no photos. Wide spaces and thin lines for an essential invitation.",
+  "notturno": "An evening ceremony: black background, thin white letters, geometric lines and a prominent countdown. For black-tie weddings.",
+  "nozze-in-fiore": "A romantic and sumptuous announcement: peonies, ivory roses, eucalyptus, wax seal and gold frames, with floating petals.",
+  "pensionamento": "Forest-green panels and gold details: an evening of thanks. For retirements and farewells.",
+  "prima-comunione": "Arch frame on light paper and sage green: simple, devout, with restrained ornaments. For first communions and confirmations.",
+  "redazione": "Magazine layout: a cover with the edition number, columns, thin rules and numbered sections like pages.",
+  "rivista": "Two-column editorial layout, big titles, crisp rules. Made for lovers of fashion magazines.",
+  "velo": "A vertical column of names in italics on ivory paper, light flowers and a horizontal scrolling programme. For romantic ceremonies.",
+};
+
+export function blockDescCopy(type: string, description: string, lang: Lang) {
+  return lang === "en" ? (BLOCK_DESC_EN[type] ?? description) : description;
+}
+
+export function themeDescCopy(id: string, description: string, lang: Lang) {
+  return lang === "en" ? (THEME_DESC_EN[id] ?? description) : description;
 }

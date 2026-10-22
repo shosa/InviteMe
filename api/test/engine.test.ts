@@ -154,6 +154,15 @@ describe("video di sfondo per zona", () => {
     }
   });
 
+  it("la mappa prende la forma scelta nel builder, anche su uno stile con contorno ad arco", () => {
+    const theme = loadThemes().themes.find((t) => t.manifest.id === "avorio-botanico")!;
+    const config = sampleConfig(theme.manifest);
+    config.blocks = config.blocks.map((b) => (b.type === "map" ? { ...b, props: { ...b.props, mapShape: "square" } } : b));
+    const html = renderInvitePage({ theme, config, slug: "x", features: new Set(ADDON_KEYS), runtime, preview: true });
+    assert.match(html, /class="map-frame"[^>]*data-map-shape="square"/);
+    assert.match(html, /\.map-frame\[data-map-shape="square"\]/);
+  });
+
   it("la busta del tema è il filmato dedicato", () => {
     const html = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "x", features: new Set(ADDON_KEYS), runtime });
     assert.match(html, /<video data-cover-video[^>]*src="\/api\/themes\/acquarello-blu\/assets\/busta\.mp4"/);
