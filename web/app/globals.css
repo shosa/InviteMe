@@ -115,7 +115,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav-link.is-current { color: var(--ink); }
 
 /* ───────────── Hero ───────────── */
-.hero { padding: clamp(56px, 8vw, 110px) 0 clamp(80px, 9vw, 130px); }
+.hero { padding: clamp(56px, 8vw, 110px) 0 clamp(80px, 9vw, 130px); overflow-x: clip; }
 .hero-grid { display: grid; grid-template-columns: 1fr 1.05fr; gap: clamp(40px, 6vw, 96px); align-items: center; }
 .hero h1 { margin-bottom: 30px; max-width: 12ch; }
 .hero .lede { margin-bottom: 40px; }
