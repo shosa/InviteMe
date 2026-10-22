@@ -19,6 +19,7 @@
 /* ───────────── Base ───────────── */
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body {
   margin: 0;
   background: var(--paper);
@@ -802,7 +803,9 @@ td a { color: var(--ink); }
   .bl-mobile-tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brass); }
   .bl-app .bl-left, .bl-app .bl-center, .bl-app .bl-right { grid-area: content; display: none; border: 0; }
   .bl-app.is-tab-blocchi .bl-left, .bl-app.is-tab-anteprima .bl-center, .bl-app.is-tab-proprieta .bl-right { display: block; }
-  .bl-frame, .bl-frame.is-desktop { width: 100%; margin: 0; height: 100%; box-shadow: none; }
+  .bl-frame, .bl-frame.is-desktop, .bl-frame.is-mobile { width: 100%; margin: 0; height: 100%; box-shadow: none; padding: 0; border-radius: 0; background: var(--paper); }
+  .bl-frame iframe, .bl-frame.is-mobile iframe { border-radius: 0; }
+  .bl-scroll { display: none; }
   .bl-preview-bar { display: none; }
   .bl-device, .bl-sep, .bl-save { display: none; }
   .bl-footer { padding: 10px 14px; }
@@ -946,14 +949,17 @@ td a { color: var(--ink); }
 .bl-card-foot small { font-size: 12px; color: var(--ink-soft); }
 .bl-card .btn { white-space: normal; text-align: center; max-width: 100%; line-height: 1.25; }
 
-/* Builder, vista mobile: l'anteprima dentro una cornice da telefono, come nel carosello. */
-.bl-frame.is-mobile { width: 390px; max-width: 100%; padding: 9px; border-radius: 48px; background: #1d1b19; box-shadow: inset 0 0 0 1px #3b3834, 0 30px 60px -30px rgba(23, 36, 42, .6); }
-.bl-frame.is-mobile iframe { border-radius: 40px; }
-
-/* Builder mobile: cornice di altezza fissa; il contenuto scorre dentro, la barra è fuori dal telefono. */
-.bl-app.is-mobile .bl-frame.is-mobile { flex: none; height: min(calc(100vh - 170px), 780px); }
-.bl-app.is-mobile .bl-frame.is-mobile iframe { height: 100%; }
-.bl-frame.is-mobile { position: relative; }
+/* Builder, vista telefono su schermi larghi: cornice con le proporzioni reali (390 × 844), dimensionata sull'altezza disponibile.
+   Sul telefono l'anteprima è a tutta larghezza, senza cornice (vedi il blocco ≤ 900 px). */
+@media (min-width: 901px) {
+  .bl-frame.is-mobile { position: relative; width: 390px; max-width: 100%; padding: 9px; border-radius: 48px; background: #1d1b19; box-shadow: inset 0 0 0 1px #3b3834, 0 30px 60px -30px rgba(23, 36, 42, .6); }
+  .bl-frame.is-mobile iframe { border-radius: 40px; }
+  .bl-app.is-mobile .bl-frame.is-mobile { flex: none; box-sizing: border-box; height: auto; aspect-ratio: 390 / 844; width: min(390px, 100%, calc((100vh - 170px) * 390 / 844)); }
+  @supports (height: 100dvh) {
+    .bl-app.is-mobile .bl-frame.is-mobile { width: min(390px, 100%, calc((100dvh - 170px) * 390 / 844)); }
+  }
+  .bl-app.is-mobile .bl-frame.is-mobile iframe { height: 100%; }
+}
 .bl-scroll { position: absolute; right: -30px; top: 24px; bottom: 24px; width: 16px; writing-mode: vertical-lr; appearance: auto; accent-color: #14b8a6; cursor: pointer; }
 .bl-item.is-hover { border-color: #14b8a6; box-shadow: inset 0 0 0 1px #14b8a6; background: rgba(20, 184, 166, 0.08); }
 
@@ -1338,7 +1344,7 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 @media (max-width: 760px) { .plan-split { grid-template-columns: minmax(0, 1fr); } }
 
 /* Colonna Struttura più larga: il nome del blocco resta su una riga, le frecce e le icone non si sovrappongono. */
-.bl-app { grid-template-columns: 360px minmax(0, 1fr) 360px; }
+@media (min-width: 901px) { .bl-app { grid-template-columns: 360px minmax(0, 1fr) 360px; } }
 .bl-item { grid-template-columns: 18px minmax(0, 1fr) auto; gap: 8px; padding: 8px 6px 8px 4px; }
 .bl-select { min-width: 0; }
 .bl-name-row { min-width: 0; max-width: 100%; }
@@ -1516,7 +1522,7 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .addr-list button:hover { background: var(--paper); }
 
 /* Pannello proprietà: più largo, campi nei limiti, domande RSVP senza sforare. */
-.bl-app { grid-template-columns: 360px minmax(0, 1fr) 470px; }
+@media (min-width: 901px) { .bl-app { grid-template-columns: 360px minmax(0, 1fr) 470px; } }
 .bl-right { min-width: 0; overflow-x: hidden; }
 .bl-back { font: inherit; font-size: 13px; font-weight: 600; background: none; border: 0; color: var(--brass); cursor: pointer; padding: 0 0 8px; text-align: left; }
 .bl-questions, .bl-question { min-width: 0; max-width: 100%; }

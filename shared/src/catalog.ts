@@ -17,6 +17,8 @@ export type ModelDef = {
   options: AddonKey[]; // acquistabili a parte
   enabled: boolean;
   sort: number;
+  // Testi in inglese modificabili dalla console. Se mancano, il sito usa quelli predefiniti in lingua o l'italiano.
+  en?: { name: string; tagline: string; description: string };
 };
 
 export type AddonDef = { key: AddonKey; label: string; description: string; cents: number; enabled: boolean };

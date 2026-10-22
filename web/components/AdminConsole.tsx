@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import type { AddonDef, Catalog, MusicTrack, ModelDef } from "@inviteme/shared";
+import { MODEL_COPY_EN } from "@/lib/catalogCopy";
 
 // Ciò che la console salva: modelli, funzioni e quali template sono attivi (i template sono file, non dati).
 type CatalogSave = Pick<Catalog, "models" | "addons"> & { themes: { id: string; enabled: boolean }[] };
@@ -153,6 +154,9 @@ function ModelsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Catal
     const next = list.includes(key) ? list.filter((k) => k !== key) : [...list, key];
     update(m.id, { [field]: next } as Partial<ModelDef>);
   };
+  // Testi inglesi: quelli salvati, altrimenti quelli predefiniti del sito, così la console mostra ciò che il sito usa.
+  const enOf = (m: ModelDef) => ({ ...(MODEL_COPY_EN[m.id] ?? { name: "", tagline: "", description: "" }), ...(m.en ?? {}) });
+  const updateEn = (m: ModelDef, patch: Partial<NonNullable<ModelDef["en"]>>) => update(m.id, { en: { ...enOf(m), ...patch } });
   const addModel = () => {
     const id = `modello-${Date.now().toString(36)}`;
     setModels((ms) => [...ms, { id, name: "Nuovo modello", tagline: "", description: "", priceCents: 4900, included: [], options: [], enabled: false, sort: ms.length + 1 }]);
@@ -175,6 +179,12 @@ function ModelsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Catal
             <Field label="Ordine"><input type="number" value={m.sort} onChange={(e) => update(m.id, { sort: Number(e.target.value) || 0 })} /></Field>
             <Field label="Slogan" wide><input value={m.tagline} maxLength={120} onChange={(e) => update(m.id, { tagline: e.target.value })} /></Field>
             <Field label="Descrizione" wide><textarea rows={2} maxLength={400} value={m.description} onChange={(e) => update(m.id, { description: e.target.value })} /></Field>
+          </div>
+          <p className="hint">Versione inglese (il sito in inglese la mostra; se vuota, usa quella predefinita)</p>
+          <div className="form-grid">
+            <Field label="Nome (inglese)"><input value={enOf(m).name} maxLength={80} onChange={(e) => updateEn(m, { name: e.target.value })} /></Field>
+            <Field label="Slogan (inglese)" wide><input value={enOf(m).tagline} maxLength={120} onChange={(e) => updateEn(m, { tagline: e.target.value })} /></Field>
+            <Field label="Descrizione (inglese)" wide><textarea rows={2} maxLength={400} value={enOf(m).description} onChange={(e) => updateEn(m, { description: e.target.value })} /></Field>
           </div>
           <fieldset className="checks">
             <legend>Incluse nel prezzo base</legend>

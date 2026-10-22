@@ -161,6 +161,8 @@ Il runtime non è un tuo file: non lo modifichi. Se un comportamento non è in q
 
 ## theme.css
 
+- **Scorrimento morbido**: il motore lo applica a tutti gli stili (`scroll-behavior: smooth` su `html`) nella pagina pubblica e nella demo. Non serve scriverlo nel tema, e non va cambiato. Con «riduci movimento» viene spento. L'anteprima del builder non lo usa.
+- Per scorrere a un punto della pagina dal codice del tema, usa `href="#id"` o `scrollIntoView` senza `behavior`: il motore decide il comportamento.
 - Colori, font e spaziature come variabili in `:root`. Il tema deve dichiarare i colori del testo in modo da superare il contrasto AA.
 - **Mobile first**: stili base per 360–414 px, poi `@media (min-width: …)` per desktop.
 - Nessun `#id` per gli hook: usa gli attributi `data-*` e le classi.

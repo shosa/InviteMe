@@ -136,6 +136,10 @@ Un livello di movimento dietro tutto il contenuto della pagina. Tipi (in `shared
 
 Foto, video e audio caricati dal cliente passano da ffmpeg (`api/src/media.ts`): video H.264 senza audio, massimo 90 secondi e 15 MB; audio MP3 128 kbps. Le foto hanno il lato lungo massimo 2200 px; le PNG e le WebP restano PNG per conservare la trasparenza (massimo 8 MB in uscita), le altre diventano JPEG. Le conversioni sono in coda, una alla volta.
 
+## Testi in inglese del catalogo
+
+I modelli hanno due set di testi: quelli in italiano (`name`, `tagline`, `description`) e quelli in inglese, facoltativi (`en`). La console admin («Modelli») li mostra entrambi e li salva. Il sito in inglese usa, nell'ordine: i testi `en` salvati, poi quelli predefiniti in `web/lib/catalogCopy.ts` (`MODEL_COPY_EN`), poi l'italiano. Per le funzioni (`addons`) e i blocchi vale la stessa logica nel codice (`ADDON_COPY_EN`, `BLOCK_COPY_EN`, `FIELD_COPY_EN`): per cambiarli serve una modifica al codice.
+
 ## Anteprima e demo
 
 - **Anteprima del builder**: `POST /api/invitations/:id/preview` con la configurazione in corso. Mostra la busta come la vede l'ospite. Il builder aggiorna da solo i blocchi che cambiano (per singolo blocco, senza ricaricare la pagina); la busta, la musica, la struttura e lo sfondo ricaricano tutta la pagina.

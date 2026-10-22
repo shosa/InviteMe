@@ -30,9 +30,17 @@ export const ADDON_COPY_EN: Record<string, { label: string; description: string 
   image: { label: "Image", description: "A full-width photo, uploaded or from Pixabay, with an optional caption" },
 };
 
-export function modelCopy(id: string, name: string, tagline: string, description: string, lang: Lang) {
-  const en = lang === "en" ? MODEL_COPY_EN[id] : undefined;
-  return en ?? { name, tagline, description };
+// Testi del modello in lingua: in inglese prima quelli salvati dalla console, poi quelli predefiniti, poi l'italiano.
+export function modelCopy(m: { id: string; name: string; tagline: string; description: string; en?: { name: string; tagline: string; description: string } }, lang: Lang) {
+  const base = { name: m.name, tagline: m.tagline, description: m.description };
+  if (lang !== "en") return base;
+  const saved = m.en && (m.en.name || m.en.tagline || m.en.description) ? m.en : undefined;
+  const fallback = MODEL_COPY_EN[m.id];
+  return {
+    name: saved?.name || fallback?.name || base.name,
+    tagline: saved?.tagline || fallback?.tagline || base.tagline,
+    description: saved?.description || fallback?.description || base.description,
+  };
 }
 
 export function addonCopy(key: string, label: string, description: string, lang: Lang) {

@@ -563,7 +563,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
             <div className="total">
               <span>{paidAlready ? (lang === "en" ? "New feature to buy" : "Funzione da acquistare") : L.total}</span>
               <strong>{formatPrice(paidAlready ? extra : total)}</strong>
-              <small>{model ? modelCopy(model.id, model.name, model.tagline, model.description, lang).name : ""}</small>
+              <small>{model ? modelCopy(model, lang).name : ""}</small>
             </div>
             <button type="button" className="btn solid" disabled={checkingOut} onClick={checkout}>
               {checkingOut ? L.paying : L.pay}

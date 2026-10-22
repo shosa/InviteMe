@@ -764,6 +764,7 @@ export async function buildApp() {
       options: (Array.isArray(m.options) ? m.options : []).filter((k: string) => keySet.has(k) && !(m.included ?? []).includes(k)),
       enabled: !!m.enabled,
       sort: Number.isFinite(Number(m.sort)) ? Number(m.sort) : i,
+      ...(m.en && typeof m.en === "object" ? { en: { name: text((m.en as Row).name, 80), tagline: text((m.en as Row).tagline, 120), description: text((m.en as Row).description, 400) } } : {}),
     }));
     // I temi sono file del repository: qui si decide solo quali sono attivi.
     const known = new Set(themes().map((t) => t.manifest.id));

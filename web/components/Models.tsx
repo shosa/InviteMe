@@ -152,7 +152,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
         <p className="lede">{H.modelsLede}</p>
         <div className="plan-options" role="radiogroup" aria-label={H.modelsHead}>
           {models.map((m) => {
-            const copy = modelCopy(m.id, m.name, m.tagline, m.description, lang);
+            const copy = modelCopy(m, lang);
             const on = m.id === modelId;
             return (
               <button key={m.id} type="button" role="radio" aria-checked={on} className={`plan-option${on ? " is-on" : ""}`} onClick={() => { setPicked(true); setModelId(m.id); }}>
@@ -166,8 +166,8 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
         </div>
         {model && (
           <details className="plan-details" open>
-            <summary>{en ? "What's included in" : "Cosa include"} {modelCopy(model.id, model.name, model.tagline, model.description, lang).name}</summary>
-            <p className="plan-desc">{modelCopy(model.id, model.name, model.tagline, model.description, lang).description}</p>
+            <summary>{en ? "What's included in" : "Cosa include"} {modelCopy(model, lang).name}</summary>
+            <p className="plan-desc">{modelCopy(model, lang).description}</p>
             <div className="plan-split">
               <div>
                 <h4 className="plan-sub">{T.included}</h4>
@@ -207,7 +207,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
           </div>
           <div className="order-bar-item">
             <span className="order-bar-label">{H.modelLabel}</span>
-            <strong>{modelCopy(model.id, model.name, model.tagline, model.description, lang).name}</strong>
+            <strong>{modelCopy(model, lang).name}</strong>
           </div>
           <div className="order-bar-item order-bar-price">
             <span className="order-bar-label">{H.totalLabel}</span>

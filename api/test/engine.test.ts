@@ -176,6 +176,18 @@ describe("video di sfondo per zona", () => {
   });
 });
 
+describe("scorrimento morbido", () => {
+  const loaded = loadThemes();
+  it("la pagina pubblica ha lo scorrimento morbido, il builder no", () => {
+    const theme = loaded.themes[0];
+    const live = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "x", features: new Set(ADDON_KEYS), runtime });
+    const builder = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "x", features: new Set(ADDON_KEYS), runtime, builder: true });
+    assert.match(live, /html\{scroll-behavior:smooth\}/);
+    assert.match(live, /prefers-reduced-motion:reduce\)\{html\{scroll-behavior:auto\}\}/);
+    assert.doesNotMatch(builder, /scroll-behavior:smooth/);
+  });
+});
+
 describe("stili non validi", () => {
   it("la fixture viene respinta con tutti i suoi problemi", () => {
     const r = loadTheme(path.join(here, "fixtures", "stile-rotto"));

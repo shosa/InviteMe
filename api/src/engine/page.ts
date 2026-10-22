@@ -169,7 +169,7 @@ export function renderInvitePage(input: PageInput): string {
 ${fonts ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n${fonts}` : ""}
 ${fontLink}
 <style>
-${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : ""}${m.backgroundVideo ? BGVIDEO_CSS : ""}
+${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : ""}${m.backgroundVideo ? BGVIDEO_CSS : ""}${input.builder ? "" : SCROLL_CSS}
 </style>
 </head>
 <body class="theme-${escapeHtml(m.id)}">
@@ -328,6 +328,10 @@ html:not([data-preview]) [data-anim]:not([data-rv="off"]):nth-child(even){animat
 @keyframes rv-slide{from{transform:translateX(-24px)}to{transform:none}}
 @keyframes rv-slide-r{from{transform:translateX(24px)}to{transform:none}}
 }}`;
+
+// Scorrimento morbido per tutti gli stili. Il builder non lo usa: il suo scorrimento è sincronizzato dal codice. «Riduci movimento» lo spegne.
+const SCROLL_CSS = `html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}`;
 
 // Video di sfondo per zona: la zona è il contenitore del suo blocco, il video sta dietro i suoi contenuti.
 // Con «riduci movimento» il video non parte e resta il colore dello stile.
