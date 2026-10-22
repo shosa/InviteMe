@@ -112,7 +112,8 @@
     "body": "assets/acquarello.mp4"
   },
   "envelope": {
-    "image": "assets/busta-poster.jpg"
+    "video": "assets/busta.mp4",
+    "poster": "assets/busta-poster.jpg"
   },
   "demoEn": {
     "hero": {

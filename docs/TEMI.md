@@ -56,7 +56,7 @@ Solo queste chiavi sono ammesse (qualunque altra è un errore): `engine`, `id`, 
 | `fonts` | no | solo URL `https://fonts.googleapis.com/css2?…` (non altri host) |
 | `background` | no | sfondo animato proposto: `{ "kind": …, "color": "#RRGGBB" }`. `kind` è uno di `confetti`, `bubbles`, `petals`, `sparkles`, `waves`, `snow`, `none`. `color` è facoltativo. Vedi «Sfondi animati» |
 | `demo` | no | per ogni tipo di blocco, i valori dell'esempio (vedi sotto) |
-| `envelope` | no | la busta a schermo intero, in una delle due forme: `{ "image": "assets/busta.jpg" }` (immagine ferma, al tocco sfuma nell'invito) oppure `{ "video": "assets/busta.mp4", "poster": "assets/busta-poster.jpg" }` (filmato; `poster` è il fotogramma fermo prima del tocco). Vedi «Busta-video» |
+| `envelope` | no | busta-video: `{ "video": "assets/busta.mp4", "poster": "assets/busta-poster.jpg" }`. Il filmato apre l'invito al posto della busta disegnata; `poster` è il fotogramma fermo mostrato prima del tocco. Vedi «Busta-video» |
 | `backgroundVideo` | no | video di sfondo per zona: `{ "hero": "assets/intestazione.mp4", "body": "assets/corpo.mp4" }`, ciascuno facoltativo. Vedi «Video di sfondo per zona» |
 | `demoEn` | no | esempi in inglese, per blocco: sostituiscono solo le proprietà indicate quando la demo è in inglese. Vedi «Esempi in inglese» |
 
@@ -210,8 +210,6 @@ Regole per lo stile:
 - Il movimento è decorativo: non deve mai contenere informazioni (date, nomi, indirizzi) né distrarre dal testo.
 
 ## Busta-video
-
-La busta a schermo intero può essere un'immagine ferma (`envelope.image`), che al tocco sfuma nell'invito: è la forma più semplice e leggera, e va bene per la maggior parte degli stili. Oppure un filmato (`envelope.video`), con il suo poster. Il resto di questa sezione riguarda il filmato.
 
 Uno stile può aprire l'invito con un filmato invece che con la busta disegnata. Basta dichiararlo nel manifest:
 

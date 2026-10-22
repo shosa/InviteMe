@@ -52,8 +52,7 @@ export type ThemeManifest = {
   // Sfondo animato proposto dallo stile (il cliente può cambiarlo o spegnerlo nel builder).
   background?: BackgroundSpec;
   // Busta-video: il filmato del tema apre l'invito al posto della busta disegnata. Il blocco Busta non ha proprietà.
-  // Busta: un filmato (con poster) oppure un'immagine a schermo intero; al tocco sfuma nell'invito.
-  envelope?: { video: string; poster?: string } | { image: string };
+  envelope?: { video: string; poster?: string };
   // Video di sfondo per zona: l'intestazione (hero) ha il suo, il resto del corpo un altro. Muti, in ciclo, scorrono con i blocchi.
   backgroundVideo?: { hero?: string; body?: string };
 };
@@ -110,16 +109,14 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
     } else backgroundVideo = { ...(hero ? { hero } : {}), ...(body ? { body } : {}) };
   }
   // Busta-video: il fotogramma iniziale (poster) è la busta ferma finché il filmato non parte.
-  let envelope: { video: string; poster?: string } | { image: string } | undefined;
+  let envelope: { video: string; poster?: string } | undefined;
   if (x.envelope !== undefined) {
     const env = isRecord(x.envelope) ? x.envelope : {};
-    const image = typeof env.image === "string" ? env.image : "";
     const video = typeof env.video === "string" ? env.video : "";
     const poster = typeof env.poster === "string" ? env.poster : undefined;
     const posterOk = poster === undefined || /^assets\/[A-Za-z0-9._-]+\.(jpg|jpeg|png|webp)$/.test(poster);
-    if (/^assets\/[A-Za-z0-9._-]+\.(jpg|jpeg|png|webp)$/.test(image) && !video) envelope = { image };
-    else if (/^assets\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(video) && posterOk && !image) envelope = { video, ...(poster ? { poster } : {}) };
-    else err("envelope: { image: \"assets/nome.jpg\" } oppure { video: \"assets/nome.mp4\", poster?: \"assets/nome.jpg\" } (una delle due)");
+    if (/^assets\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(video) && posterOk) envelope = { video, ...(poster ? { poster } : {}) };
+    else err("envelope: { video: \"assets/nome.mp4\", poster?: \"assets/nome.jpg\" } (filmato mp4 o webm del tema, senza audio; poster facoltativo)");
   }
 
   if (errors.length || !id || !name) return { manifest: null, errors };

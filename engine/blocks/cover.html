@@ -2,15 +2,14 @@
 <div data-cover role="button" tabindex="0" aria-label="{{t.openInviteAria}} {{title}}">
   {{#topText}}<p class="env-top">{{topText}}</p>{{/topText}}
   {{#coverVideo}}<video data-cover-video playsinline muted disablepictureinpicture disableremoteplayback preload="auto"{{#coverPoster}} poster="{{coverPoster}}"{{/coverPoster}} src="{{coverVideo}}" aria-label="{{t.coverVideoAria}}"></video>{{/coverVideo}}
-  {{#coverImage}}<img data-cover-image src="{{coverImage}}" alt="">{{/coverImage}}
-  {{^coverVideo}}{{^coverImage}}
+  {{^coverVideo}}
   <div class="env-card">
     <div class="env"{{#envelopeColor}} style="--env:{{envelopeColor}}"{{/envelopeColor}}>
       <div class="env-flap" aria-hidden="true"></div>
       <div class="env-seal"{{#sealColor}} style="--seal:{{sealColor}}"{{/sealColor}}><span>{{#sealText}}{{sealText}}{{/sealText}}{{^sealText}}{{monogram}}{{/sealText}}</span></div>
     </div>
   </div>
-  {{/coverImage}}{{/coverVideo}}
+  {{/coverVideo}}
   <div data-cover-tap>
     <div class="wei-chevron"></div>
     <div data-cover-label>{{t.tapToOpen}}</div>
