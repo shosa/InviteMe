@@ -159,7 +159,7 @@ export function renderInvitePage(input: PageInput): string {
 <html lang="${config.locale}" data-theme="${escapeHtml(m.id)}" data-assets="${base}"${input.preview ? " data-preview" : ""}>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <meta name="robots" content="noindex,nofollow">
 

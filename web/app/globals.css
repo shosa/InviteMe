@@ -1680,3 +1680,23 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-item.is-dragging { opacity: .45; }
 .bl-item.is-drop-before { box-shadow: inset 0 3px 0 var(--brass); }
 .bl-item.is-drop-after { box-shadow: inset 0 -3px 0 var(--brass); }
+
+/* Barra dell'ordine: su telefono si vede solo il totale e la freccia; aprendola compaiono stile, modello e Personalizza. */
+.order-bar-toggle { display: none; }
+@media (max-width: 720px) {
+  .order-bar { flex-wrap: wrap; gap: 10px 12px; padding: 10px 16px; }
+  .order-bar-price { order: 1; }
+  .order-bar-toggle { display: inline-grid; place-items: center; order: 2; margin-left: auto; width: 44px; height: 44px; min-height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--ink); transition: transform .25s ease; }
+  .order-bar-toggle svg { transition: transform .25s ease; }
+  .order-bar.is-open .order-bar-toggle svg { transform: rotate(180deg); }
+  .order-bar .order-bar-item:not(.order-bar-price) { display: none; }
+  .order-bar > .btn { display: none; }
+  .order-bar.is-open .order-bar-item:not(.order-bar-price) { display: grid; flex: 1 1 100%; order: 3; }
+  .order-bar.is-open .order-bar-item:nth-of-type(2) { order: 4; }
+  .order-bar.is-open > .btn { display: inline-flex; order: 5; flex: 1 1 100%; width: 100%; margin-left: 0; justify-content: center; }
+  .order-bar-price strong { font-size: 1.35rem; }
+}
+/* Campi di testo a 16 px su telefono: iOS non ingrandisce la pagina quando si scrive. */
+@media (max-width: 900px) {
+  input, select, textarea { font-size: 16px; }
+}

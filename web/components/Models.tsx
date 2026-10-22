@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BLOCKS, formatPrice, enabledThemes, themeCategories, type BlockDef, type Catalog, type ModelDef, type ThemeCategory } from "@inviteme/shared";
 import { CATEGORY_LIST, allLabel, categoryLabel } from "@/lib/categoryCopy";
-import { Check, Plus } from "lucide-react";
+import { Check, ChevronUp, Plus } from "lucide-react";
 import { BlockIcon } from "@/lib/blockIcons";
 import { TemplateCarousel } from "./TemplateCarousel";
 import { ui, type Lang } from "@/lib/ui";
@@ -45,6 +45,8 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   const [modelId, setModelId] = useState(models[0]?.id ?? "");
   // La barra del carrello compare solo dopo una scelta dell'utente (uno stile o un modello), non alla prima apertura.
   const [picked, setPicked] = useState(false);
+  // Su telefono la barra è chiusa: si vede solo il totale, e la freccia la apre verso l'alto.
+  const [barOpen, setBarOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const gallery = useRef<HTMLElement>(null);
@@ -55,8 +57,8 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
   const compatible = model ? enabledThemes(catalog, model.id).some((t) => t.id === themeId) : false;
   const en = lang === "en";
   const T = en
-    ? { included: "Included in the price", optional: "Add when you need it", blocks: "What goes in your invitation", blocksText: "Every block you can place on the page. Included blocks are ready; the others unlock with the feature.", base: "Included", add: "Add", unavailable: "Not with this model", popular: "Most chosen", inc: "Included", ask: "Choose this model", chosen: "Chosen", perks: "Pay once, no subscription", free: "Free" }
-    : { included: "Incluso nel prezzo", optional: "Aggiungibile quando serve", blocks: "Cosa va nel vostro invito", blocksText: "Tutti i blocchi che puoi mettere nella pagina. Quelli inclusi sono pronti; gli altri si sbloccano con la funzione.", base: "Incluso", add: "Aggiungi", unavailable: "Non con questo modello", popular: "Il più scelto", inc: "Incluso", ask: "Scegli questo modello", chosen: "Modello scelto", perks: "Si paga una volta, senza abbonamenti", free: "Gratis" };
+    ? { included: "Included in the price", optional: "Add when you need it", blocks: "What goes in your invitation", blocksText: "Every block you can place on the page. Included blocks are ready; the others unlock with the feature.", base: "Included", add: "Add", unavailable: "Not with this model", popular: "Most chosen", inc: "Included", ask: "Choose this model", chosen: "Chosen", perks: "Pay once, no subscription", free: "Free", showDetails: "Show details", hideDetails: "Hide details" }
+    : { included: "Incluso nel prezzo", optional: "Aggiungibile quando serve", blocks: "Cosa va nel vostro invito", blocksText: "Tutti i blocchi che puoi mettere nella pagina. Quelli inclusi sono pronti; gli altri si sbloccano con la funzione.", base: "Incluso", add: "Aggiungi", unavailable: "Non con questo modello", popular: "Il più scelto", inc: "Incluso", ask: "Scegli questo modello", chosen: "Modello scelto", perks: "Si paga una volta, senza abbonamenti", free: "Gratis", showDetails: "Mostra dettagli", hideDetails: "Nascondi dettagli" };
 
   // Stato di un blocco per il modello: sempre incluso, aggiungibile con una funzione, o non disponibile.
   function blockState(b: BlockDef, m: ModelDef | undefined): "base" | "included" | "option" | "na" {
@@ -200,7 +202,7 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
       {error && <p role="alert" className="form-error models-error">{error}</p>}
 
       {model && picked && (
-        <div className="order-bar" role="region" aria-label={H.orderBarLabel}>
+        <div className={`order-bar${barOpen ? " is-open" : ""}`} role="region" aria-label={H.orderBarLabel}>
           <div className="order-bar-item">
             <span className="order-bar-label">{H.styleLabel}</span>
             <strong>{styleName}</strong>
@@ -213,6 +215,15 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
             <span className="order-bar-label">{H.totalLabel}</span>
             <strong>{formatPrice(model.priceCents)}</strong>
           </div>
+          <button
+            type="button"
+            className="order-bar-toggle"
+            aria-expanded={barOpen}
+            aria-label={barOpen ? T.hideDetails : T.showDetails}
+            onClick={() => setBarOpen((o) => !o)}
+          >
+            <ChevronUp size={18} aria-hidden="true" />
+          </button>
 
           <button type="button" className="btn solid lg" disabled={busy || !compatible} onClick={order}>
             {busy ? L.preparing : H.customize}
