@@ -169,7 +169,7 @@ export function renderInvitePage(input: PageInput): string {
 ${fonts ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n${fonts}` : ""}
 ${fontLink}
 <style>
-${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : ""}${m.backgroundVideo ? BGVIDEO_CSS : ""}${input.builder ? "" : SCROLL_CSS}
+${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : DRAWN_ENVELOPE_CSS}${m.backgroundVideo ? BGVIDEO_CSS : ""}${input.builder ? "" : SCROLL_CSS}
 </style>
 </head>
 <body class="theme-${escapeHtml(m.id)}">
@@ -332,6 +332,13 @@ html:not([data-preview]) [data-anim]:not([data-rv="off"]):nth-child(even){animat
 // Scorrimento morbido per tutti gli stili. Il builder non lo usa: il suo scorrimento è sincronizzato dal codice. «Riduci movimento» lo spegne.
 const SCROLL_CSS = `html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}`;
+
+// Busta disegnata a schermo intero: la busta esce dai bordi dello schermo e si vedono solo i lembi a V, come la busta-filmato.
+// Il lembo si apre al tocco e l'invito sfuma (vedi runtime). Vale per gli stili senza busta-filmato.
+const DRAWN_ENVELOPE_CSS = `[data-cover] .env-card{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;max-width:none;overflow:hidden;perspective:none}
+[data-cover] .env{position:absolute;left:-40vw;right:-40vw;top:-18vh;bottom:-18vh;height:auto;border-radius:0;box-shadow:none}
+[data-cover] .env-flap{inset:0}
+[data-cover] .env-seal{top:56%;width:min(38vw,150px);height:min(38vw,150px)}`;
 
 // Video di sfondo per zona: la zona è il contenitore del suo blocco, il video sta dietro i suoi contenuti.
 // Con «riduci movimento» il video non parte e resta il colore dello stile.
