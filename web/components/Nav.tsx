@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogOut, ShieldCheck, Ticket } from "lucide-react";
 import { Logo } from "./Logo";
 import { ui, type Lang } from "@/lib/ui";
+import { LangSelect } from "@/components/LangSelect";
 
 type Me = { id: string; name: string; email: string; role: "user" | "admin" } | null;
 
@@ -50,7 +51,7 @@ export function Nav({ current, lang = "it" }: { current?: "home" | "account" | "
               <a href="/accedi?tab=register" className="btn solid small">{t.register}</a>
             </>
           )}
-          <a className="lang-switch" href={`/lingua/${lang === "it" ? "en" : "it"}`} aria-label={`${t.langLabel}: ${lang === "it" ? "English" : "Italiano"}`}>{lang === "it" ? "EN" : "IT"}</a>
+          <LangSelect lang={lang} />
         </div>
       </div>
     </header>

@@ -61,10 +61,11 @@ export function loadTheme(dir: string): ThemeLoad {
     if (!fs.existsSync(path.join(dir, ref[0]))) errors.push(`${name}: asset mancante ${ref[0]}`);
   }
   if (manifest?.envelope && !fs.existsSync(path.join(dir, manifest.envelope.video))) errors.push(`${name}: busta-video mancante (${manifest.envelope.video})`);
+  if (manifest?.envelope?.poster && !fs.existsSync(path.join(dir, manifest.envelope.poster))) errors.push(`${name}: poster della busta mancante (${manifest.envelope.poster})`);
   for (const file of Object.values(manifest?.backgroundVideo ?? {})) {
     if (!fs.existsSync(path.join(dir, file))) errors.push(`${name}: video di sfondo mancante (${file})`);
   }
-  for (const [block, props] of Object.entries(manifest?.demo ?? {})) {
+  for (const [block, props] of Object.entries({ ...(manifest?.demo ?? {}), ...(manifest?.demoEn ?? {}) })) {
     for (const v of Object.values(props)) {
       for (const f of Array.isArray(v) ? v : [v]) {
         if (typeof f === "string" && f.startsWith("assets/") && !fs.existsSync(path.join(dir, f))) errors.push(`${name}: demo.${block} usa un file mancante (${f})`);
@@ -145,6 +146,12 @@ function checkCss(css: string, name: string, errors: string[]) {
 
 // Config di esempio per la demo e le anteprime: tutti i blocchi, tutte le funzioni, i file dello stile come esempio.
 // Vetrina: ogni caricamento genera contenuti nuovi (nomi, date, luoghi, programma) nella lingua richiesta.
+// Le proprietà di testo ed elenco di un blocco (titoli, etichette, programma, colori con nome): tolte dalla demo in inglese.
+function withoutTexts(def: { fields: { key: string; type: string }[] }, props: Record<string, unknown>): Record<string, unknown> {
+  const textual = new Set(def.fields.filter((f) => f.type === "text" || f.type === "longtext" || f.type === "list").map((f) => f.key));
+  return Object.fromEntries(Object.entries(props).filter(([k]) => !textual.has(k)));
+}
+
 export function sampleConfig(manifest: ThemeManifest, lang: "it" | "en" = "it", rnd: () => number = Math.random): InviteConfig {
   const sample = sampleSample(manifest.id, lang, rnd);
   const config = defaultConfig(manifest, "invitation-rsvp", sample.eventType === "anniversary" ? "wedding" : sample.eventType, new Set(ADDON_KEYS));
@@ -163,7 +170,8 @@ export function sampleConfig(manifest: ThemeManifest, lang: "it" | "en" = "it", 
       type,
       hidden: false,
       // I valori dello stile (immagini, filmati) restano quelli del template; i testi cambiano a ogni caricamento.
-      props: { ...JSON.parse(JSON.stringify(lang === "en" ? (def.defaultsEn ?? def.defaults) : def.defaults)), ...(manifest.demo[type] ?? {}), ...generated },
+      // In inglese i testi scritti in italiano dallo stile non si usano: vale demoEn, altrimenti i dati generati e le etichette di default.
+      props: { ...JSON.parse(JSON.stringify(lang === "en" ? (def.defaultsEn ?? def.defaults) : def.defaults)), ...(lang === "en" ? withoutTexts(def, manifest.demo[type] ?? {}) : (manifest.demo[type] ?? {})), ...(lang === "en" ? (manifest.demoEn?.[type] ?? {}) : {}), ...generated },
     };
   });
   return config;

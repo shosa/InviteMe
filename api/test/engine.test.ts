@@ -125,6 +125,35 @@ describe("video di sfondo per zona", () => {
     }
   });
 
+  it("la busta mostra il suo fotogramma fermo prima del filmato; i video del template non partono da soli", () => {
+    const html = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "x", features: new Set(ADDON_KEYS), runtime });
+    assert.match(html, /<video data-cover-video[^>]*poster="\/api\/themes\/acquarello-blu\/assets\/busta-poster\.jpg"/);
+    assert.doesNotMatch(html, /data-zone-video="[a-z]+"[^>]*autoplay/);
+  });
+
+  it("con lingua inglese la demo usa i testi di demoEn, in italiano restano quelli di demo", () => {
+    const en = sampleConfig(theme.manifest, "en").blocks.find((b) => b.type === "hero")!;
+    const it = sampleConfig(theme.manifest, "it").blocks.find((b) => b.type === "hero")!;
+    assert.equal(en.props.occasion, "We're getting married");
+    assert.equal(it.props.occasion, "Ci sposiamo");
+  });
+
+  it("in inglese uno stile senza demoEn non mostra i testi italiani della sua demo", () => {
+    const other = loaded.themes.find((t) => t.manifest.id === "minimo")!;
+    const italian = other.manifest.demo.message?.heading;
+    assert.equal(typeof italian, "string");
+    const en = sampleConfig(other.manifest, "en").blocks.find((b) => b.type === "message")!;
+    assert.notEqual(en.props.heading, italian);
+  });
+
+  it("la demo ha sempre una didascalia e un testo di trasferimento, in entrambe le lingue", () => {
+    for (const lang of ["it", "en"] as const) {
+      const cfg = sampleConfig(theme.manifest, lang);
+      assert.ok(cfg.blocks.find((b) => b.type === "image")!.props.caption);
+      assert.ok(cfg.blocks.find((b) => b.type === "transfer")!.props.body);
+    }
+  });
+
   it("la busta del tema è il filmato dedicato", () => {
     const html = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "x", features: new Set(ADDON_KEYS), runtime });
     assert.match(html, /<video data-cover-video[^>]*src="\/api\/themes\/acquarello-blu\/assets\/busta\.mp4"/);

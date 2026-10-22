@@ -47,10 +47,12 @@ export type ThemeManifest = {
   fonts: string[]; // fogli di stile di Google Fonts, soli URL https://fonts.googleapis.com/
   // Esempi per la demo e per le anteprime: per blocco, valori delle proprietà con percorsi "assets/…" del tema.
   demo: Record<string, Record<string, unknown>>;
+  // Versione inglese degli esempi: per blocco, solo le proprietà da sostituire quando la demo è in inglese. Il resto viene da demo.
+  demoEn?: Record<string, Record<string, unknown>>;
   // Sfondo animato proposto dallo stile (il cliente può cambiarlo o spegnerlo nel builder).
   background?: BackgroundSpec;
   // Busta-video: il filmato del tema apre l'invito al posto della busta disegnata. Il blocco Busta non ha proprietà.
-  envelope?: { video: string };
+  envelope?: { video: string; poster?: string };
   // Video di sfondo per zona: l'intestazione (hero) ha il suo, il resto del corpo un altro. Muti, in ciclo, scorrono con i blocchi.
   backgroundVideo?: { hero?: string; body?: string };
 };
@@ -71,7 +73,7 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
   if (!isRecord(input)) return { manifest: null, errors: [`${dir}: theme.json deve essere un oggetto`] };
   const x = input;
 
-  const allowed = ["engine", "id", "name", "description", "models", "themeColor", "fonts", "demo", "background", "envelope", "backgroundVideo"];
+  const allowed = ["engine", "id", "name", "description", "models", "themeColor", "fonts", "demo", "background", "envelope", "backgroundVideo", "demoEn"];
   for (const k of Object.keys(x)) if (!allowed.includes(k)) err(`campo sconosciuto "${k}"`);
   if (x.engine !== ENGINE_VERSION) err(`engine deve essere ${ENGINE_VERSION}`);
 
@@ -89,6 +91,7 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
     return false;
   });
   const demo = validateDemo(x.demo, err);
+  const demoEn = x.demoEn === undefined ? undefined : validateDemo(x.demoEn, err);
   let background: BackgroundSpec | undefined;
   if (x.background !== undefined) {
     background = sanitizeBackground(x.background);
@@ -105,11 +108,15 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
       err("backgroundVideo: { hero?: \"assets/nome.mp4\", body?: \"assets/nome.mp4\" } (almeno uno; mp4 o webm, senza audio)");
     } else backgroundVideo = { ...(hero ? { hero } : {}), ...(body ? { body } : {}) };
   }
-  let envelope: { video: string } | undefined;
+  // Busta-video: il fotogramma iniziale (poster) è la busta ferma finché il filmato non parte.
+  let envelope: { video: string; poster?: string } | undefined;
   if (x.envelope !== undefined) {
-    const video = isRecord(x.envelope) && typeof x.envelope.video === "string" ? x.envelope.video : "";
-    if (/^assets\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(video)) envelope = { video };
-    else err("envelope: { video: \"assets/nome.mp4\" } (filmato mp4 o webm del tema, senza audio)");
+    const env = isRecord(x.envelope) ? x.envelope : {};
+    const video = typeof env.video === "string" ? env.video : "";
+    const poster = typeof env.poster === "string" ? env.poster : undefined;
+    const posterOk = poster === undefined || /^assets\/[A-Za-z0-9._-]+\.(jpg|jpeg|png|webp)$/.test(poster);
+    if (/^assets\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(video) && posterOk) envelope = { video, ...(poster ? { poster } : {}) };
+    else err("envelope: { video: \"assets/nome.mp4\", poster?: \"assets/nome.jpg\" } (filmato mp4 o webm del tema, senza audio; poster facoltativo)");
   }
 
   if (errors.length || !id || !name) return { manifest: null, errors };
@@ -123,6 +130,7 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
       themeColor,
       fonts,
       demo,
+      ...(demoEn ? { demoEn } : {}),
       ...(background ? { background } : {}),
       ...(envelope ? { envelope } : {}),
       ...(backgroundVideo ? { backgroundVideo } : {}),

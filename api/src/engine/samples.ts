@@ -85,6 +85,9 @@ export function sampleProps(type: BlockType, s: Sample, lang: Lang): Record<stri
     case "venue": return { heading: lang === "en" ? "Where" : "Dove" };
     case "dresscode": return { heading: lang === "en" ? "Dress code" : "Abbigliamento", dress: s.dress };
     case "footer": return { signature: s.signature };
+    // Didascalia e testo del trasferimento: senza questi valori restano vuoti nella demo.
+    case "image": return { caption: lang === "en" ? "A moment from our day." : "Un momento del nostro giorno." };
+    case "transfer": return { body: lang === "en" ? "Follow the signs for the venue. Parking is available on site." : "Seguite le indicazioni per il luogo. C'è parcheggio in loco." };
     default: return null;
   }
 }

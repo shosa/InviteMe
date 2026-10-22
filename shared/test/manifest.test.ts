@@ -37,6 +37,15 @@ describe("busta-video", () => {
   });
 });
 
+describe("esempi in inglese", () => {
+  it("accetta demoEn per blocco e rifiuta percorsi esterni", () => {
+    const r = validateManifest({ ...base, demoEn: { hero: { occasion: "Wedding" } } });
+    assert.deepEqual(r.errors, []);
+    assert.deepEqual(r.manifest?.demoEn, { hero: { occasion: "Wedding" } });
+    assert.ok(validateManifest({ ...base, demoEn: { hero: { couplePhoto: "https://x.test/a.jpg" } } }).errors.length > 0);
+  });
+});
+
 describe("video di sfondo per zona", () => {
   it("accetta un video per intestazione e uno per il corpo", () => {
     const r = validateManifest({ ...base, backgroundVideo: { hero: "assets/a.mp4", body: "assets/b.webm" } });

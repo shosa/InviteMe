@@ -43,7 +43,7 @@ themes/<id>/
 }
 ```
 
-Solo queste chiavi sono ammesse (qualunque altra è un errore): `engine`, `id`, `name`, `description`, `models`, `themeColor`, `fonts`, `demo`, `background`, `envelope`.
+Solo queste chiavi sono ammesse (qualunque altra è un errore): `engine`, `id`, `name`, `description`, `models`, `themeColor`, `fonts`, `demo`, `demoEn`, `background`, `envelope`, `backgroundVideo`.
 
 | Chiave | Obbligatoria | Regola |
 |---|---|---|
@@ -56,11 +56,37 @@ Solo queste chiavi sono ammesse (qualunque altra è un errore): `engine`, `id`, 
 | `fonts` | no | solo URL `https://fonts.googleapis.com/css2?…` (non altri host) |
 | `background` | no | sfondo animato proposto: `{ "kind": …, "color": "#RRGGBB" }`. `kind` è uno di `confetti`, `bubbles`, `petals`, `sparkles`, `waves`, `snow`, `none`. `color` è facoltativo. Vedi «Sfondi animati» |
 | `demo` | no | per ogni tipo di blocco, i valori dell'esempio (vedi sotto) |
-| `envelope` | no | busta-video: `{ "video": "assets/apertura.mp4" }`. Il filmato apre l'invito al posto della busta disegnata. Vedi «Busta-video» |
+| `envelope` | no | busta-video: `{ "video": "assets/busta.mp4", "poster": "assets/busta-poster.jpg" }`. Il filmato apre l'invito al posto della busta disegnata; `poster` è il fotogramma fermo mostrato prima del tocco. Vedi «Busta-video» |
+| `backgroundVideo` | no | video di sfondo per zona: `{ "hero": "assets/intestazione.mp4", "body": "assets/corpo.mp4" }`, ciascuno facoltativo. Vedi «Video di sfondo per zona» |
+| `demoEn` | no | esempi in inglese, per blocco: sostituiscono solo le proprietà indicate quando la demo è in inglese. Vedi «Esempi in inglese» |
 
 ### Esempi (`demo`)
 
 Per ogni tipo di blocco puoi indicare i valori dell'esempio. Le chiavi devono essere proprietà reali di quel blocco (tabella sotto). I file sono solo percorsi `assets/nome.file`, e devono esistere. Non sono ammessi URL esterni, né `/`, né `\` nei percorsi. Per la chiave `event` sono ammessi solo `title`, `hosts`, `eventDate`, `eventTime`, `venue`, `address`. Se un blocco non ha esempi, la demo usa i suoi valori di partenza.
+
+### Esempi in inglese (`demoEn`)
+
+La demo cambia lingua con il selettore del sito (`?lang=it` o `?lang=en`). I nomi, i luoghi, le date, le frasi del messaggio, il programma e il dress code arrivano dal generatore (`api/src/engine/samples.ts`), che ha entrambe le lingue: non serve scriverli.
+
+Le etichette e i titoli scritti dallo stile («Dettagli del nostro giorno», «Ci sposiamo», «Dress code»…) stanno in `demo` e sono in italiano. In inglese il motore **non li usa**: per ogni blocco prende, nell'ordine,
+1. la versione inglese scritta dallo stile in `demoEn`, se c'è;
+2. altrimenti le etichette di default in inglese del blocco (`defaultsEn` in `shared/src/blocks.ts`).
+
+Le foto, i video e le altre proprietà non testuali restano quelli di `demo` in ogni lingua. I testi generati (nomi, luoghi, frasi, programma, dress code) vengono dal generatore in entrambe le lingue.
+
+Quando conviene scrivere `demoEn`: per avere frasi proprie dello stile in inglese, come nell'acquarello. Esempio:
+
+```json
+"demoEn": {
+  "hero": { "occasion": "We're getting married" },
+  "gallery": { "heading": "Details of our day" }
+}
+```
+
+Regole:
+- valgono le stesse regole di `demo` (proprietà reali del blocco, `assets/…` per i file, niente URL esterni);
+- `demoEn` vale solo per le proprietà indicate: le altre restano quelle del punto 2;
+- non serve copiare tutto: basta ciò che lo stile vuole dire in modo diverso dall'inglese di default.
 
 ## I blocchi
 
@@ -195,6 +221,8 @@ Effetti:
 - Con «riduci movimento» il filmato è saltato e l'invito compare subito. Se il filmato non parte o si blocca, l'invito si apre lo stesso.
 - Il file deve esistere in `assets/`, con estensione `.mp4` o `.webm`; il validatore lo controlla.
 
+Il **poster** (`envelope.poster`) è il primo fotogramma del filmato in un'immagine JPG o PNG, mostrato fermo prima del tocco. Senza poster su alcuni dispositivi la busta non compare finché il filmato non parte. Estrailo così: `ffmpeg -i assets/busta.mp4 -frames:v 1 -q:v 3 assets/busta-poster.jpg`.
+
 ### Come fare il filmato
 
 Il filmato è la busta che si apre. Regole:
@@ -217,6 +245,24 @@ ffmpeg -i sorgente.mov -an -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p \
 
 Controllo: `ffprobe -v error -show_entries format=duration:stream=codec_name,width,height -of default=nw=1 assets/apertura.mp4` (deve dare `h264`, 1080×1920, durata sotto i 90 s).
 
+## Video di sfondo per zona
+
+Lo stile può mettere un video dietro l'intestazione e uno dietro il resto dell'invito. Il manifest:
+
+```json
+"backgroundVideo": { "hero": "assets/intestazione.mp4", "body": "assets/corpo.mp4" }
+```
+
+Ciascuno dei due è facoltativo. Come funziona:
+- **Intestazione (`hero`)**: il video sta dentro il blocco e scorre via con lui. Il blocco deve avere lo sfondo trasparente.
+- **Corpo (`body`)**: il video è fisso dietro tutti i blocchi successivi, sotto l'intestazione. Scorrendo, l'intestazione sale sopra di lui. Le sezioni devono essere trasparenti o semitrasparenti, altrimenti il video non si vede.
+- Entrambi partono in **loop**, muti, senza controlli, con `playsinline`. Non metterli con l'audio.
+- **Fermi finché la busta non si apre**: il runtime li tiene sul primo fotogramma e li fa partire dopo il tocco, quando l'invito compare.
+- Con «riduci movimento» i video non partono (`display:none`) e resta il colore dello stile.
+- Formato: MP4 H.264 senza audio (o WebM), verticale 9:16 come la busta, poco più di 2 MB ciascuno se possibile, con `+faststart`. Il primo fotogramma deve essere già bello da vedere, perché è quello che resta fermo. Il file deve esistere in `assets/`: il validatore lo controlla.
+
+Lo stile fa solo il CSS: il motore mette i contenitori e i video. Per l'intestazione con video, il blocco va reso solo testo sopra il video (le forme decorative, se ci sono, vanno nascoste con `display:none`).
+
 ## Sostituzioni di blocco (`blocks/`)
 
 Quando uno stile vuole un markup diverso per un blocco, mette `themes/<id>/blocks/<tipo>.html`. Il file sostituisce il template di default **solo per quel tipo**. Regole:
@@ -232,7 +278,7 @@ Per la maggior parte degli stili non serve: basta il CSS. Usa una sostituzione q
 - Ornamenti, cornici e fregi: SVG preferibili, o PNG con sfondo trasparente.
 - Foto e illustrazioni dello stile (solo se non sono di persone reali): JPEG, lato lungo massimo 2000 px, meno di 400 KB ciascuna.
 - Audio o video dello stile: solo con diritti chiari. Di default lo stile non include musica: la sceglie il cliente.
-- Per i video: H.264 senza audio, massimo 90 secondi. La busta-video segue le regole della sezione «Busta-video».
+- Per i video: H.264 senza audio, massimo 90 secondi. La busta-video segue le regole della sezione «Busta-video», i video di sfondo quelle di «Video di sfondo per zona».
 - Nei template e nel CSS i percorsi sono `assets/nome.file`: il motore li porta sul percorso pubblico dello stile.
 
 ## Validazione
@@ -263,6 +309,9 @@ Il validatore controlla, in ordine: il manifest (chiavi ammesse, tipi, `themeCol
 - [ ] nessun dato di persone in asset, esempi o nomi di file
 - [ ] tutte le classi dei blocchi sono stilizzate, anche la versione mobile
 - [ ] la busta funziona con e senza filmato; con busta-video il filmato finisce su carta chiara e sfuma nell'invito
+- [ ] con busta-video: il poster (`envelope.poster`) è il primo fotogramma, la busta è ferma prima del tocco
+- [ ] con video di sfondo: l'intestazione è solo testo, i video sono in loop e fermi finché la busta non si apre
+- [ ] la demo in inglese (`?lang=en`) non mostra etichette italiane: i testi di `demo` non si usano in inglese, controlla le etichette di default e, se servono frasi proprie, `demoEn`
 - [ ] con busta-video: il blocco Busta non mostra campi nel builder
 - [ ] il popup RSVP si apre, valida i campi obbligatori e si chiude con Esc
 - [ ] il Dress code mostra i pallini e i nomi dei colori
@@ -276,8 +325,8 @@ Il validatore controlla, in ordine: il manifest (chiavi ammesse, tipi, `themeCol
 
 Per uno stile semplice:
 
-> Crea uno stile per InviteMe in `themes/<id>/` seguendo `docs/TEMI.md` e `docs/MOTORE.md`. Parti da `themes/invitereference`. Lo stile è [descrizione: colori, atmosfera, font]. Sfondo animato proposto: [tipo e colore, o nessuno]. Asset: [elenco, senza dati di persone]. Esempi per blocco: [elenco]. Copri tutte le classi dei blocchi, anche il mobile. Valida con `npm run validate-theme -w @inviteme/api -- themes/<id>` e non consegnare finché non passa. Riporta i problemi trovati e come li hai risolti.
+> Crea uno stile per InviteMe in `themes/<id>/` seguendo `docs/TEMI.md` e `docs/MOTORE.md`. Parti da `themes/invitereference`. Lo stile è [descrizione: colori, atmosfera, font]. Sfondo animato proposto: [tipo e colore, o nessuno]. Asset: [elenco, senza dati di persone]. Esempi per blocco: [elenco]. Esempi in inglese (`demoEn`, facoltativo: solo le frasi proprie dello stile). Copri tutte le classi dei blocchi, anche il mobile. Valida con `npm run validate-theme -w @inviteme/api -- themes/<id>` e non consegnare finché non passa. Riporta i problemi trovati e come li hai risolti.
 
 Per uno stile complesso e animato:
 
-> Crea uno stile per InviteMe in `themes/<id>/` seguendo `docs/TEMI.md` e `docs/MOTORE.md`, in particolare la sezione «Sfondi animati» e il contratto delle classi. Atmosfera: [descrizione]. Obiettivi: (1) tutti i blocchi con una loro identità visiva, non un'unica griglia; (2) animazioni CSS decorative di ingresso con `data-anim` e `--d` per ritardi, senza alterare il testo; (3) sfondo animato `[tipo]` con colore `[#RRGGBB]`, con i pannelli semitrasparenti dove serve; (4) layout mobile first a 390 px senza scorrimento orizzontale, e movimento ridotto rispettato. Vincoli: nessun codice nuovo, nessun `<script>`, nessun gestore inline, nessun dato di persone. Non inventare classi o attributi del runtime che non sono in `docs/TEMI.md`. Valida con `npm run validate-theme -w @inviteme/api -- themes/<id>` e correggi finché non passa; poi elenca cosa hai fatto per ogni punto e le scelte che hai dovuto prendere.
+> Crea uno stile per InviteMe in `themes/<id>/` seguendo `docs/TEMI.md` e `docs/MOTORE.md`, in particolare la sezione «Sfondi animati» e il contratto delle classi. Atmosfera: [descrizione]. Obiettivi: (1) tutti i blocchi con una loro identità visiva, non un'unica griglia; (2) animazioni CSS decorative di ingresso con `data-anim` e `--d` per ritardi, senza alterare il testo; (3) sfondo animato `[tipo]` con colore `[#RRGGBB]`, con i pannelli semitrasparenti dove serve; (4) layout mobile first a 390 px senza scorrimento orizzontale, e movimento ridotto rispettato. Vincoli: nessun codice nuovo, nessun `<script>`, nessun gestore inline, nessun dato di persone. Se lo stile ha video di sfondo, l'intestazione resta solo testo e i video sono in loop (vedi «Video di sfondo per zona»). Non inventare classi o attributi del runtime che non sono in `docs/TEMI.md`. Valida con `npm run validate-theme -w @inviteme/api -- themes/<id>` e correggi finché non passa; poi elenca cosa hai fatto per ogni punto e le scelte che hai dovuto prendere.

@@ -139,7 +139,7 @@ Foto, video e audio caricati dal cliente passano da ffmpeg (`api/src/media.ts`):
 ## Anteprima e demo
 
 - **Anteprima del builder**: `POST /api/invitations/:id/preview` con la configurazione in corso. Mostra la busta come la vede l'ospite. Il builder aggiorna da solo i blocchi che cambiano (per singolo blocco, senza ricaricare la pagina); la busta, la musica, la struttura e lo sfondo ricaricano tutta la pagina.
-- **Demo degli stili**: `GET /api/themes/:id/demo`, con tutti i blocchi e gli esempi dello stile. Nessuna busta (`preview: true`), così le schede dei modelli si vedono subito. Gli esempi sono generati da `api/src/engine/samples.ts`.
+- **Demo degli stili**: `GET /api/themes/:id/demo?lang=it|en`, con tutti i blocchi e gli esempi dello stile. La lingua sceglie i dati generati (nomi, luoghi, frasi) e la versione `demoEn` dello stile. Il selettore della lingua del sito (bandiere, `web/components/LangSelect.tsx`) cambia la lingua delle schede. Nessuna busta (`preview: true`), così le schede dei modelli si vedono subito. Gli esempi sono generati da `api/src/engine/samples.ts`.
 
 ## Verifica
 

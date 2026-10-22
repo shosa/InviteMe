@@ -887,9 +887,16 @@ td a { color: var(--ink); }
 @media (max-width: 900px) { .planner-grid { grid-template-columns: 1fr; } .planner { padding: 24px 0 60px; } }
 
 /* Selettore di lingua nella barra */
-.lang-switch { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; height: 34px; padding: 0 10px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 13px; letter-spacing: .06em; }
-.lang-switch:hover { border-color: var(--ink); }
-.lang-switch:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+/* Selettore della lingua: bandiera, nome e un elenco con le bandiere */
+.lang-select { position: relative; }
+.lang-select-btn { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px 0 8px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); font-size: 13px; letter-spacing: .06em; cursor: pointer; box-shadow: 0 1px 2px rgba(20, 30, 40, .06); }
+.lang-select-btn:hover { border-color: var(--ink); }
+.lang-select-btn:focus-visible, .lang-select-opt:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.lang-flag { width: 1.35em; height: 1em; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, .12); }
+.lang-select-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 50; min-width: 168px; margin: 0; padding: 6px; list-style: none; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 30px rgba(20, 30, 40, .14); }
+.lang-select-opt { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; color: var(--ink); font-size: 14px; cursor: pointer; }
+.lang-select-opt:hover { background: rgba(20, 30, 40, .05); }
+.lang-select-opt[aria-selected="true"] { font-weight: 600; }
 
 /* Pagine legali in bozza */
 .legal { padding: 40px 0 80px; max-width: 760px; }

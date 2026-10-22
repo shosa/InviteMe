@@ -70,8 +70,17 @@
     var VOLUME = 0.85;
     var done = false, closed = false, audioUnlocked = false, userPaused = false, musicaPartita = false;
 
+    // I video del corpo e dell'intestazione restano fermi sul primo fotogramma finché la busta non si apre.
+    var zones = Array.prototype.slice.call(document.querySelectorAll('[data-zone-video]'));
+    function playZones() {
+      zones.forEach(function (z) {
+        try { var p = z.play(); if (p && p.catch) p.catch(function () {}); } catch (e) { /* ignorato */ }
+      });
+    }
+
     if (!overlay) {
       // nessuna busta: l'invito è subito visibile; la musica resta al pulsante
+      playZones();
       startObserving();
       return;
     }
@@ -160,6 +169,7 @@
 
     function revealPage() {
       document.body.classList.remove('is-locked');
+      playZones();
       window.scrollTo(0, 0);
       if (toggle) { toggle.style.visibility = 'visible'; toggle.style.opacity = '1'; }
       startMusic();

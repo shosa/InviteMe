@@ -67,7 +67,7 @@ export function renderInvitePage(input: PageInput): string {
   const usedFonts = new Set<FontId>();
   // Video di sfondo per zona: intestazione e corpo hanno ciascuno il proprio filmato, muto e in ciclo.
   const zoneVideo = (file: string, zone: string) =>
-    `<video class="zone-video" data-zone-video="${zone}" autoplay muted loop playsinline disablepictureinpicture preload="auto" src="${base}/${escapeHtml(file.replace(/^assets\//, ""))}" aria-hidden="true" tabindex="-1"></video>`;
+    `<video class="zone-video" data-zone-video="${zone}" muted loop playsinline disablepictureinpicture preload="auto" src="${base}/${escapeHtml(file.replace(/^assets\//, ""))}" aria-hidden="true" tabindex="-1"></video>`;
   // Video del corpo: fisso dietro tutto il contenuto, così i blocchi scorrono sopra di lui.
   const bodyVideo = m.backgroundVideo?.body ? zoneVideo(m.backgroundVideo.body, "body").replace('class="zone-video"', 'class="zone-video zone-fixed"') + "\n" : "";
   let main = "";
@@ -87,7 +87,7 @@ export function renderInvitePage(input: PageInput): string {
   for (const instance of config.blocks) {
     if (instance.hidden || !blockDef(instance.type)) continue;
     // Busta-video del tema: il filmato è dello stile, il blocco Busta non ha proprietà modificabili.
-    const block = instance.type === "cover" && m.envelope ? { ...instance, props: { coverVideo: m.envelope.video } } : instance;
+    const block = instance.type === "cover" && m.envelope ? { ...instance, props: { coverVideo: m.envelope.video, ...(m.envelope.poster ? { coverPoster: m.envelope.poster } : {}) } } : instance;
     const template = partials.get(block.type as BlockType);
     if (!template) continue;
     // Un campo vuoto non cancella il valore dell'evento quando la proprietà esiste anche tra i dati dell'evento (nomi, riga sotto i nomi).
