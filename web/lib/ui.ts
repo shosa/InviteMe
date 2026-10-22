@@ -4,6 +4,8 @@ export type Lang = "it" | "en";
 export const UI = {
   it: {
     modelli: "Modelli",
+    openMenu: "Apri il menu",
+    closeMenu: "Chiudi il menu",
     howItWorks: "Come funziona",
     faq: "Domande",
     login: "Accedi",
@@ -311,6 +313,8 @@ export const UI = {
   },
   en: {
     modelli: "Templates",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
     howItWorks: "How it works",
     faq: "Questions",
     login: "Log in",

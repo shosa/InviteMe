@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, ShieldCheck, Ticket } from "lucide-react";
+import { CircleHelp, ListOrdered, LayoutGrid, LogIn, LogOut, Menu, ShieldCheck, Ticket, UserPlus, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { ui, type Lang } from "@/lib/ui";
 import { LangSelect } from "@/components/LangSelect";
@@ -14,6 +14,8 @@ export function Nav({ current, lang = "it" }: { current?: "home" | "account" | "
   const t = ui(lang);
   const router = useRouter();
   const [me, setMe] = useState<Me | undefined>(undefined);
+  // Su telefono la navigazione si apre con l'hamburger, sotto la barra, in una colonna.
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -30,13 +32,13 @@ export function Nav({ current, lang = "it" }: { current?: "home" | "account" | "
   }
 
   return (
-    <header className="nav">
+    <header className={`nav${open ? " is-open" : ""}`}>
       <div className="nav-inner">
         <a href="/" className="logo-link" aria-label="InviteMe, home"><Logo /></a>
-        <nav className="nav-links" aria-label="Principale">
-          <a href="/#modelli" className={current === "home" ? "is-current" : undefined}>{t.modelli}</a>
-          <a href="/#come-funziona">{t.howItWorks}</a>
-          <a href="/#faq">{t.faq}</a>
+        <nav id="nav-menu" className="nav-links" aria-label="Principale">
+          <a href="/#modelli" className={current === "home" ? "is-current" : undefined} onClick={() => setOpen(false)}><LayoutGrid size={16} aria-hidden="true" />{t.modelli}</a>
+          <a href="/#come-funziona" onClick={() => setOpen(false)}><ListOrdered size={16} aria-hidden="true" />{t.howItWorks}</a>
+          <a href="/#faq" onClick={() => setOpen(false)}><CircleHelp size={16} aria-hidden="true" />{t.faq}</a>
         </nav>
         <div className="nav-account">
           {me === undefined ? null : me ? (
@@ -47,12 +49,15 @@ export function Nav({ current, lang = "it" }: { current?: "home" | "account" | "
             </>
           ) : (
             <>
-              <a href="/accedi" className="btn ghost small">{t.login}</a>
-              <a href="/accedi?tab=register" className="btn solid small">{t.register}</a>
+              <a href="/accedi" className="btn ghost small"><LogIn size={16} aria-hidden="true" />{t.login}</a>
+              <a href="/accedi?tab=register" className="btn solid small"><UserPlus size={16} aria-hidden="true" />{t.register}</a>
             </>
           )}
           <LangSelect lang={lang} />
         </div>
+        <button type="button" className="nav-burger" aria-expanded={open} aria-controls="nav-menu" aria-label={open ? t.closeMenu : t.openMenu} onClick={() => setOpen((o) => !o)}>
+          {open ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+        </button>
       </div>
     </header>
   );

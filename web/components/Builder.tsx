@@ -21,7 +21,7 @@ import {
   isFixedPosition,
 } from "@inviteme/shared";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Eye, Monitor, Redo2, Smartphone, Undo2, Users } from "lucide-react";
+import { ArrowLeft, Copy, Eye, Menu, Monitor, Redo2, Smartphone, Undo2, Users, X } from "lucide-react";
 import { Canvas } from "./builder/Canvas";
 import { Inspector } from "./builder/Inspector";
 import { GuestsPanel } from "./builder/guests";
@@ -110,6 +110,9 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState(false);
+  // Su telefono: il menu degli strumenti dall'hamburger, e il modale di Salva con totale e pagamento al posto del footer.
+  const [topMenu, setTopMenu] = useState(false);
+  const [mobileSheet, setMobileSheet] = useState(false);
   const [origin, setOrigin] = useState("");
   const [guests, setGuests] = useState(initial.guests);
   const [firstSave, setFirstSave] = useState(true);
@@ -384,9 +387,11 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   return (
     <div className={`bl-app is-${device} is-tab-${mobileTab}`}>
       <header className="bl-top">
-        <a href="/account" className="back-link"><ArrowLeft size={16} aria-hidden="true" />{L.back}</a>
+        <a href="/account" className="back-link" aria-label={L.back}><ArrowLeft size={16} aria-hidden="true" /><span className="bl-back-text">{L.back}</span></a>
         <h1 className="bl-title">{title}</h1>
-        <div className="bl-top-tools">
+        <button type="button" className="bl-mobile-save btn solid small" onClick={() => (paidAlready && editable ? setSummary(true) : setMobileSheet(true))}>{L.saveNow}</button>
+        <button type="button" className="bl-burger" aria-expanded={topMenu} aria-label={lang === "en" ? (topMenu ? "Close menu" : "Open menu") : (topMenu ? "Chiudi il menu" : "Apri il menu")} onClick={() => setTopMenu((o) => !o)}>{topMenu ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}</button>
+        <div className={`bl-top-tools${topMenu ? " is-menu-open" : ""}`}>
           <button type="button" className="bl-icon" aria-label={L.undo} title={`${L.undo} (Ctrl+Z)`} disabled={locked || !history.canUndo} onClick={history.undo}><Undo2 size={17} /></button>
           <button type="button" className="bl-icon" aria-label={L.redo} title={`${L.redo} (Ctrl+Shift+Z)`} disabled={locked || !history.canRedo} onClick={history.redo}><Redo2 size={17} /></button>
           <span className="bl-sep" aria-hidden="true" />
@@ -396,7 +401,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
           </div>
           {locked && <button type="button" className="bl-icon" aria-label={L.guests} onClick={() => setPanel(panel === "ospiti" ? "proprieta" : "ospiti")}><Users size={17} /></button>}
           {!locked && (
-            <button type="button" className="btn solid small" disabled={save === "saving"} onClick={() => persist(config)}>{L.saveNow}</button>
+            <button type="button" className="btn solid small bl-desktop-save" disabled={save === "saving"} onClick={() => persist(config)}>{L.saveNow}</button>
           )}
           <span className={`bl-save save-${save}`} aria-live="polite">{saveLabel}</span>
         </div>
@@ -519,6 +524,32 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
       </aside>
 
       {error && <p role="alert" className="form-error bl-error">{error}</p>}
+
+      {mobileSheet && (
+        <div className="bl-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setMobileSheet(false); }} onKeyDown={(e) => { if (e.key === "Escape") setMobileSheet(false); }}>
+          <div className="bl-modal sheet-save" role="dialog" aria-modal="true" aria-labelledby="sheet-save-title">
+            <header className="bl-modal-head">
+              <h2 id="sheet-save-title">{lang === "en" ? "Save" : "Salva"}</h2>
+              <button type="button" className="bl-icon" aria-label={lang === "en" ? "Close" : "Chiudi"} onClick={() => setMobileSheet(false)}><X size={18} aria-hidden="true" /></button>
+            </header>
+            {paidAlready && extra <= 0 ? (
+              <div className="shared">
+                <code>{shareUrl}</code>
+                <button type="button" className="btn outline small" onClick={() => { navigator.clipboard?.writeText(shareUrl); toast.success("✓"); }}><Copy size={15} aria-hidden="true" />{L.copy}</button>
+              </div>
+            ) : (
+              <>
+                <div className="total">
+                  <span>{paidAlready ? (lang === "en" ? "New feature to buy" : "Funzione da acquistare") : L.total}</span>
+                  <strong>{formatPrice(paidAlready ? extra : total)}</strong>
+                  <small>{model ? modelCopy(model, lang).name : ""}</small>
+                </div>
+                <button type="button" className="btn solid" disabled={checkingOut} onClick={checkout}>{checkingOut ? L.paying : L.pay}</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {summary && paidAlready && editable && (
         <div className="bl-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setSummary(false); }} onKeyDown={(e) => { if (e.key === "Escape") setSummary(false); }}>

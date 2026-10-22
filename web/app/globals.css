@@ -1686,17 +1686,56 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 @media (max-width: 720px) {
   .order-bar { flex-wrap: wrap; gap: 10px 12px; padding: 10px 16px; }
   .order-bar-price { order: 1; }
-  .order-bar-toggle { display: inline-grid; place-items: center; order: 2; margin-left: auto; width: 44px; height: 44px; min-height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--ink); transition: transform .25s ease; }
+  .order-bar > .btn { display: inline-flex; order: 2; margin-left: auto; flex: 0 0 auto; width: auto; min-height: 44px; padding: 0 18px; justify-content: center; }
+  .order-bar-toggle { display: inline-grid; place-items: center; order: 3; width: 44px; height: 44px; min-height: 44px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--ink); transition: transform .25s ease; }
   .order-bar-toggle svg { transition: transform .25s ease; }
   .order-bar.is-open .order-bar-toggle svg { transform: rotate(180deg); }
   .order-bar .order-bar-item:not(.order-bar-price) { display: none; }
-  .order-bar > .btn { display: none; }
   .order-bar.is-open .order-bar-item:not(.order-bar-price) { display: grid; flex: 1 1 100%; order: 3; }
   .order-bar.is-open .order-bar-item:nth-of-type(2) { order: 4; }
-  .order-bar.is-open > .btn { display: inline-flex; order: 5; flex: 1 1 100%; width: 100%; margin-left: 0; justify-content: center; }
+  .order-bar.is-open > .btn { order: 5; flex: 1 1 100%; width: 100%; margin-left: 0; }
   .order-bar-price strong { font-size: 1.35rem; }
 }
 /* Campi di testo a 16 px su telefono: iOS non ingrandisce la pagina quando si scrive. */
 @media (max-width: 900px) {
   input, select, textarea { font-size: 16px; }
+}
+
+/* Topbar: icone sulle sezioni su desktop; su telefono una sola riga con il logo, la lingua e l'hamburger.
+   Il menu si apre sotto la barra, in colonna: stesse voci e stesse icone. */
+.nav-burger { display: none; }
+.nav-links a { display: inline-flex; align-items: center; gap: 7px; }
+.nav-links a svg { flex: none; }
+@media (max-width: 900px) {
+  .nav-inner { flex-wrap: nowrap; row-gap: 0; gap: 10px; padding: 12px 16px; height: 60px; }
+  .logo-link { min-width: 0; }
+  .nav-links, .nav-account { display: none; }
+  .nav-burger { display: inline-grid; place-items: center; margin-left: auto; width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); cursor: pointer; flex: none; }
+  .nav.is-open .nav-links, .nav.is-open .nav-account {
+    display: flex; flex-direction: column; align-items: stretch; gap: 0; position: absolute; top: 100%; left: 0; right: 0;
+    background: #fff; border-bottom: 1px solid var(--line); box-shadow: 0 18px 34px -24px rgba(0,0,0,.35); padding: 6px 16px 16px; margin: 0;
+  }
+  .nav.is-open .nav-links a { padding: 14px 4px; border-bottom: 1px solid var(--line); font-size: 16px; text-decoration: none; color: var(--ink); }
+  .nav.is-open .nav-account { padding-top: 14px; gap: 10px; }
+  .nav.is-open .nav-account .nav-link { padding: 10px 4px; }
+  .nav.is-open .nav-account .btn { width: 100%; justify-content: center; min-height: 44px; }
+  .nav-account .btn.solid { display: inline-flex; }
+}
+
+/* Builder: su telefono la topbar sta su una riga (indietro, titolo, Salva, hamburger). Gli strumenti stanno nel menu;
+   il totale e il pagamento sono nel modale di Salva, e il footer si nasconde. Su desktop restano le barre di sempre. */
+.bl-burger, .bl-mobile-save { display: none; }
+@media (max-width: 900px) {
+  .bl-top { position: relative; flex-wrap: nowrap; gap: 8px; }
+  .bl-back-text { display: none; }
+  .bl-app { grid-template-columns: minmax(0, 1fr); }
+  .bl-title { flex: 1 1 0; width: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bl-mobile-save { display: inline-flex; flex: none; min-height: 40px; }
+  .bl-desktop-save { display: none; }
+  .bl-burger { display: inline-grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); cursor: pointer; }
+  .bl-top-tools { display: none; }
+  .bl-top-tools.is-menu-open { display: flex; flex-direction: column; align-items: stretch; gap: 12px; position: absolute; top: 100%; left: 12px; right: 12px; z-index: 60; padding: 14px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 18px 34px -22px rgba(0, 0, 0, .35); }
+  .bl-top-tools.is-menu-open .bl-history, .bl-top-tools.is-menu-open .bl-device { display: flex; justify-content: center; gap: 12px; }
+  .bl-top-tools.is-menu-open .bl-sep { display: none; }
+  .bl-footer { display: none; }
 }

@@ -169,7 +169,7 @@ export function renderInvitePage(input: PageInput): string {
 ${fonts ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n${fonts}` : ""}
 ${fontLink}
 <style>
-${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : DRAWN_ENVELOPE_CSS}${m.backgroundVideo ? BGVIDEO_CSS : ""}${input.builder ? "" : SCROLL_CSS}
+${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : DRAWN_ENVELOPE_CSS}${m.backgroundVideo ? BGVIDEO_CSS : ""}${input.builder ? "" : SCROLL_CSS}${MOBILE_CSS}
 </style>
 </head>
 <body class="theme-${escapeHtml(m.id)}">
@@ -328,6 +328,18 @@ html:not([data-preview]) [data-anim]:not([data-rv="off"]):nth-child(even){animat
 @keyframes rv-slide{from{transform:translateX(-24px)}to{transform:none}}
 @keyframes rv-slide-r{from{transform:translateX(24px)}to{transform:none}}
 }}`;
+
+// Telefono: nessun contenuto tocca il bordo dello schermo. Vale per tutti gli stili: mappa centrata, tessere del gratta-e-scopri
+// dentro la scheda, timeline del programma che non esce dalla scheda.
+const MOBILE_CSS = `@media (max-width:600px){
+@keyframes rv-slide{from{transform:translateX(-8px)}to{transform:none}}
+@keyframes rv-slide-r{from{transform:translateX(8px)}to{transform:none}}
+.map-frame{margin-inline:auto!important;max-width:100%;box-sizing:border-box}
+.scratch-row,.sc-labels{gap:6px!important;max-width:100%;box-sizing:border-box}
+.scratch,.sc-labels span{flex:1 1 0;min-width:0;max-width:none!important}
+.timeline{max-width:100%;box-sizing:border-box;padding-right:14px}
+.t-cell{min-width:0}
+}`;
 
 // Scorrimento morbido per tutti gli stili. Il builder non lo usa: il suo scorrimento è sincronizzato dal codice. «Riduci movimento» lo spegne.
 const SCROLL_CSS = `html{scroll-behavior:smooth}
