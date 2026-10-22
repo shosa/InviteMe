@@ -217,7 +217,7 @@ function AddonsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Catal
     <div className="stack-lg">
       <p className="hint">Ogni funzione ha un prezzo fisso. Le modifiche valgono per tutti i modelli che la includono o la vendono a parte.</p>
       <div className="card table-wrap">
-        <table className="admin-table">
+        <div className="admin-scroll"><table className="admin-table">
           <thead><tr><th>Attiva</th><th>Funzione</th><th>Descrizione</th><th>Prezzo (€)</th></tr></thead>
           <tbody>
             {addons.map((a) => (
@@ -229,7 +229,7 @@ function AddonsEditor({ catalog, onSave }: { catalog: Catalog; onSave: (c: Catal
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
       <div className="actions"><button type="button" className="btn solid" onClick={save}>Salva funzioni e prezzi</button></div>
     </div>
@@ -296,7 +296,7 @@ function MusicLibrary({ tracks, onChange }: { tracks: MusicTrack[]; onChange: ()
         {all.length === 0 ? (
           <p className="hint">Nessun brano. Carica il primo sopra.</p>
         ) : (
-          <table className="admin-table">
+          <div className="admin-scroll"><table className="admin-table">
             <thead><tr><th>Brano</th><th>Ascolta</th><th>Licenza</th><th>Visibile</th><th /></tr></thead>
             <tbody>
               {all.map((t) => (
@@ -309,7 +309,7 @@ function MusicLibrary({ tracks, onChange }: { tracks: MusicTrack[]; onChange: ()
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </div>
@@ -327,7 +327,7 @@ function Orders() {
       {rows.length === 0 ? (
         <p className="hint">Nessun ordine ancora.</p>
       ) : (
-        <table className="admin-table">
+        <div className="admin-scroll"><table className="admin-table">
           <thead><tr><th>Data</th><th>Invito</th><th>Cliente</th><th>Importo</th><th>Fonte</th><th>Stato</th></tr></thead>
           <tbody>
             {rows.map((o) => (
@@ -341,7 +341,7 @@ function Orders() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
     </div>
   );
@@ -360,7 +360,7 @@ function Users({ onOpenInvitations }: { onOpenInvitations: (userId: string) => v
   return (
     <div className="card table-wrap">
       <h2>Utenti</h2>
-      <table className="admin-table">
+      <div className="admin-scroll"><table className="admin-table">
         <thead><tr><th>Nome</th><th>Email</th><th>Inviti</th><th>Ruolo</th></tr></thead>
         <tbody>
           {rows.map((u) => (
@@ -377,7 +377,7 @@ function Users({ onOpenInvitations }: { onOpenInvitations: (userId: string) => v
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }

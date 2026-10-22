@@ -392,14 +392,14 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
         <button type="button" className="bl-mobile-save btn solid small" onClick={() => (paidAlready && editable ? setSummary(true) : setMobileSheet(true))}>{L.saveNow}</button>
         <button type="button" className="bl-burger" aria-expanded={topMenu} aria-label={lang === "en" ? (topMenu ? "Close menu" : "Open menu") : (topMenu ? "Chiudi il menu" : "Apri il menu")} onClick={() => setTopMenu((o) => !o)}>{topMenu ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}</button>
         <div className={`bl-top-tools${topMenu ? " is-menu-open" : ""}`}>
-          <button type="button" className="bl-icon" aria-label={L.undo} title={`${L.undo} (Ctrl+Z)`} disabled={locked || !history.canUndo} onClick={history.undo}><Undo2 size={17} /></button>
-          <button type="button" className="bl-icon" aria-label={L.redo} title={`${L.redo} (Ctrl+Shift+Z)`} disabled={locked || !history.canRedo} onClick={history.redo}><Redo2 size={17} /></button>
+          <button type="button" className="bl-icon" aria-label={L.undo} data-label={L.undo} title={`${L.undo} (Ctrl+Z)`} disabled={locked || !history.canUndo} onClick={history.undo}><Undo2 size={17} /></button>
+          <button type="button" className="bl-icon" aria-label={L.redo} data-label={L.redo} title={`${L.redo} (Ctrl+Shift+Z)`} disabled={locked || !history.canRedo} onClick={history.redo}><Redo2 size={17} /></button>
           <span className="bl-sep" aria-hidden="true" />
           <div className="bl-device" role="group" aria-label="Anteprima">
-            <button type="button" aria-pressed={device === "desktop"} className="bl-icon" aria-label={L.desktopPreview} onClick={() => setDevice("desktop")}><Monitor size={17} /></button>
-            <button type="button" aria-pressed={device === "mobile"} className="bl-icon" aria-label={L.phonePreview} onClick={() => setDevice("mobile")}><Smartphone size={17} /></button>
+            <button type="button" aria-pressed={device === "desktop"} className="bl-icon" aria-label={L.desktopPreview} data-label={L.desktopPreview} onClick={() => setDevice("desktop")}><Monitor size={17} /></button>
+            <button type="button" aria-pressed={device === "mobile"} className="bl-icon" aria-label={L.phonePreview} data-label={L.phonePreview} onClick={() => setDevice("mobile")}><Smartphone size={17} /></button>
           </div>
-          {locked && <button type="button" className="bl-icon" aria-label={L.guests} onClick={() => setPanel(panel === "ospiti" ? "proprieta" : "ospiti")}><Users size={17} /></button>}
+          {locked && <button type="button" className="bl-icon" aria-label={L.guests} data-label={L.guests} onClick={() => setPanel(panel === "ospiti" ? "proprieta" : "ospiti")}><Users size={17} /></button>}
           {!locked && (
             <button type="button" className="btn solid small bl-desktop-save" disabled={save === "saving"} onClick={() => persist(config)}>{L.saveNow}</button>
           )}
