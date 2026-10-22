@@ -60,8 +60,10 @@ export function loadTheme(dir: string): ThemeLoad {
   for (const ref of css.matchAll(/assets\/[A-Za-z0-9._-]+/g)) {
     if (!fs.existsSync(path.join(dir, ref[0]))) errors.push(`${name}: asset mancante ${ref[0]}`);
   }
-  if (manifest?.envelope && !fs.existsSync(path.join(dir, manifest.envelope.video))) errors.push(`${name}: busta-video mancante (${manifest.envelope.video})`);
-  if (manifest?.envelope?.poster && !fs.existsSync(path.join(dir, manifest.envelope.poster))) errors.push(`${name}: poster della busta mancante (${manifest.envelope.poster})`);
+  const envelopeFiles = manifest?.envelope ? Object.values(manifest.envelope) : [];
+  for (const file of envelopeFiles) {
+    if (!fs.existsSync(path.join(dir, file))) errors.push(`${name}: file della busta mancante (${file})`);
+  }
   for (const file of Object.values(manifest?.backgroundVideo ?? {})) {
     if (!fs.existsSync(path.join(dir, file))) errors.push(`${name}: video di sfondo mancante (${file})`);
   }

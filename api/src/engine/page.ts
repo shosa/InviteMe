@@ -87,7 +87,7 @@ export function renderInvitePage(input: PageInput): string {
   for (const instance of config.blocks) {
     if (instance.hidden || !blockDef(instance.type)) continue;
     // Busta-video del tema: il filmato è dello stile, il blocco Busta non ha proprietà modificabili.
-    const block = instance.type === "cover" && m.envelope ? { ...instance, props: { coverVideo: m.envelope.video, ...(m.envelope.poster ? { coverPoster: m.envelope.poster } : {}) } } : instance;
+    const block = instance.type === "cover" && m.envelope ? { ...instance, props: "image" in m.envelope ? { coverImage: m.envelope.image } : { coverVideo: m.envelope.video, ...(m.envelope.poster ? { coverPoster: m.envelope.poster } : {}) } } : instance;
     const template = partials.get(block.type as BlockType);
     if (!template) continue;
     // Un campo vuoto non cancella il valore dell'evento quando la proprietà esiste anche tra i dati dell'evento (nomi, riga sotto i nomi).
@@ -341,7 +341,8 @@ const BGVIDEO_CSS = `.zone{position:relative;isolation:isolate}
 @media (prefers-reduced-motion:reduce){.zone-video{display:none}}`;
 
 // Busta-video: il filmato è parte dell'invito, senza controlli del browser. Dove sta «Tocca per aprire» lo decide lo stile.
-const ENVELOPE_CSS = `[data-cover-video]{pointer-events:none}
+const ENVELOPE_CSS = `[data-cover-image]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+[data-cover-video]{pointer-events:none}
 [data-cover-video]::-webkit-media-controls,[data-cover-video]::-webkit-media-controls-enclosure{display:none!important}
 [data-cover-video]::-webkit-media-controls-start-playback-button{display:none!important}`;
 

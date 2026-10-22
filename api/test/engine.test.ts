@@ -125,9 +125,10 @@ describe("video di sfondo per zona", () => {
     }
   });
 
-  it("la busta mostra il suo fotogramma fermo prima del filmato; i video del template non partono da soli", () => {
+  it("i video del template non partono da soli; la busta è un'immagine a schermo intero, senza video", () => {
     const html = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "x", features: new Set(ADDON_KEYS), runtime });
-    assert.match(html, /<video data-cover-video[^>]*poster="\/api\/themes\/acquarello-blu\/assets\/busta-poster\.jpg"/);
+    assert.match(html, /<img data-cover-image src="\/api\/themes\/acquarello-blu\/assets\/busta-poster\.jpg"/);
+    assert.doesNotMatch(html, /<video data-cover-video/);
     assert.doesNotMatch(html, /data-zone-video="[a-z]+"[^>]*autoplay/);
   });
 
@@ -163,9 +164,10 @@ describe("video di sfondo per zona", () => {
     assert.match(html, /\.map-frame\[data-map-shape="square"\]/);
   });
 
-  it("la busta del tema è il filmato dedicato", () => {
+  it("busta-immagine: nessun controllo video e nessun contenitore della busta-filmato", () => {
     const html = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "x", features: new Set(ADDON_KEYS), runtime });
-    assert.match(html, /<video data-cover-video[^>]*src="\/api\/themes\/acquarello-blu\/assets\/busta\.mp4"/);
+    assert.doesNotMatch(html, /class="env-card"/);
+    assert.match(html, /\[data-cover-image\]\{position:absolute/);
   });
 
   it("uno stile senza video di sfondo non ha zone con video", () => {
