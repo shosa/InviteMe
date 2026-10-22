@@ -7,6 +7,7 @@ export const THEME_CATEGORIES: Record<string, ThemeCategory[]> = {
   "anniversario-oro": ["anniversary"],
   "argento-anniversario": ["anniversary"],
   "autunno-cena": ["birthday"],
+  "avorio-botanico": ["wedding"],
   "baby-shower": ["baby"],
   "battesimo-celeste": ["baby"],
   "compleanno-festa": ["birthday"],

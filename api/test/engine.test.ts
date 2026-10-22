@@ -23,7 +23,7 @@ describe("stili del repository", () => {
 
   it("caricano senza errori", () => {
     assert.deepEqual(loaded.errors, []);
-    assert.deepEqual(loaded.themes.map((t) => t.manifest.id).sort(), ["anniversario-oro", "argento-anniversario", "autunno-cena", "baby-shower", "battesimo-celeste", "compleanno-festa", "festa-spiaggia", "gala-aziendale", "giardino", "invitereference", "laurea-giulia", "lavanda-nozze", "matrimonio-citta", "matrimonio-lago", "minimo", "notturno", "nozze-in-fiore", "pensionamento", "prima-comunione", "redazione", "rivista", "velo"]);
+    assert.deepEqual(loaded.themes.map((t) => t.manifest.id).sort(), ["anniversario-oro", "argento-anniversario", "autunno-cena", "avorio-botanico", "baby-shower", "battesimo-celeste", "compleanno-festa", "festa-spiaggia", "gala-aziendale", "giardino", "invitereference", "laurea-giulia", "lavanda-nozze", "matrimonio-citta", "matrimonio-lago", "minimo", "notturno", "nozze-in-fiore", "pensionamento", "prima-comunione", "redazione", "rivista", "velo"]);
   });
 
   it("la demo con tutti i blocchi non lascia segnaposti e non perde dati", () => {
