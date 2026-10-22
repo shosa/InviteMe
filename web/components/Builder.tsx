@@ -416,6 +416,8 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
           selected={selected}
           hover={hover}
           features={features}
+          theme={theme}
+          paidAlready={paidAlready}
           onSelect={(id) => { setSelected(id); setPanel("proprieta"); setMobileTab("proprieta"); }}
           onHover={setHover}
           lang={lang}

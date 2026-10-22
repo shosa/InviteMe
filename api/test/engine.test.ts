@@ -23,7 +23,7 @@ describe("stili del repository", () => {
 
   it("caricano senza errori", () => {
     assert.deepEqual(loaded.errors, []);
-    assert.deepEqual(loaded.themes.map((t) => t.manifest.id).sort(), ["anniversario-oro", "argento-anniversario", "autunno-cena", "avorio-botanico", "baby-shower", "battesimo-celeste", "compleanno-festa", "festa-spiaggia", "gala-aziendale", "giardino", "invitereference", "laurea-giulia", "lavanda-nozze", "matrimonio-citta", "matrimonio-lago", "minimo", "notturno", "nozze-in-fiore", "pensionamento", "prima-comunione", "redazione", "rivista", "velo"]);
+    assert.deepEqual(loaded.themes.map((t) => t.manifest.id).sort(), ["acquarello-blu", "anniversario-oro", "argento-anniversario", "autunno-cena", "avorio-botanico", "baby-shower", "battesimo-celeste", "compleanno-festa", "festa-spiaggia", "gala-aziendale", "giardino", "invitereference", "laurea-giulia", "lavanda-nozze", "matrimonio-citta", "matrimonio-lago", "minimo", "notturno", "nozze-in-fiore", "pensionamento", "prima-comunione", "redazione", "rivista", "velo"]);
   });
 
   it("la demo con tutti i blocchi non lascia segnaposti e non perde dati", () => {
@@ -106,6 +106,38 @@ describe("busta-video", () => {
   });
 });
 
+describe("video di sfondo per zona", () => {
+  const loaded = loadThemes();
+  const theme = loaded.themes.find((t) => t.manifest.id === "acquarello-blu")!;
+
+  it("l'intestazione ha il suo video nella sua zona; il corpo ha un video fisso sotto, con loop", () => {
+    const html = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "x", features: new Set(ADDON_KEYS), runtime });
+    const hero = html.match(/<div class="zone zone-hero">(<video[^>]*>)/);
+    const body = html.match(/(<video class="zone-video zone-fixed" data-zone-video="body"[^>]*>)/);
+    assert.ok(hero, "zona intestazione con video");
+    assert.ok(body, "video fisso del corpo");
+    assert.ok(html.indexOf(body[1]) < html.indexOf('<div class="zone zone-hero">'), "il video del corpo sta sotto l'intestazione");
+    assert.match(hero[1], /src="\/api\/themes\/acquarello-blu\/assets\/intestazione-palme\.mp4"/);
+    assert.match(body[1], /src="\/api\/themes\/acquarello-blu\/assets\/acquarello\.mp4"/);
+    for (const v of [hero[1], body[1]]) {
+      assert.match(v, / loop/);
+      assert.match(v, / muted/);
+    }
+  });
+
+  it("la busta del tema è il filmato dedicato", () => {
+    const html = renderInvitePage({ theme, config: sampleConfig(theme.manifest), slug: "x", features: new Set(ADDON_KEYS), runtime });
+    assert.match(html, /<video data-cover-video[^>]*src="\/api\/themes\/acquarello-blu\/assets\/busta\.mp4"/);
+  });
+
+  it("uno stile senza video di sfondo non ha zone con video", () => {
+    const other = loaded.themes.find((t) => t.manifest.id === "minimo")!;
+    const html = renderInvitePage({ theme: other, config: sampleConfig(other.manifest), slug: "x", features: new Set(ADDON_KEYS), runtime });
+    assert.doesNotMatch(html, /zone-video/);
+    assert.doesNotMatch(html, /class="zone zone-/);
+  });
+});
+
 describe("stili non validi", () => {
   it("la fixture viene respinta con tutti i suoi problemi", () => {
     const r = loadTheme(path.join(here, "fixtures", "stile-rotto"));
@@ -126,7 +158,10 @@ describe("configurazione a blocchi", () => {
     assert.ok(features.has("rsvp"));
     const config = defaultConfig(loadThemes().themes[0].manifest, m.id, "wedding", features);
     assert.ok(config.blocks.some((b) => b.type === "rsvp"));
-    assert.ok(!config.blocks.some((b) => b.type === "countdown")); // non acquistata
+    assert.ok(config.blocks.some((b) => b.type === "countdown")); // inclusa nel modello Smart
+    const base = getModel(c, "save-the-date")!;
+    const baseConfig = defaultConfig(loadThemes().themes[0].manifest, base.id, "wedding", activeFeatures(c, base.id, []));
+    assert.ok(!baseConfig.blocks.some((b) => b.type === "countdown")); // opzione del modello Base: non acquistata
   });
 });
 

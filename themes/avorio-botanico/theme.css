@@ -39,6 +39,8 @@ button,input,a { -webkit-tap-highlight-color:transparent }
 .env-seal { position:absolute; left:50%; top:34%; transform:translateX(-50%); display:grid; place-items:center; width:92px; height:92px; border:0; border-radius:50%; background:url(assets/wax-seal.png) center/contain no-repeat; color:#6f4d2a; font:italic 28px var(--display); filter:drop-shadow(0 7px 8px #47392335) }
 [data-cover-tap] { position:relative; z-index:1; display:grid; justify-items:center; gap:12px; margin:38px auto 0; padding:12px 18px; max-width:85vw; background:var(--panel); border-radius:30px; text-align:center }
 [data-cover-label] { color:var(--ink); font-size:12px; letter-spacing:.12em }
+/* Busta-video: «Tocca per aprire» a tre quarti dell'altezza dello schermo, sopra il filmato */
+[data-cover] [data-cover-tap] { position:absolute; top:75%; left:50%; transform:translate(-50%,-50%); margin:0; z-index:3 }
 .wei-chevron { width:10px; height:10px; border-left:1px solid var(--gold); border-top:1px solid var(--gold); transform:rotate(45deg) }
 .wei-opening .env-flap { transform:rotateX(170deg) }
 .wei-opening .env-seal { opacity:0; transition:opacity .25s }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type PointerEvent } from "react";
-import { blockDef, isFixedPosition, type AddonKey, type BlockInstance, type BlockType, type Catalog, type InviteConfig } from "@inviteme/shared";
+import { BLOCKS, blockDef, formatPrice, getAddon, isFixedPosition, type AddonKey, type BlockInstance, type BlockType, type Catalog, type InviteConfig, type ThemeManifest } from "@inviteme/shared";
 import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, GripVertical, Plus, Trash2 } from "lucide-react";
 import { ui, type Lang } from "@/lib/ui";
 import { blockCopy } from "@/lib/catalogCopy";
@@ -15,6 +15,8 @@ type Props = {
   selected: string | null;
   hover: string | null;
   features: ReadonlySet<AddonKey>;
+  theme?: ThemeManifest; // blocchi del tema: quelli non ancora nell'invito si mostrano in fondo
+  paidAlready: boolean; // invito già pagato: il pulsante dice Upgrade
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
   onAdd: (type: BlockType, feature?: AddonKey) => void;
@@ -113,6 +115,10 @@ export function Canvas(p: Props) {
     }, 170);
   }
 
+  // Blocchi che il tema usa ma l'invito non ha: se la funzione manca, il blocco è bloccato e si acquista.
+  const present = new Set(p.blocks.map((b) => b.type));
+  const absent = BLOCKS.filter((d) => d.feature && !present.has(d.type) && p.theme && d.type in p.theme.demo);
+
   return (
     <div className="bl-column">
       <section className={`bl-section bl-structure${drag ? " is-sorting" : ""}`} aria-labelledby="bl-struct">
@@ -167,6 +173,29 @@ export function Canvas(p: Props) {
             );
           })}
         </ol>
+        {absent.length > 0 && (
+          <ul className="bl-missing" aria-label={L.templateBlocks}>
+            <li className="bl-missing-title">{L.templateBlocks}</li>
+            {absent.map((d) => {
+              const feature = d.feature as AddonKey;
+              const locked = !p.features.has(feature);
+              const addon = getAddon(p.catalog, feature);
+              const name = blockCopy(d.type, d.label, p.lang ?? "it");
+              return (
+                <li key={d.type} className={`bl-item bl-ghost${locked ? " is-locked-feature" : ""}`}>
+                  <span className="bl-name bl-name-row"><BlockIcon type={d.type} size={16} /><span>{name}</span></span>
+                  {locked ? (
+                    <button type="button" className="bl-buy" onClick={() => p.onAdd(d.type, feature)}>
+                      {p.paidAlready ? L.upgradeFeature : L.buyFeature}{addon ? ` · ${formatPrice(addon.cents, p.lang === "en" ? "en-GB" : "it-IT")}` : ""}
+                    </button>
+                  ) : (
+                    <button type="button" className="bl-buy" onClick={() => p.onAdd(d.type, feature)}>{L.addTemplateBlock}</button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       {adding && (

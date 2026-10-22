@@ -51,6 +51,8 @@ export type ThemeManifest = {
   background?: BackgroundSpec;
   // Busta-video: il filmato del tema apre l'invito al posto della busta disegnata. Il blocco Busta non ha proprietà.
   envelope?: { video: string };
+  // Video di sfondo per zona: l'intestazione (hero) ha il suo, il resto del corpo un altro. Muti, in ciclo, scorrono con i blocchi.
+  backgroundVideo?: { hero?: string; body?: string };
 };
 
 // Nomi riservati al motore: un campo o una proprietà con questo nome nasconderebbe un dato di sistema.
@@ -69,7 +71,7 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
   if (!isRecord(input)) return { manifest: null, errors: [`${dir}: theme.json deve essere un oggetto`] };
   const x = input;
 
-  const allowed = ["engine", "id", "name", "description", "models", "themeColor", "fonts", "demo", "background", "envelope"];
+  const allowed = ["engine", "id", "name", "description", "models", "themeColor", "fonts", "demo", "background", "envelope", "backgroundVideo"];
   for (const k of Object.keys(x)) if (!allowed.includes(k)) err(`campo sconosciuto "${k}"`);
   if (x.engine !== ENGINE_VERSION) err(`engine deve essere ${ENGINE_VERSION}`);
 
@@ -93,6 +95,16 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
     if (!background) err(`background: tipo non valido (ammessi: ${BACKGROUND_KINDS.join(", ")}), colore #RRGGBB facoltativo`);
   }
 
+  const VIDEO_FILE = /^assets\/[A-Za-z0-9._-]+\.(mp4|webm)$/;
+  let backgroundVideo: { hero?: string; body?: string } | undefined;
+  if (x.backgroundVideo !== undefined) {
+    const v = isRecord(x.backgroundVideo) ? x.backgroundVideo : {};
+    const hero = typeof v.hero === "string" && VIDEO_FILE.test(v.hero) ? v.hero : undefined;
+    const body = typeof v.body === "string" && VIDEO_FILE.test(v.body) ? v.body : undefined;
+    if (!isRecord(x.backgroundVideo) || (!hero && !body) || Object.keys(v).some((k) => k !== "hero" && k !== "body")) {
+      err("backgroundVideo: { hero?: \"assets/nome.mp4\", body?: \"assets/nome.mp4\" } (almeno uno; mp4 o webm, senza audio)");
+    } else backgroundVideo = { ...(hero ? { hero } : {}), ...(body ? { body } : {}) };
+  }
   let envelope: { video: string } | undefined;
   if (x.envelope !== undefined) {
     const video = isRecord(x.envelope) && typeof x.envelope.video === "string" ? x.envelope.video : "";
@@ -113,6 +125,7 @@ export function validateManifest(input: unknown, dir = "stile"): ManifestResult 
       demo,
       ...(background ? { background } : {}),
       ...(envelope ? { envelope } : {}),
+      ...(backgroundVideo ? { backgroundVideo } : {}),
     },
     errors,
   };

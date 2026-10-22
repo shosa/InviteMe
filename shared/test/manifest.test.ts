@@ -37,6 +37,20 @@ describe("busta-video", () => {
   });
 });
 
+describe("video di sfondo per zona", () => {
+  it("accetta un video per intestazione e uno per il corpo", () => {
+    const r = validateManifest({ ...base, backgroundVideo: { hero: "assets/a.mp4", body: "assets/b.webm" } });
+    assert.deepEqual(r.errors, []);
+    assert.deepEqual(r.manifest?.backgroundVideo, { hero: "assets/a.mp4", body: "assets/b.webm" });
+  });
+
+  it("rifiuta la forma a stringa, percorsi esterni e chiavi sconosciute", () => {
+    assert.ok(validateManifest({ ...base, backgroundVideo: "assets/a.mp4" }).errors.length > 0);
+    assert.ok(validateManifest({ ...base, backgroundVideo: { hero: "https://x.test/a.mp4" } }).errors.length > 0);
+    assert.ok(validateManifest({ ...base, backgroundVideo: { intro: "assets/a.mp4" } }).errors.length > 0);
+  });
+});
+
 describe("blocchi dell'invito", () => {
   const block = (type: string, extra: Partial<BlockInstance> = {}): BlockInstance => ({ id: `id-${type}-${Math.random().toString(36).slice(2, 6)}`, type: type as BlockInstance["type"], props: {}, ...extra });
   const all = new Set(["rsvp", "program", "map", "music", "countdown", "gallery"] as const);

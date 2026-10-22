@@ -1537,6 +1537,14 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 
 /* Blocco principale (Intestazione con i dati dell'evento): colore proprio, sempre in cima, non eliminabile. */
 .bl-item.is-locked { background: #E4F6EE; border-color: #0B6E65; }
+/* Blocchi del tema non ancora nell'invito: in fondo alla struttura. Se la funzione manca, overlay rosso con il pulsante per acquistarla. */
+.bl-missing { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 6px }
+.bl-missing-title { font-size: 12px; color: var(--ink-soft); padding: 0 2px 2px }
+.bl-item.bl-ghost { grid-template-columns: minmax(0, 1fr) auto; border-style: dashed }
+.bl-item.bl-ghost.is-locked-feature { background: #B42318; border-color: #7A1710; color: #fff; border-style: solid }
+.bl-item.bl-ghost.is-locked-feature .bl-name-row { color: #fff }
+.bl-buy { border: 0; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; background: var(--paper); color: var(--ink) }
+.bl-item.bl-ghost.is-locked-feature .bl-buy { background: #fff; color: #B42318 }
 .bl-item.is-locked .bl-tools button:disabled { opacity: .35; }
 .bl-lock { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #0B6E65; background: #FFFFFF; border: 1px solid #0B6E65; border-radius: 999px; padding: 2px 8px; margin-left: 8px; }
 

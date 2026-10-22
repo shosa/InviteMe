@@ -65,7 +65,25 @@ export function renderInvitePage(input: PageInput): string {
   let cover = "";
   // Font scelti dal cliente per i testi: solo quelli della libreria finiscono nel foglio di stile della pagina.
   const usedFonts = new Set<FontId>();
+  // Video di sfondo per zona: intestazione e corpo hanno ciascuno il proprio filmato, muto e in ciclo.
+  const zoneVideo = (file: string, zone: string) =>
+    `<video class="zone-video" data-zone-video="${zone}" autoplay muted loop playsinline disablepictureinpicture preload="auto" src="${base}/${escapeHtml(file.replace(/^assets\//, ""))}" aria-hidden="true" tabindex="-1"></video>`;
+  // Video del corpo: fisso dietro tutto il contenuto, così i blocchi scorrono sopra di lui.
+  const bodyVideo = m.backgroundVideo?.body ? zoneVideo(m.backgroundVideo.body, "body").replace('class="zone-video"', 'class="zone-video zone-fixed"') + "\n" : "";
   let main = "";
+  // Blocchi consecutivi della stessa zona stanno in un solo contenitore, con il video di quella zona dietro.
+  let zoneOpen: string | null = null;
+  // L'intestazione con il suo video sta in un contenitore che scorre via con lei. Il corpo ha un video fisso dietro i contenuti (vedi sotto).
+  // Gli altri stili restano con lo stesso markup di prima.
+  const closeZone = () => (zoneOpen ? ((zoneOpen = null), "</div>") : "");
+  const framedZone = (zone: "hero", framed: string): string => {
+    const file = m.backgroundVideo?.[zone];
+    if (!file) return closeZone() + framed;
+    if (zoneOpen === zone) return framed;
+    const pre = closeZone();
+    zoneOpen = zone;
+    return `${pre}<div class="zone zone-${zone}">${zoneVideo(file, zone)}${framed}`;
+  };
   for (const instance of config.blocks) {
     if (instance.hidden || !blockDef(instance.type)) continue;
     // Busta-video del tema: il filmato è dello stile, il blocco Busta non ha proprietà modificabili.
@@ -117,9 +135,10 @@ export function renderInvitePage(input: PageInput): string {
     // Il marcatore di chiusura serve al builder per ritagliare il blocco dalla pagina e aggiornarlo da solo.
     const framed = input.builder ? `<div data-blk="${escapeHtml(block.id)}" style="display:contents">${look}</div><!--/blk-->` : look;
     if (block.type === "cover") cover += framed;
-    else main += framed;
+    else if (block.type === "hero") main += framedZone("hero", framed);
+    else main += closeZone() + framed;
   }
-  const body = `${cover}<main class="invite">\n${main}</main>`;
+  const body = `${cover}<main class="invite">\n${main}${zoneOpen ? "</div>" : ""}</main>`;
 
   const css = theme.css.replace(/url\((["']?)assets\//g, `url($1${base}/`) + LOOK_CSS;
   const html = body.replace(/(src|poster|srcset|href)=(["'])assets\//g, `$1=$2${base}/`);
@@ -150,11 +169,11 @@ export function renderInvitePage(input: PageInput): string {
 ${fonts ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n${fonts}` : ""}
 ${fontLink}
 <style>
-${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : ""}
+${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : ""}${m.backgroundVideo ? BGVIDEO_CSS : ""}
 </style>
 </head>
 <body class="theme-${escapeHtml(m.id)}">
-${bgLayer}${html}
+${bodyVideo}${bgLayer}${html}
 <script type="application/json" id="inv-data">${payload}</script>
 <script>
 ${runtime}
@@ -310,11 +329,17 @@ html:not([data-preview]) [data-anim]:not([data-rv="off"]):nth-child(even){animat
 @keyframes rv-slide-r{from{transform:translateX(24px)}to{transform:none}}
 }}`;
 
-// Busta-video: il filmato è parte dell'invito, senza controlli del browser. «Tocca per aprire» sta a tre quarti dell'altezza.
+// Video di sfondo per zona: la zona è il contenitore del suo blocco, il video sta dietro i suoi contenuti.
+// Con «riduci movimento» il video non parte e resta il colore dello stile.
+const BGVIDEO_CSS = `.zone{position:relative;isolation:isolate}
+.zone-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;pointer-events:none}
+.zone-video.zone-fixed{position:fixed}
+@media (prefers-reduced-motion:reduce){.zone-video{display:none}}`;
+
+// Busta-video: il filmato è parte dell'invito, senza controlli del browser. Dove sta «Tocca per aprire» lo decide lo stile.
 const ENVELOPE_CSS = `[data-cover-video]{pointer-events:none}
 [data-cover-video]::-webkit-media-controls,[data-cover-video]::-webkit-media-controls-enclosure{display:none!important}
-[data-cover-video]::-webkit-media-controls-start-playback-button{display:none!important}
-[data-cover] [data-cover-tap]{position:absolute;top:75%;left:50%;transform:translate(-50%,-50%);margin:0;z-index:3}`;
+[data-cover-video]::-webkit-media-controls-start-playback-button{display:none!important}`;
 
 // Sfondo animato: un livello fisso dietro tutto il contenuto, senza interazione. Il movimento ridotto lo ferma nel runtime.
 const BG_CSS = `.bg-fx{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:block}`;
