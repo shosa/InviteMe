@@ -2050,3 +2050,17 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 .bl-app .bl-right input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), .bl-app .bl-right select, .bl-app .bl-right textarea,
 .bl-app .bl-fields input:not([type="checkbox"]):not([type="radio"]):not([type="color"]), .bl-app .bl-fields select, .bl-app .bl-fields textarea,
 .bl-app .font-btn { background: #FFFFFF; }
+
+/* Builder: il campo unito al pulsante Aa ha il lato destro dritto (vince sulle regole generali dei campi). */
+.bl-app .bl-right .field-control > input, .bl-app .bl-right .field-control > textarea,
+.bl-app .bl-fields .field-control > input, .bl-app .bl-fields .field-control > textarea { border-radius: 12px 0 0 12px; border-right: 0; }
+.bl-app .bl-right .field-control > .font-btn, .bl-app .bl-fields .field-control > .font-btn { border-radius: 0 12px 12px 0; }
+
+/* Builder: campo unito al pulsante Aa con il lato destro dritto (selettore abbastanza specifico da vincere). */
+.bl-app .bl-right .field-control > input:not([type="color"]):not([type="radio"]):not([type="checkbox"]):not([type="range"]),
+.bl-app .bl-right .field-control > textarea { border-radius: 12px 0 0 12px; border-right: 0; }
+.bl-app .bl-fields .field-control > input:not([type="color"]):not([type="radio"]):not([type="checkbox"]):not([type="range"]),
+.bl-app .bl-fields .field-control > textarea { border-radius: 12px 0 0 12px; border-right: 0; }
+
+/* Builder: etichette dei campi (es. "Titolo della data") più grandi, come i titoli delle sezioni. */
+.bl-app .field-label, .bl-app .field > span, .bl-app .bl-fields .field > span { font-size: 16px !important; font-weight: 500; color: var(--ink); }
