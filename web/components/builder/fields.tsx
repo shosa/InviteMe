@@ -71,13 +71,13 @@ export function FieldEditor({
               <button
                 key={c.hex}
                 type="button"
-                className={`swatch${text.toLowerCase() === c.hex.toLowerCase() ? " is-on" : ""}`}
-                style={{ background: c.hex }}
-                title={c.name}
-                aria-label={c.name}
+                className={`swatch-chip${text.toLowerCase() === c.hex.toLowerCase() ? " is-on" : ""}`}
                 aria-pressed={text.toLowerCase() === c.hex.toLowerCase()}
                 onClick={() => onChange(c.hex)}
-              />
+              >
+                <span className="swatch-dot" style={{ background: c.hex }} aria-hidden="true" />
+                <span>{c.name}</span>
+              </button>
             ))}
           </div>
           <div className="color-row">
@@ -86,15 +86,31 @@ export function FieldEditor({
           </div>
         </Field>
       );
-    case "choice":
+    case "choice": {
+      const opts = field.options ?? [];
+      const name = (o: { value: string; label: string }) => (copy ? copy(`${field.key}.${o.value}`, o.label) : o.label);
+      // Poche scelte: pulsanti affiancati, come nel riferimento. Molte: menu a tendina.
+      if (opts.length <= 4) {
+        return (
+          <Field label={label}>
+            <div className="seg" role="radiogroup" aria-label={label}>
+              <button type="button" role="radio" aria-checked={!text} className={`seg-opt${!text ? " is-on" : ""}`} onClick={() => onChange("")}>{standard ?? "Default"}</button>
+              {opts.map((o) => (
+                <button key={o.value} type="button" role="radio" aria-checked={text === o.value} className={`seg-opt${text === o.value ? " is-on" : ""}`} onClick={() => onChange(o.value)}>{name(o)}</button>
+              ))}
+            </div>
+          </Field>
+        );
+      }
       return (
         <Field label={label}>
           <select value={text} onChange={(e) => onChange(e.target.value)}>
             <option value="">{standard ?? "Default"}</option>
-            {(field.options ?? []).map((o) => <option key={o.value} value={o.value}>{copy ? copy(`${field.key}.${o.value}`, o.label) : o.label}</option>)}
+            {opts.map((o) => <option key={o.value} value={o.value}>{name(o)}</option>)}
           </select>
         </Field>
       );
+    }
     case "date":
       return <Field label={label}><input type="date" value={text} onChange={(e) => onChange(e.target.value)} /></Field>;
     case "time":
