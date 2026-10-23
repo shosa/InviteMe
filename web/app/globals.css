@@ -1866,26 +1866,3 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .std-switch:checked { background: var(--brass); }
 .std-switch:checked::after { transform: translateX(18px); }
 .link-edit { display: grid; gap: 8px; }
-
-/* Pannello controlli del builder, come nel riferimento "Details": sezioni a card, titoli serif con puntino d'ottone,
-   campi arrotondati, scelte a pulsanti, colori come chip con il nome. */
-.bl-right { background: #FBF7F2; }
-.bl-right .bl-group { background: #FFFFFF; border: 1px solid #E8DFD4; border-radius: 16px; padding: 18px 18px 16px; box-shadow: 0 1px 2px rgba(43, 35, 32, .04); }
-.bl-right .bl-group + .bl-group { margin-top: 12px; }
-.bl-right .bl-group h3 { display: flex; align-items: center; gap: 9px; font-family: var(--font-display), Georgia, serif; font-size: 19px; font-weight: 500; letter-spacing: -0.01em; color: var(--brass); margin: 0 0 14px; }
-.bl-right .bl-group h3::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--brass-light); flex: none; }
-.bl-right .bl-fields > .bl-group { background: none; border: 0; padding: 0; box-shadow: none; }
-.bl-right label { font-size: 12.5px; color: var(--ink-soft); letter-spacing: .01em; }
-.bl-right input[type="text"], .bl-right input[type="date"], .bl-right input[type="time"], .bl-right input[type="url"], .bl-right input[type="number"], .bl-right select, .bl-right textarea {
-  background: #FFFFFF; border: 1px solid #DCCFC2; border-radius: 10px; min-height: 42px; padding: 9px 12px; font-size: 15px; color: var(--ink); width: 100%; box-sizing: border-box;
-}
-.bl-right textarea { min-height: 96px; }
-.bl-right input:focus, .bl-right select:focus, .bl-right textarea:focus { outline: 2px solid var(--brass-light); outline-offset: 1px; }
-.bl-right .hint { font-size: 12.5px; font-style: italic; color: var(--ink-soft); }
-.seg { display: flex; flex-wrap: wrap; gap: 8px; }
-.seg-opt { min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #DCCFC2; background: #FFFFFF; color: var(--ink); font-size: 14px; cursor: pointer; }
-.seg-opt:hover { border-color: var(--brass-light); }
-.seg-opt.is-on { border: 1.5px solid var(--brass); background: #F7EEE6; color: var(--brass); font-weight: 600; }
-.swatch-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 5px 12px 5px 6px; border-radius: 999px; border: 1px solid #DCCFC2; background: #FFFFFF; color: var(--ink); font-size: 13px; cursor: pointer; }
-.swatch-chip.is-on { border: 1.5px solid var(--brass); background: #F7EEE6; color: var(--brass); font-weight: 600; }
-.swatch-dot { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(43, 35, 32, .18); flex: none; }
