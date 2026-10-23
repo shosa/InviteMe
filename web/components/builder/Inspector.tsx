@@ -1,7 +1,7 @@
 "use client";
 
 import { BLOCK_LABELS, EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type FontId, type InviteConfig, type RsvpQuestion, BACKGROUND_KINDS, BACKGROUND_LABELS, type BackgroundKind, type BackgroundSpec } from "@inviteme/shared";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Ellipsis, Eye, EyeOff, Image as ImageIcon, LayoutGrid, Palette, Shapes, Trash2, Type } from "lucide-react";
 import { Field, FieldEditor, type Values } from "./fields";
@@ -137,6 +137,8 @@ type Props = {
   // Quale parte del pannello generale mostrare, scelta dalle schede: dettagli, tema, lingua, link.
   section?: "dettagli" | "tema" | "lingua" | "link";
   shareUrl?: string;
+  slug?: string;
+  onSaveSlug?: (slug: string) => Promise<string | null>; // ritorna l'errore, o null se salvato
   onSetEventType: (t: EventType) => void;
   onSetBackground: (b: BackgroundSpec | null) => void;
   onSetQuestions: (q: RsvpQuestion[]) => void;
@@ -199,6 +201,7 @@ export function Inspector(p: Props) {
             </div>
           </section>
         )}
+        {p.block.type === "rsvp" && <StandardQuestions lang={p.lang ?? "it"} questions={p.config.rsvpQuestions} onChange={p.onSetQuestions} />}
         {p.block.type === "rsvp" && <QuestionsEditor questions={p.config.rsvpQuestions} onChange={p.onSetQuestions} L={L} />}
       </div>
     );
@@ -259,18 +262,7 @@ export function Inspector(p: Props) {
       </section>
       )}
 
-      {show("link") && (
-      <section className="bl-group" aria-labelledby="bl-link">
-        <h3 id="bl-link">{p.lang === "en" ? "Invitation link" : "Link dell'invito"}</h3>
-        {p.shareUrl ? (
-          <div className="bl-fields">
-            <code className="bl-link-url">{p.shareUrl}</code>
-          </div>
-        ) : (
-          <p className="hint">{p.lang === "en" ? "The link appears once the invitation is published." : "Il link compare quando l'invito è pubblicato."}</p>
-        )}
-      </section>
-      )}
+      {show("link") && <LinkSection lang={p.lang ?? "it"} slug={p.slug} shareUrl={p.shareUrl} onSave={p.onSaveSlug} />}
 
       {show("tema") && (
       <section className="bl-group" aria-labelledby="bl-style">
@@ -293,6 +285,68 @@ export function Inspector(p: Props) {
       </section>
       )}
     </div>
+  );
+}
+
+// Domande standard della conferma di presenza, accese e spente con un interruttore (come nel riferimento).
+const STANDARD_QUESTIONS: { id: string; it: string; en: string; itHelp: string; enHelp: string }[] = [
+  { id: "messaggio", it: "Messaggio personale", en: "Personal message", itHelp: "Gli ospiti possono lasciare un pensiero.", enHelp: "Guests can leave a message." },
+  { id: "canzone", it: "Richiesta di canzone", en: "Song request", itHelp: "Gli ospiti suggeriscono le canzoni della festa.", enHelp: "Guests suggest songs for the party." },
+  { id: "allergie", it: "Allergie e intolleranze", en: "Allergies and intolerances", itHelp: "Una domanda aperta per le esigenze alimentari.", enHelp: "An open question about dietary needs." },
+];
+
+function StandardQuestions({ lang, questions, onChange }: { lang: "it" | "en"; questions: RsvpQuestion[]; onChange: (q: RsvpQuestion[]) => void }) {
+  const en = lang === "en";
+  const on = (id: string) => questions.some((q) => q.id === id);
+  function flip(item: (typeof STANDARD_QUESTIONS)[number], value: boolean) {
+    if (value) onChange([...questions, { id: item.id, label: en ? item.en : item.it, type: "text" }]);
+    else onChange(questions.filter((q) => q.id !== item.id));
+  }
+  return (
+    <div className="bl-group std-questions">
+      <h4 className="std-title">{en ? "Standard questions" : "Domande standard"}</h4>
+      {STANDARD_QUESTIONS.map((item) => (
+        <label key={item.id} className="std-row">
+          <span className="std-text">
+            <strong>{en ? item.en : item.it}</strong>
+            <small>{en ? item.enHelp : item.itHelp}</small>
+          </span>
+          <input type="checkbox" className="std-switch" checked={on(item.id)} onChange={(e) => flip(item, e.target.checked)} />
+        </label>
+      ))}
+    </div>
+  );
+}
+
+// Link dell'invito: visibile sempre, modificabile solo finché l'invito è in bozza.
+function LinkSection({ lang, slug, shareUrl, onSave }: { lang: "it" | "en"; slug?: string; shareUrl?: string; onSave?: (slug: string) => Promise<string | null> }) {
+  const en = lang === "en";
+  const [value, setValue] = useState(slug ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  useEffect(() => setValue(slug ?? ""), [slug]);
+  return (
+    <section className="bl-group" aria-labelledby="bl-link">
+      <h3 id="bl-link">{en ? "Invitation link" : "Link dell'invito"}</h3>
+      {shareUrl && <code className="bl-link-url">{shareUrl}</code>}
+      {onSave && (
+        <form className="link-edit" onSubmit={async (e) => {
+          e.preventDefault();
+          setSaved(false);
+          const err = await onSave(value);
+          setError(err);
+          setSaved(!err);
+        }}>
+          <Field label={en ? "Link name" : "Nome del link"}>
+            <input value={value} maxLength={60} onChange={(e) => { setValue(e.target.value); setSaved(false); }} aria-describedby="link-hint" />
+          </Field>
+          <p id="link-hint" className="hint">{en ? "Lowercase letters, numbers and dashes. Once the invitation is published the link stays the same." : "Solo lettere minuscole, numeri e trattini. Dopo la pubblicazione il link non cambia."}</p>
+          {error && <p role="alert" className="form-error">{error}</p>}
+          {saved && <p className="hint">{en ? "Link saved." : "Link salvato."}</p>}
+          <button type="submit" className="btn solid small">{en ? "Save link" : "Salva il link"}</button>
+        </form>
+      )}
+    </section>
   );
 }
 

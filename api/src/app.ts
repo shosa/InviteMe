@@ -23,6 +23,7 @@ import {
   type Catalog,
   type InviteConfig,
   type RsvpQuestion,
+  normalizeSlug,
 } from "@inviteme/shared";
 import { pool, migrate, track } from "./db";
 import { invalidateCatalog, loadCatalog, loadFullCatalog, saveCatalog, themes } from "./catalog";
@@ -283,6 +284,24 @@ export async function buildApp() {
     if (inv.status === "paid") return reply.code(409).send({ error: "Invito pagato: non si può eliminare" });
     await pool.query("DELETE FROM invitations WHERE id = $1 AND status <> 'paid'", [inv.id]);
     return reply.code(204).send();
+  });
+
+  // Link dell'invito: si può cambiare solo finché l'invito è in bozza. Un invito pubblicato mantiene il suo link.
+  app.put<{ Params: { id: string }; Body: { slug?: unknown } }>("/api/invitations/:id/slug", async (req, reply) => {
+    const user = await requireUser(req, reply);
+    if (!user) return;
+    const inv = await ownedInvitation(req.params.id, user.id);
+    if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
+    if (inv.status === "paid") return reply.code(409).send({ error: "Il link di un invito pubblicato non cambia: gli ospiti lo hanno già ricevuto." });
+    const slug = normalizeSlug((req.body ?? {}).slug);
+    if (!slug) return reply.code(400).send({ error: "Il link può contenere solo lettere minuscole, numeri e trattini (3–60 caratteri)." });
+    try {
+      await pool.query("UPDATE invitations SET slug = $1 WHERE id = $2", [slug, inv.id]);
+    } catch (e) {
+      if ((e as { code?: string }).code === "23505") return reply.code(409).send({ error: "Questo link è già in uso: scegline un altro." });
+      throw e;
+    }
+    return { slug };
   });
 
   app.put<{ Params: { id: string } }>("/api/invitations/:id", async (req, reply) => {

@@ -23,6 +23,13 @@ export type InviteConfig = {
   background?: BackgroundSpec; // sfondo animato scelto dal cliente; assente = quello proposto dallo stile
 };
 
+// Lo slug del link: minuscole, numeri e trattini, da 3 a 60 caratteri, senza trattini agli estremi.
+export function normalizeSlug(input: unknown): string | null {
+  const s = String(input ?? "").trim().toLowerCase().replace(/\s+/g, "-");
+  if (!/^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$/.test(s) || s.includes("--")) return null;
+  return s;
+}
+
 export const MAX_BLOCKS = 30;
 
 // Domande di partenza per la conferma di presenza.

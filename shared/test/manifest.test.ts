@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { validateManifest, sanitizeBlocks, type BlockInstance } from "../src/index";
+import { validateManifest, sanitizeBlocks, normalizeSlug, type BlockInstance } from "../src/index";
 
 const base = { engine: 2, id: "prova", name: "Prova", themeColor: "#000000", models: [], fonts: [], demo: {} };
 
@@ -79,5 +79,15 @@ describe("blocchi dell'invito", () => {
     assert.equal(out[0].hidden, true);
     assert.equal(out[0].props.heading, "<b>ok</b>");
     assert.equal("extra" in out[0].props, false);
+  });
+});
+
+describe("link dell'invito", () => {
+  it("accetta solo slug in minuscolo con numeri e trattini", () => {
+    assert.equal(normalizeSlug("Sara-Luca 2027"), "sara-luca-2027");
+    assert.equal(normalizeSlug("ab"), null);
+    assert.equal(normalizeSlug("-inizio"), null);
+    assert.equal(normalizeSlug("doppio--trattino"), null);
+    assert.equal(normalizeSlug("nome/cattivo"), null);
   });
 });

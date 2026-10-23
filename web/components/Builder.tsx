@@ -400,7 +400,20 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
     }
   }
 
-  const shareUrl = `${origin}/i/${initial.slug}`;
+  const [slug, setSlug] = useState(initial.slug);
+  const shareUrl = `${origin}/i/${slug}`;
+  // Link dell'invito: cambiabile solo in bozza; il server controlla formato e unicità.
+  async function saveSlug(value: string): Promise<string | null> {
+    const res = await fetch(`/api/invitations/${initial.id}/slug`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: value }),
+    });
+    const data = (await res.json().catch(() => ({}))) as { slug?: string; error?: string };
+    if (!res.ok || !data.slug) return data.error ?? (lang === "en" ? "Could not save the link." : "Impossibile salvare il link.");
+    setSlug(data.slug);
+    return null;
+  }
   const saveLabel = locked ? L.paid : save === "saving" ? L.saving : save === "error" ? L.notSaved : L.saved;
 
   return (
@@ -549,6 +562,8 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
             lang={lang}
             section={GENERAL_TABS.includes(tab) && !block ? (tab as "dettagli" | "tema" | "lingua" | "link") : undefined}
             shareUrl={shareUrl}
+            slug={slug}
+            onSaveSlug={editable && initial.status !== "paid" ? saveSlug : undefined}
             config={config}
             catalog={catalog}
             block={block}

@@ -1853,3 +1853,16 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .swatch:hover { transform: scale(1.06); }
 .swatch.is-on { outline: 2px solid var(--brass); outline-offset: 2px; }
 .bl-link-url { display: block; word-break: break-all; font-size: 13px; padding: 10px 12px; background: var(--paper-light); border: 1px solid var(--line); border-radius: 8px; }
+
+/* Builder: bordi floreali, domande standard RSVP con interruttori, modifica del link. */
+.std-questions { display: grid; gap: 4px; }
+.std-title { margin: 0 0 6px; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #8A5F13; font-weight: 500; }
+.std-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-bottom: 1px dashed rgba(185, 141, 95, .55); cursor: pointer; }
+.std-text { display: grid; gap: 3px; min-width: 0; }
+.std-text strong { font-weight: 500; font-size: 14.5px; }
+.std-text small { font-size: 12.5px; color: var(--ink-soft); }
+.std-switch { appearance: none; width: 42px; height: 24px; border-radius: 999px; background: #d9cbbb; position: relative; cursor: pointer; flex: none; margin: 0; transition: background .2s; }
+.std-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.std-switch:checked { background: var(--brass); }
+.std-switch:checked::after { transform: translateX(18px); }
+.link-edit { display: grid; gap: 8px; }
