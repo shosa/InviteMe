@@ -2045,3 +2045,8 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 .bl-app .font-btn { width: 48px; min-height: 44px; border: 1px solid #DCCFC2; border-radius: 0 12px 12px 0; background: #FFFFFF; font-size: 15px; }
 .bl-app .font-btn:hover, .bl-app .font-btn[aria-expanded="true"] { border-color: var(--brass-light); }
 .bl-app .font-btn.is-set { background: var(--brass); border-color: var(--brass); color: #FFFFFF; }
+
+/* Builder: campi, select e pulsante Aa bianchi (non avorio). */
+.bl-app .bl-right input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), .bl-app .bl-right select, .bl-app .bl-right textarea,
+.bl-app .bl-fields input:not([type="checkbox"]):not([type="radio"]):not([type="color"]), .bl-app .bl-fields select, .bl-app .bl-fields textarea,
+.bl-app .font-btn { background: #FFFFFF; }
