@@ -21,7 +21,8 @@ import {
   isFixedPosition,
 } from "@inviteme/shared";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Eye, ExternalLink, Maximize2, Menu, Minimize2, Monitor, Redo2, RotateCw, Smartphone, Undo2, Users, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { ArrowLeft, CalendarDays, ClipboardCheck, Copy, Eye, ExternalLink, Languages, Link2, Mail, Maximize2, Menu, Minimize2, Monitor, Music, Palette, Redo2, RotateCw, Smartphone, Undo2, Users, X } from "lucide-react";
 import { Canvas } from "./builder/Canvas";
 import { Inspector } from "./builder/Inspector";
 import { GuestsPanel } from "./builder/guests";
@@ -64,15 +65,15 @@ function pageKey(c: InviteConfig, envelopeOn: boolean): string {
 const GENERAL_TABS = ["tema", "dettagli", "lingua", "link"];
 
 // Schede del pannello dei controlli: ciascuna apre una funzione già presente nel builder.
-const BUILDER_TABS: { id: string; it: string; en: string; type?: string; guests?: boolean }[] = [
-  { id: "tema", it: "Tema", en: "Theme" },
-  { id: "busta", it: "Busta", en: "Envelope", type: "cover" },
-  { id: "dettagli", it: "Dettagli", en: "Details" },
-  { id: "audio", it: "Audio", en: "Audio", type: "music" },
-  { id: "lingua", it: "Lingue", en: "Languages" },
-  { id: "rsvp", it: "RSVP", en: "RSVP", type: "rsvp" },
-  { id: "ospiti", it: "Ospiti", en: "Guests", guests: true },
-  { id: "link", it: "Link", en: "Custom URL" },
+const BUILDER_TABS: { id: string; it: string; en: string; type?: string; guests?: boolean; icon: LucideIcon }[] = [
+  { id: "tema", it: "Tema", en: "Theme", icon: Palette },
+  { id: "busta", it: "Busta", en: "Envelope", type: "cover", icon: Mail },
+  { id: "dettagli", it: "Dettagli", en: "Details", icon: CalendarDays },
+  { id: "audio", it: "Audio", en: "Audio", type: "music", icon: Music },
+  { id: "lingua", it: "Lingue", en: "Languages", icon: Languages },
+  { id: "rsvp", it: "RSVP", en: "RSVP", type: "rsvp", icon: ClipboardCheck },
+  { id: "ospiti", it: "Ospiti", en: "Guests", guests: true, icon: Users },
+  { id: "link", it: "Link", en: "Custom URL", icon: Link2 },
 ];
 
 export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang }) {
@@ -556,7 +557,8 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
                   setSelected(target ? target.id : null);
                 }}
               >
-                {label}
+                <t.icon size={18} aria-hidden="true" />
+                <span>{label}</span>
               </button>
             );
           })}

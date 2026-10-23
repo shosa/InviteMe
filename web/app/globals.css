@@ -1885,3 +1885,4 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-tab:hover { border-color: var(--brass-light); }
 .bl-tab.on { background: var(--brass); border-color: var(--brass); color: #FFFFFF; box-shadow: 0 8px 18px -12px rgba(90, 27, 35, .6); }
 .bl-tab:focus-visible { outline: 2px solid var(--brass-light); outline-offset: 2px; }
+.bl-tab { flex-direction: column; gap: 6px; }
