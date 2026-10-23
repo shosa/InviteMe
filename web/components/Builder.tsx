@@ -60,6 +60,18 @@ function pageKey(c: InviteConfig, envelopeOn: boolean): string {
 }
 
 // L'invito aperto è disponibile a tutto l'editor (ricerca foto Pixabay nei campi).
+// Schede del pannello dei controlli: ciascuna apre una funzione già presente nel builder.
+const BUILDER_TABS: { id: string; it: string; en: string; type?: string; guests?: boolean }[] = [
+  { id: "tema", it: "Tema", en: "Theme" },
+  { id: "busta", it: "Busta", en: "Envelope", type: "cover" },
+  { id: "dettagli", it: "Dettagli", en: "Details" },
+  { id: "audio", it: "Audio", en: "Audio", type: "music" },
+  { id: "lingua", it: "Lingue", en: "Languages" },
+  { id: "rsvp", it: "RSVP", en: "RSVP", type: "rsvp" },
+  { id: "ospiti", it: "Ospiti", en: "Guests", guests: true },
+  { id: "link", it: "Link", en: "Custom URL" },
+];
+
 export function Builder({ initial, lang = "it" }: { initial: Manage; lang?: Lang }) {
   return (
     <StockContext.Provider value={initial.id}>
@@ -93,6 +105,8 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
 
   const [selected, setSelected] = useState<string | null>(null);
   const [panel, setPanel] = useState<"proprieta" | "ospiti">("proprieta");
+  // Schede in alto nel pannello dei controlli, come nel riferimento: ciascuna apre una funzione del builder.
+  const [tab, setTab] = useState<string>("dettagli");
   const [device, setDevice] = useState<Device>("mobile");
   const [mobileTab, setMobileTab] = useState<MobileTab>("anteprima");
   const [save, setSave] = useState<Save>("saved");
@@ -491,6 +505,31 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
       </main>
 
       <aside className="bl-right" aria-label="Proprietà">
+        <nav className="bl-tabs" role="tablist" aria-label={lang === "en" ? "Sections" : "Sezioni"}>
+          {BUILDER_TABS.map((t) => {
+            const it = lang !== "en";
+            const label = it ? t.it : t.en;
+            const on = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                className={`bl-tab${on ? " on" : ""}`}
+                onClick={() => {
+                  setTab(t.id);
+                  if (t.guests) { setPanel("ospiti"); setSelected(null); return; }
+                  setPanel("proprieta");
+                  const target = t.type ? config.blocks.find((b) => b.type === t.type) : undefined;
+                  setSelected(target ? target.id : null);
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </nav>
         {panel === "ospiti" ? (
           <GuestsPanel lang={lang} invitationId={initial.id} paid={locked} hasRsvp={hasRsvp} guests={guests} onSent={(sent) => setGuests((g) => [...g, ...sent.map((email) => ({ email, sentAt: new Date().toISOString() }))])} />
         ) : (
