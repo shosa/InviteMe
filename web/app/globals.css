@@ -1886,3 +1886,10 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-tab.on { background: var(--brass); border-color: var(--brass); color: #FFFFFF; box-shadow: 0 8px 18px -12px rgba(90, 27, 35, .6); }
 .bl-tab:focus-visible { outline: 2px solid var(--brass-light); outline-offset: 2px; }
 .bl-tab { flex-direction: column; gap: 6px; }
+
+/* Builder: titolo della sezione sopra le schede; schede un po' più piccole. */
+.bl-tabs-head { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; }
+.bl-tabs-head h2 { margin: 0; font-family: var(--font-display), Georgia, serif; font-size: 26px; font-weight: 500; color: var(--brass); letter-spacing: -0.01em; }
+.bl-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 0 0 18px; }
+@media (max-width: 900px) { .bl-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.bl-tab { min-height: 50px; padding: 9px 8px; font-size: 14px; gap: 5px; border-radius: 10px; }

@@ -22,7 +22,7 @@ import {
 } from "@inviteme/shared";
 import { toast } from "sonner";
 import type { LucideIcon } from "lucide-react";
-import { ArrowLeft, CalendarDays, ClipboardCheck, Copy, Eye, ExternalLink, Languages, Link2, Mail, Maximize2, Menu, Minimize2, Monitor, Music, Palette, Redo2, RotateCw, Smartphone, Undo2, Users, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, ClipboardCheck, Copy, Eye, ExternalLink, LayoutList, Languages, Link2, Mail, Maximize2, Menu, Minimize2, Monitor, Music, Palette, Redo2, RotateCw, Smartphone, Undo2, Users, X } from "lucide-react";
 import { Canvas } from "./builder/Canvas";
 import { Inspector } from "./builder/Inspector";
 import { GuestsPanel } from "./builder/guests";
@@ -65,7 +65,8 @@ function pageKey(c: InviteConfig, envelopeOn: boolean): string {
 const GENERAL_TABS = ["tema", "dettagli", "lingua", "link"];
 
 // Schede del pannello dei controlli: ciascuna apre una funzione già presente nel builder.
-const BUILDER_TABS: { id: string; it: string; en: string; type?: string; guests?: boolean; icon: LucideIcon }[] = [
+const BUILDER_TABS: { id: string; it: string; en: string; type?: string; guests?: boolean; blocks?: boolean; icon: LucideIcon }[] = [
+  { id: "blocchi", it: "Blocchi", en: "Blocks", blocks: true, icon: LayoutList },
   { id: "tema", it: "Tema", en: "Theme", icon: Palette },
   { id: "busta", it: "Busta", en: "Envelope", type: "cover", icon: Mail },
   { id: "dettagli", it: "Dettagli", en: "Details", icon: CalendarDays },
@@ -133,6 +134,15 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   const [mobileSheet, setMobileSheet] = useState(false);
   // Anteprima in una card con barra: ingrandisci a tutto schermo, ricarica, copia il link, apri in una nuova scheda.
   const [previewFull, setPreviewFull] = useState(false);
+  // Su desktop l'elenco dei blocchi è una scheda del centro; su telefono resta nella sua colonna.
+  const [isDesktop, setIsDesktop] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 901px)");
+    const on = () => setIsDesktop(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   const [origin, setOrigin] = useState("");
   const [guests, setGuests] = useState(initial.guests);
   const [firstSave, setFirstSave] = useState(true);
@@ -419,6 +429,29 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   }
   const saveLabel = locked ? L.paid : save === "saving" ? L.saving : save === "error" ? L.notSaved : L.saved;
 
+  const blocksPanel = (
+          <Canvas
+            blocks={config.blocks}
+            config={config}
+            catalog={catalog}
+            selected={selected}
+            hover={hover}
+            features={features}
+            theme={theme}
+            paidAlready={paidAlready}
+            onSelect={(id) => { setSelected(id); setPanel("proprieta"); setMobileTab("proprieta"); }}
+            onHover={setHover}
+            lang={lang}
+            onAdd={addBlock}
+            onToggleAddon={toggleAddon}
+            onSetModel={setModel}
+            onMove={moveBlock}
+            onDuplicate={duplicateBlock}
+            onToggle={toggleBlock}
+            onRemove={removeBlock}
+          />
+  );
+
   return (
     <div className={`bl-app is-${device} is-tab-${mobileTab}`}>
       <header className="bl-top">
@@ -449,26 +482,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
       </nav>
 
       <aside className="bl-left" aria-label="Blocchi">
-        <Canvas
-          blocks={config.blocks}
-          config={config}
-          catalog={catalog}
-          selected={selected}
-          hover={hover}
-          features={features}
-          theme={theme}
-          paidAlready={paidAlready}
-          onSelect={(id) => { setSelected(id); setPanel("proprieta"); setMobileTab("proprieta"); }}
-          onHover={setHover}
-          lang={lang}
-          onAdd={addBlock}
-          onToggleAddon={toggleAddon}
-          onSetModel={setModel}
-          onMove={moveBlock}
-          onDuplicate={duplicateBlock}
-          onToggle={toggleBlock}
-          onRemove={removeBlock}
-        />
+        {!isDesktop && blocksPanel}
       </aside>
 
       <main className="bl-center" aria-label={L.previewAria}>
@@ -537,6 +551,10 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
       </main>
 
       <aside className="bl-right" aria-label="Proprietà">
+        <div className="bl-tabs-head">
+          <span className="bl-kicker">{lang === "en" ? "Invitation sections" : "Sezioni dell'invito"}</span>
+          <h2>{(() => { const t = BUILDER_TABS.find((x) => x.id === tab); return t ? (lang === "en" ? t.en : t.it) : ""; })()}</h2>
+        </div>
         <nav className="bl-tabs" role="tablist" aria-label={lang === "en" ? "Sections" : "Sezioni"}>
           {BUILDER_TABS.map((t) => {
             const it = lang !== "en";
@@ -551,19 +569,20 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
                 className={`bl-tab${on ? " on" : ""}`}
                 onClick={() => {
                   setTab(t.id);
+                  if (t.blocks) { setSelected(null); setPanel("proprieta"); setMobileTab("blocchi"); return; }
                   if (t.guests) { setPanel("ospiti"); setSelected(null); return; }
                   setPanel("proprieta");
                   const target = t.type ? config.blocks.find((b) => b.type === t.type) : undefined;
                   setSelected(target ? target.id : null);
                 }}
               >
-                <t.icon size={18} aria-hidden="true" />
+                <t.icon size={16} aria-hidden="true" />
                 <span>{label}</span>
               </button>
             );
           })}
         </nav>
-        {panel === "ospiti" ? (
+        {isDesktop && tab === "blocchi" ? blocksPanel : panel === "ospiti" ? (
           <GuestsPanel lang={lang} invitationId={initial.id} paid={locked} hasRsvp={hasRsvp} guests={guests} onSent={(sent) => setGuests((g) => [...g, ...sent.map((email) => ({ email, sentAt: new Date().toISOString() }))])} />
         ) : tabMissingBlock ? (
           <div className="bl-inspector">
