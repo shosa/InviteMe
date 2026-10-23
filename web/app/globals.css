@@ -974,9 +974,9 @@ td a { color: var(--ink); }
 @media (min-width: 901px) {
   .bl-frame.is-mobile { position: relative; width: 390px; max-width: 100%; padding: 9px; border-radius: 48px; background: #1d1b19; box-shadow: inset 0 0 0 1px #3b3834, 0 30px 60px -30px rgba(23, 36, 42, .6); }
   .bl-frame.is-mobile iframe { border-radius: 40px; }
-  .bl-app.is-mobile .bl-frame.is-mobile { flex: none; box-sizing: border-box; height: auto; aspect-ratio: 390 / 844; width: min(390px, 100%, calc((100vh - 170px) * 390 / 844)); }
+  .bl-app.is-mobile .bl-frame.is-mobile { flex: none; box-sizing: border-box; height: auto; aspect-ratio: 390 / 844; width: min(390px, 100%, calc((100vh - 250px) * 390 / 844)); }
   @supports (height: 100dvh) {
-    .bl-app.is-mobile .bl-frame.is-mobile { width: min(390px, 100%, calc((100dvh - 170px) * 390 / 844)); }
+    .bl-app.is-mobile .bl-frame.is-mobile { width: min(390px, 100%, calc((100dvh - 250px) * 390 / 844)); }
   }
   .bl-app.is-mobile .bl-frame.is-mobile iframe { height: 100%; }
 }
@@ -1542,7 +1542,14 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .addr-list button:hover { background: var(--paper); }
 
 /* Pannello proprietà: più largo, campi nei limiti, domande RSVP senza sforare. */
-@media (min-width: 901px) { .bl-app { grid-template-columns: 360px minmax(0, 1fr) 470px; } }
+/* Builder desktop, come nel riferimento: sezioni a sinistra, controlli al centro, anteprima telefono a destra.
+   La colonna DOM dell'anteprima (.bl-center) va nell'area di destra; quella dei controlli (.bl-right) al centro. */
+@media (min-width: 901px) {
+  .bl-app { grid-template-columns: 300px minmax(0, 1fr) 420px; }
+  .bl-app .bl-center { grid-area: right; }
+  .bl-app .bl-right { grid-area: center; }
+  .bl-app .bl-right { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+}
 .bl-right { min-width: 0; overflow-x: hidden; }
 .bl-back { font: inherit; font-size: 13px; font-weight: 600; background: none; border: 0; color: var(--brass); cursor: pointer; padding: 0 0 8px; text-align: left; }
 .bl-questions, .bl-question { min-width: 0; max-width: 100%; }
