@@ -620,7 +620,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
             onSetQuestions={(rsvpQuestions: RsvpQuestion[]) => edit((c) => ({ ...c, rsvpQuestions }), "questions")}
             onToggle={toggleBlock}
             onRemove={removeBlock}
-            onBack={() => setSelected(null)}
+            onBack={() => { setSelected(null); setTab("blocchi"); setPanel("proprieta"); }}
             onUpload={upload}
           />
         )}

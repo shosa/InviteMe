@@ -1917,3 +1917,10 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .mp-upload strong { font-size: 14px; }
 .mp-upload small { font-size: 12.5px; color: var(--ink-soft); flex: 1 1 100%; }
 .mp-upload-btn { cursor: pointer; }
+
+/* Builder: "Torna ai blocchi" in alto a sinistra, sopra il titolo del blocco. */
+.bl-inspector > .bl-back, .bl-insp-head > .bl-back { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin: 0 0 4px; padding: 0; font-size: 13.5px; font-weight: 600; color: var(--brass); }
+.bl-inspector > .bl-back::before { content: "←"; font-weight: 500; }
+.bl-insp-head { flex-wrap: wrap; }
+.bl-insp-head > .bl-back { order: -1; flex-basis: 100%; }
+.bl-insp-head > .bl-back::before { content: "←"; font-weight: 500; margin-right: 2px; }
