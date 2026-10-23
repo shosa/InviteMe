@@ -1946,29 +1946,11 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
   .bl-insp-head > .bl-back { transition: none; }
 }
 
-/* Builder: "Torna ai blocchi" come pulsante compatto in una riga propria, colore ottone pieno. */
+/* Builder: "Torna ai blocchi" in riga propria, compatto, colore accento (ceralacca). Al passaggio del mouse
+   diventa bianco con bordo e testo bordeaux. */
 .bl-back-row { display: flex; }
-.bl-back-row .bl-back { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--brass-light); color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color .15s, transform .15s; }
-.bl-back-row .bl-back::before { content: "←"; font-size: 14px; line-height: 1; }
-.bl-back-row .bl-back:hover { background: var(--brass); transform: translateX(-2px); }
-.bl-back-row .bl-back:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.bl-back-row .bl-back { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px 0 11px; border: 1px solid var(--brass); border-radius: 999px; background: var(--brass); color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 6px 14px -10px rgba(90, 27, 35, .7); transition: background-color .15s, border-color .15s, box-shadow .15s, transform .15s, color .15s; }
+.bl-back-row .bl-back svg { flex: none; }
+.bl-back-row .bl-back:hover { background: #FFFFFF; color: var(--brass); border-color: var(--brass); box-shadow: 0 0 0 3px rgba(90, 27, 35, .14); transform: translateX(-2px); }
+.bl-back-row .bl-back:focus-visible { outline: 2px solid var(--brass-light); outline-offset: 2px; }
 .bl-insp-head > .bl-back { display: none; }
-
-/* Builder: select, campi e aree di caricamento trascinabili (drop-zone) con angoli tondi, come il resto dei controlli. */
-.bl-right select, .bl-right input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), .bl-right textarea,
-.bl-fields select, .bl-fields input:not([type="checkbox"]):not([type="radio"]), .bl-fields textarea {
-  border-radius: 12px; border: 1px solid var(--line); background: var(--paper-light); min-height: 42px;
-  transition: border-color .15s, box-shadow .15s;
-}
-.bl-right select:hover, .bl-right input:hover:not([type="checkbox"]):not([type="radio"]), .bl-right textarea:hover,
-.bl-fields select:hover, .bl-fields textarea:hover { border-color: var(--brass-light); }
-.bl-right select:focus, .bl-right input:focus, .bl-right textarea:focus, .bl-fields select:focus, .bl-fields textarea:focus {
-  border-color: var(--brass); box-shadow: 0 0 0 3px rgba(185, 141, 95, .18); outline: none;
-}
-.bl-right .upload, .bl-fields .upload, .bl-right .media-actions > .upload {
-  border: 1.5px dashed #CDBBA8; border-radius: 16px; background: #FBF7F2; color: var(--ink);
-  transition: border-color .15s, background-color .15s, transform .15s;
-}
-.bl-right .upload:hover, .bl-fields .upload:hover, .bl-right .media-actions > .upload:hover { background: #F7EEE6; border-color: var(--brass-light); transform: translateY(-1px); }
-.bl-right .media-preview, .bl-fields .media-preview { border-radius: 14px; }
-.bl-right .media-stock, .bl-right .media-actions > .media-stock { background: transparent; }

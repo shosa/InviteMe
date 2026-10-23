@@ -3,7 +3,7 @@
 import { BLOCK_LABELS, EVENT_FIELDS, EVENT_TYPES, HERO_EVENT_KEYS, blockDef, enabledThemes, type BlockDef, type BlockInstance, type Catalog, type EventType, type FieldDef, type FontId, type InviteConfig, type RsvpQuestion, BACKGROUND_KINDS, BACKGROUND_LABELS, type BackgroundKind, type BackgroundSpec } from "@inviteme/shared";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Ellipsis, Eye, EyeOff, Image as ImageIcon, LayoutGrid, Palette, Shapes, Trash2, Type } from "lucide-react";
+import { ArrowLeft, Ellipsis, Eye, EyeOff, Image as ImageIcon, LayoutGrid, Palette, Shapes, Trash2, Type } from "lucide-react";
 import { Field, FieldEditor, type Values } from "./fields";
 import { FontButton } from "./FontButton";
 import { TemplateSwitch } from "./TemplateSwitch";
@@ -160,7 +160,7 @@ export function Inspector(p: Props) {
       <div className="bl-inspector">
         {p.onBack && (
           <div className="bl-back-row">
-            <button type="button" className="bl-back" onClick={p.onBack}>{p.lang === "en" ? "Back to blocks" : "Torna ai blocchi"}</button>
+            <button type="button" className="bl-back" onClick={p.onBack}><ArrowLeft size={15} aria-hidden="true" />{p.lang === "en" ? "Back to blocks" : "Torna ai blocchi"}</button>
           </div>
         )}
         <header className="bl-insp-head">
