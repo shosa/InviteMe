@@ -29,7 +29,7 @@ import { GuestsPanel } from "./builder/guests";
 import { useHistory } from "./builder/history";
 import { parseFragments } from "@/lib/blockFragments";
 import { ui, type Lang } from "@/lib/ui";
-import { modelCopy, themeCopy } from "@/lib/catalogCopy";
+import { blockCopy, modelCopy, themeCopy } from "@/lib/catalogCopy";
 import { StockContext } from "./builder/PixabayDialog";
 
 export type Manage = {
@@ -166,6 +166,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   const extra = paidAlready ? total - paidTotal : 0;
   const block = config.blocks.find((b) => b.id === selected) ?? null;
   const tabDef = BUILDER_TABS.find((t) => t.id === tab);
+  const missingType = tabDef?.type ?? "";
   const tabMissingBlock = !block && !!tabDef?.type && !tabDef.guests && !config.blocks.some((b) => b.type === tabDef.type);
   const title = String(config.event.title ?? "") || L.unnamed;
   const hasRsvp = config.blocks.some((b) => b.type === "rsvp");
@@ -584,12 +585,15 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
         </nav>
         {isDesktop && tab === "blocchi" ? blocksPanel : panel === "ospiti" ? (
           <GuestsPanel lang={lang} invitationId={initial.id} paid={locked} hasRsvp={hasRsvp} guests={guests} onSent={(sent) => setGuests((g) => [...g, ...sent.map((email) => ({ email, sentAt: new Date().toISOString() }))])} />
-        ) : tabMissingBlock ? (
-          <div className="bl-inspector">
+        ) : tabMissingBlock && tabDef?.type ? (
+          <div className="bl-inspector bl-missing-block">
             <p className="bl-kicker">{lang === "en" ? "Not in the invitation" : "Non presente nell'invito"}</p>
-            <p className="hint">{lang === "en"
-              ? "This function is not in the invitation yet. Add it from the structure column with the + button."
-              : "Questa funzione non è ancora nell'invito. Aggiungila dalla colonna della struttura con il pulsante +."}</p>
+            <h2>{blockCopy(tabDef.type, blockDef(tabDef.type)?.label ?? tabDef.type, lang)}</h2>
+            <p className="hint">{blockDef(tabDef.type)?.description ?? ""}</p>
+            <button type="button" className="btn solid" disabled={locked} onClick={() => addBlock(missingType as BlockType, blockDef(missingType)?.feature)}>
+              {lang === "en" ? "Add to invitation" : "Aggiungila all'invito"}
+            </button>
+            {locked && <p className="hint">{L.lockedNote}</p>}
           </div>
         ) : (
           <Inspector
