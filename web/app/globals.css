@@ -1878,21 +1878,18 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-preview-tools-row button[aria-pressed="true"] { background: var(--brass); color: #FFFFFF; border-color: var(--brass); }
 .bl-preview-card .bl-preview-bar { border-bottom: 1px solid var(--line); }
 
-/* Builder: schede delle sezioni (Tema, Busta, Dettagli…) come rettangoli con bordo, più grandi; la scheda attiva è piena. */
-.bl-tabs { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; border-bottom: 0; margin: 4px 0 20px; overflow: visible; }
-.bl-tab { min-height: 58px; justify-content: center; padding: 12px 10px; border: 1px solid var(--line); border-radius: 12px; background: #FFFFFF; color: var(--ink); font-size: 15px; font-weight: 600; text-align: center; box-shadow: 0 1px 2px rgba(43, 35, 32, .05); transition: border-color .15s, background-color .15s, color .15s; }
-.bl-tab:hover { border-color: var(--brass-light); }
-.bl-tab.on { background: var(--brass); border-color: var(--brass); color: #FFFFFF; box-shadow: 0 8px 18px -12px rgba(90, 27, 35, .6); }
-.bl-tab:focus-visible { outline: 2px solid var(--brass-light); outline-offset: 2px; }
-.bl-tab { flex-direction: column; gap: 6px; }
-
-/* Builder: titolo della sezione sopra le schede; schede un po' più piccole. */
+/* Builder: titolo della sezione sopra lo switcher. */
 .bl-tabs-head { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; }
 .bl-tabs-head h2 { margin: 0; font-family: var(--font-display), Georgia, serif; font-size: 26px; font-weight: 500; color: var(--brass); letter-spacing: -0.01em; }
-.bl-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 0 0 18px; }
-@media (max-width: 900px) { .bl-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.bl-tab { min-height: 50px; padding: 9px 8px; font-size: 14px; gap: 5px; border-radius: 10px; }
 
+/* Builder: switcher delle sezioni (primo livello): barra a segmenti con icone; la scheda attiva è una card bianca. */
+.bl-switcher { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; padding: 6px; margin: 0 0 20px; background: #EFE7DC; border: 1px solid #E3D7C8; border-radius: 16px; }
+.bl-switcher-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 66px; padding: 8px 4px; border: 0; border-radius: 12px; background: transparent; color: var(--ink-soft); font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: background-color .15s, color .15s, box-shadow .15s; }
+.bl-switcher-tab:hover { color: var(--ink); background: rgba(255, 255, 255, .55); }
+.bl-switcher-tab.is-on { background: #FFFFFF; color: var(--brass); font-weight: 600; box-shadow: 0 1px 2px rgba(43, 35, 32, .12), 0 8px 16px -12px rgba(90, 27, 35, .55); }
+.bl-switcher-tab:focus-visible { outline: 2px solid var(--brass-light); outline-offset: 2px; }
+.sw-ico { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: #F6EFE6; color: var(--brass-light); transition: background-color .15s, color .15s; }
+.bl-switcher-tab.is-on .sw-ico { background: var(--brass); color: #FFFFFF; }
 /* Builder desktop: l'elenco dei blocchi occupa il 70% dello spazio della colonna, centrato, con margini ai lati. */
 @media (min-width: 901px) {
   .bl-right .bl-column { width: 70%; max-width: none; margin: 0 auto; }

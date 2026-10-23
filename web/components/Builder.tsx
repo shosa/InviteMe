@@ -556,7 +556,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
           <span className="bl-kicker">{lang === "en" ? "Invitation sections" : "Sezioni dell'invito"}</span>
           <h2>{(() => { const t = BUILDER_TABS.find((x) => x.id === tab); return t ? (lang === "en" ? t.en : t.it) : ""; })()}</h2>
         </div>
-        <nav className="bl-tabs" role="tablist" aria-label={lang === "en" ? "Sections" : "Sezioni"}>
+        <nav className="bl-switcher" role="tablist" aria-label={lang === "en" ? "Sections" : "Sezioni"}>
           {BUILDER_TABS.map((t) => {
             const it = lang !== "en";
             const label = it ? t.it : t.en;
@@ -567,7 +567,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
                 type="button"
                 role="tab"
                 aria-selected={on}
-                className={`bl-tab${on ? " on" : ""}`}
+                className={`bl-switcher-tab${on ? " is-on" : ""}`}
                 onClick={() => {
                   setTab(t.id);
                   if (t.blocks) { setSelected(null); setPanel("proprieta"); setMobileTab("blocchi"); return; }
@@ -577,7 +577,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
                   setSelected(target ? target.id : null);
                 }}
               >
-                <t.icon size={16} aria-hidden="true" />
+                <span className="sw-ico"><t.icon size={16} aria-hidden="true" /></span>
                 <span>{label}</span>
               </button>
             );
