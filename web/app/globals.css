@@ -1882,15 +1882,16 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-tabs-head { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; }
 .bl-tabs-head h2 { margin: 0; font-family: var(--font-display), Georgia, serif; font-size: 26px; font-weight: 500; color: var(--brass); letter-spacing: -0.01em; }
 
-/* Builder: switcher delle sezioni (primo livello) come nel riferimento: una riga di schede con icona e testo,
-   scorrevole in orizzontale; la scheda attiva ha il bordo e il testo in bordeaux. */
-.bl-switcher { display: flex; gap: 6px; margin: 0 0 18px; padding: 2px 0 10px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+/* Builder: switcher delle sezioni (primo livello): una riga di schede grandi, ognuna con il suo bordo;
+   hover con bordo e sfondo più chiari; scheda attiva piena in bordeaux con testo bianco. */
+.bl-switcher { display: flex; gap: 8px; margin: 0 0 18px; padding: 2px 0 2px; overflow-x: auto; scrollbar-width: none; }
 .bl-switcher::-webkit-scrollbar { display: none; }
-.bl-switcher-tab { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--ink-soft); font: inherit; font-size: 13.5px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: border-color .15s, color .15s, background-color .15s; }
-.bl-switcher-tab:hover { color: var(--ink); border-color: var(--line); }
-.bl-switcher-tab.is-on { color: var(--brass); border-color: var(--brass); background: #F7EEE6; font-weight: 600; }
+.bl-switcher-tab { flex: none; display: inline-flex; align-items: center; gap: 9px; min-height: 50px; padding: 0 18px; border: 1px solid #DCCFC2; border-radius: 12px; background: #FFFFFF; color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; white-space: nowrap; cursor: pointer; box-shadow: 0 1px 2px rgba(43, 35, 32, .05); transition: border-color .15s, background-color .15s, color .15s, box-shadow .15s, transform .15s; }
+.bl-switcher-tab .sw-ico { display: inline-flex; color: var(--brass-light); transition: color .15s; }
+.bl-switcher-tab:hover { border-color: var(--brass-light); background: #FBF5EE; box-shadow: 0 6px 14px -10px rgba(90, 27, 35, .45); transform: translateY(-1px); }
 .bl-switcher-tab:focus-visible { outline: 2px solid var(--brass-light); outline-offset: 2px; }
-.sw-ico { display: inline-flex; color: currentColor; }
+.bl-switcher-tab.is-on { background: var(--brass); border-color: var(--brass); color: #FFFFFF; font-weight: 600; box-shadow: 0 10px 18px -12px rgba(90, 27, 35, .7); transform: none; }
+.bl-switcher-tab.is-on .sw-ico { color: #FFFFFF; }
 
 /* Builder desktop: l'elenco dei blocchi occupa il 70% dello spazio della colonna, centrato, con margini ai lati. */
 @media (min-width: 901px) {
