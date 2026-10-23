@@ -1997,3 +1997,12 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .stock-check input { accent-color: var(--brass); }
 .stock-item { border-radius: 14px; }
 .stock-foot .link, .stock-filter-foot .link { color: var(--brass); }
+
+/* Builder: riga di navigazione accanto a "Torna ai blocchi": Blocchi › blocco › scheda di secondo livello. */
+.bl-back-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.bl-crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; font-size: 13px; color: var(--ink-soft); }
+.bl-crumb { background: none; border: 0; padding: 0; font: inherit; color: inherit; }
+button.bl-crumb { cursor: pointer; text-decoration: underline; text-decoration-color: rgba(90, 27, 35, .35); text-underline-offset: 3px; }
+button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass); }
+.bl-crumb-sep { opacity: .5; }
+.bl-crumb.is-current { color: var(--brass); font-weight: 600; }

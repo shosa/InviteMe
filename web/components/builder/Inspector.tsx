@@ -40,8 +40,7 @@ const isTextField = (f: FieldDef) => f.type === "text" || f.type === "longtext";
 // Una riga del pannello: una proprietà del blocco, oppure un dato dell'evento (solo nell'Intestazione).
 type Item = { field: FieldDef; event: boolean };
 
-function BlockFields({ p, def, L }: { p: Props; def: BlockDef; L: ReturnType<typeof ui>["builder"] }) {
-  const [tab, setTab] = useState<TabKey>("all");
+function BlockFields({ p, def, L, tab, setTab }: { p: Props; def: BlockDef; L: ReturnType<typeof ui>["builder"]; tab: TabKey; setTab: (t: TabKey) => void }) {
   const items = useMemo<Item[]>(() => {
     const own = def.fields.map((field) => ({ field, event: false }));
     const fromEvent = def.type === "hero" ? EVENT_FIELDS.filter((f) => HERO_EVENT_KEYS.includes(f.key)).map((field) => ({ field, event: true })) : [];
@@ -153,7 +152,11 @@ type Props = {
 // Colonna destra: le proprietà del blocco selezionato, oppure i dati generali dell'invito.
 export function Inspector(p: Props) {
   const L = ui(p.lang ?? "it").builder;
+  // Scheda di secondo livello del blocco (Tutto, Testi, Colori…): tenuta qui per mostrarla nella riga di navigazione.
+  const [sub, setSub] = useState<{ id: string; tab: TabKey }>({ id: "", tab: "all" });
   if (p.block) {
+    const subTab: TabKey = sub.id === p.block.id ? sub.tab : "all";
+    const subLabels: Record<TabKey, string> = { all: L.tabAll, texts: L.tabTexts, colors: L.tabColors, shapes: L.tabShapes, media: L.tabMedia, other: L.tabOther };
     const def = blockDef(p.block.type);
     if (!def) return null;
     return (
@@ -161,6 +164,13 @@ export function Inspector(p: Props) {
         {p.onBack && (
           <div className="bl-back-row">
             <button type="button" className="bl-back" onClick={p.onBack}><ArrowLeft size={15} aria-hidden="true" />{p.lang === "en" ? "Back to blocks" : "Torna ai blocchi"}</button>
+            <nav className="bl-crumbs" aria-label={p.lang === "en" ? "You are here" : "Dove sei"}>
+              <button type="button" className="bl-crumb" onClick={p.onBack}>{p.lang === "en" ? "Blocks" : "Blocchi"}</button>
+              <span className="bl-crumb-sep" aria-hidden="true">›</span>
+              <span className="bl-crumb">{blockCopy(def.type, def.label, p.lang ?? "it")}</span>
+              <span className="bl-crumb-sep" aria-hidden="true">›</span>
+              <span className="bl-crumb is-current" aria-current="page">{subLabels[subTab]}</span>
+            </nav>
           </div>
         )}
         <header className="bl-insp-head">
@@ -193,7 +203,7 @@ export function Inspector(p: Props) {
               busy={!!p.busy}
             />
           ) : (
-            <BlockFields key={p.block.id} p={p} def={def} L={L} />
+            <BlockFields key={p.block.id} p={p} def={def} L={L} tab={subTab} setTab={(t) => setSub({ id: p.block!.id, tab: t })} />
           )
         )}
         {p.block.type === "map" && (
