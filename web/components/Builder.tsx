@@ -21,7 +21,7 @@ import {
   isFixedPosition,
 } from "@inviteme/shared";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Eye, Menu, Monitor, Redo2, Smartphone, Undo2, Users, X } from "lucide-react";
+import { ArrowLeft, Copy, Eye, ExternalLink, Maximize2, Menu, Minimize2, Monitor, Redo2, RotateCw, Smartphone, Undo2, Users, X } from "lucide-react";
 import { Canvas } from "./builder/Canvas";
 import { Inspector } from "./builder/Inspector";
 import { GuestsPanel } from "./builder/guests";
@@ -130,6 +130,8 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   // Su telefono: il menu degli strumenti dall'hamburger, e il modale di Salva con totale e pagamento al posto del footer.
   const [topMenu, setTopMenu] = useState(false);
   const [mobileSheet, setMobileSheet] = useState(false);
+  // Anteprima in una card con barra: ingrandisci a tutto schermo, ricarica, copia il link, apri in una nuova scheda.
+  const [previewFull, setPreviewFull] = useState(false);
   const [origin, setOrigin] = useState("");
   const [guests, setGuests] = useState(initial.guests);
   const [firstSave, setFirstSave] = useState(true);
@@ -469,6 +471,16 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
       </aside>
 
       <main className="bl-center" aria-label={L.previewAria}>
+        <section className={`bl-preview-card${previewFull ? " is-expanded" : ""}`} aria-label={lang === "en" ? "Live preview" : "Anteprima dal vivo"}>
+        <header className="bl-preview-head">
+          <span className="bl-preview-title"><Eye size={16} aria-hidden="true" />{lang === "en" ? "Live preview" : "Anteprima dal vivo"}</span>
+          <span className="bl-preview-tools-row">
+            <button type="button" aria-label={lang === "en" ? "Reload preview" : "Ricarica l'anteprima"} title={lang === "en" ? "Reload preview" : "Ricarica l'anteprima"} onClick={() => frame.current?.contentWindow?.location.reload()}><RotateCw size={16} aria-hidden="true" /></button>
+            <button type="button" aria-pressed={previewFull} aria-label={previewFull ? (lang === "en" ? "Exit full screen" : "Esci da schermo intero") : (lang === "en" ? "Full screen" : "Schermo intero")} title={previewFull ? (lang === "en" ? "Exit full screen" : "Esci da schermo intero") : (lang === "en" ? "Full screen" : "Schermo intero")} onClick={() => setPreviewFull((v) => !v)}>{previewFull ? <Minimize2 size={16} aria-hidden="true" /> : <Maximize2 size={16} aria-hidden="true" />}</button>
+            <button type="button" aria-label={lang === "en" ? "Copy link" : "Copia il link"} title={lang === "en" ? "Copy link" : "Copia il link"} disabled={initial.status !== "paid"} onClick={() => { navigator.clipboard?.writeText(shareUrl); toast.success("✓"); }}><Copy size={16} aria-hidden="true" /></button>
+            <button type="button" aria-label={lang === "en" ? "Open in a new tab" : "Apri in una nuova scheda"} title={lang === "en" ? "Open in a new tab" : "Apri in una nuova scheda"} disabled={initial.status !== "paid"} onClick={() => window.open(shareUrl, "_blank", "noopener")}><ExternalLink size={16} aria-hidden="true" /></button>
+          </span>
+        </header>
         <div className="bl-preview-bar">
           <div className="bl-tpl-chip">
             <span className="bl-tpl-kicker">{L.template}</span>
@@ -520,6 +532,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
             />
           )}
         </div>
+        </section>
       </main>
 
       <aside className="bl-right" aria-label="Proprietà">
