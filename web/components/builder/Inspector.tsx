@@ -134,6 +134,9 @@ type Props = {
   locked?: boolean;
   videoEnvelope?: boolean; // il tema apre l'invito con un filmato: la Busta non ha proprietà
   onSetLocale: (locale: "it" | "en") => void;
+  // Quale parte del pannello generale mostrare, scelta dalle schede: dettagli, tema, lingua, link.
+  section?: "dettagli" | "tema" | "lingua" | "link";
+  shareUrl?: string;
   onSetEventType: (t: EventType) => void;
   onSetBackground: (b: BackgroundSpec | null) => void;
   onSetQuestions: (q: RsvpQuestion[]) => void;
@@ -204,6 +207,7 @@ export function Inspector(p: Props) {
   const themes = enabledThemes(p.catalog, p.config.model);
   const hasMap = p.config.blocks.some((b) => b.type === "map");
   const hasHero = p.config.blocks.some((b) => b.type === "hero");
+  const show = (k: "dettagli" | "tema" | "lingua" | "link") => !p.section || p.section === k;
   return (
     <div className="bl-inspector">
       <header className="bl-insp-head">
@@ -214,6 +218,7 @@ export function Inspector(p: Props) {
         </div>
       </header>
 
+      {show("dettagli") && (
       <section className="bl-group" aria-labelledby="bl-event">
         <h3 id="bl-event">{L.eventDetails}</h3>
         {hasMap && <p className="hint">{L.locationInMap}</p>}
@@ -236,6 +241,14 @@ export function Inspector(p: Props) {
               {EVENT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
             </select>
           </Field>
+        </div>
+      </section>
+      )}
+
+      {show("lingua") && (
+      <section className="bl-group" aria-labelledby="bl-lang">
+        <h3 id="bl-lang">{L.pageLang}</h3>
+        <div className="bl-fields">
           <Field label={L.pageLang}>
             <select value={p.config.locale} onChange={(e) => p.onSetLocale(e.target.value as "it" | "en")}>
               <option value="it">Italiano</option>
@@ -244,7 +257,22 @@ export function Inspector(p: Props) {
           </Field>
         </div>
       </section>
+      )}
 
+      {show("link") && (
+      <section className="bl-group" aria-labelledby="bl-link">
+        <h3 id="bl-link">{p.lang === "en" ? "Invitation link" : "Link dell'invito"}</h3>
+        {p.shareUrl ? (
+          <div className="bl-fields">
+            <code className="bl-link-url">{p.shareUrl}</code>
+          </div>
+        ) : (
+          <p className="hint">{p.lang === "en" ? "The link appears once the invitation is published." : "Il link compare quando l'invito è pubblicato."}</p>
+        )}
+      </section>
+      )}
+
+      {show("tema") && (
       <section className="bl-group" aria-labelledby="bl-style">
         <h3 id="bl-style">{L.template}</h3>
         <TemplateSwitch themes={themes} currentId={p.config.themeId} locked={!!p.locked} onConfirm={p.onSetTheme} lang={p.lang} />
@@ -263,7 +291,7 @@ export function Inspector(p: Props) {
           </Field>
         )}
       </section>
-
+      )}
     </div>
   );
 }

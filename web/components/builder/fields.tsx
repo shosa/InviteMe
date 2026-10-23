@@ -12,6 +12,20 @@ export type Values = Record<string, unknown>;
 export type MediaKind = "photo" | "video" | "audio";
 
 // Un campo del tema: il tipo decide l'editor. Le liste ripetono gli editor dei campi della singola voce.
+// Colori predefiniti come nel riferimento: si sceglie con un tocco, il selettore libero resta sotto.
+const COLOR_PRESETS: { name: string; hex: string }[] = [
+  { name: "Nero classico", hex: "#1D1B19" },
+  { name: "Marrone classico", hex: "#5C4632" },
+  { name: "Oro elegante", hex: "#B98D5F" },
+  { name: "Bordeaux profondo", hex: "#5A1B23" },
+  { name: "Blu navy", hex: "#1F2F4D" },
+  { name: "Verde foresta", hex: "#1F3127" },
+  { name: "Carbone", hex: "#3A3A3A" },
+  { name: "Oro rosa", hex: "#C9988A" },
+  { name: "Bianco puro", hex: "#FFFFFF" },
+  { name: "Crema morbida", hex: "#F4EDE2" },
+];
+
 export function FieldEditor({
   field,
   value,
@@ -52,6 +66,20 @@ export function FieldEditor({
     case "color":
       return (
         <Field label={label}>
+          <div className="swatches" role="group" aria-label={label}>
+            {COLOR_PRESETS.map((c) => (
+              <button
+                key={c.hex}
+                type="button"
+                className={`swatch${text.toLowerCase() === c.hex.toLowerCase() ? " is-on" : ""}`}
+                style={{ background: c.hex }}
+                title={c.name}
+                aria-label={c.name}
+                aria-pressed={text.toLowerCase() === c.hex.toLowerCase()}
+                onClick={() => onChange(c.hex)}
+              />
+            ))}
+          </div>
           <div className="color-row">
             <input type="color" aria-label={label} value={text || "#ffffff"} onChange={(e) => onChange(e.target.value)} />
             <button type="button" className="link" disabled={!text} onClick={() => onChange("")}>{standard ?? "Default"}</button>

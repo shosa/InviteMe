@@ -60,6 +60,9 @@ function pageKey(c: InviteConfig, envelopeOn: boolean): string {
 }
 
 // L'invito aperto è disponibile a tutto l'editor (ricerca foto Pixabay nei campi).
+// Schede che mostrano il pannello generale (senza blocco selezionato).
+const GENERAL_TABS = ["tema", "dettagli", "lingua", "link"];
+
 // Schede del pannello dei controlli: ciascuna apre una funzione già presente nel builder.
 const BUILDER_TABS: { id: string; it: string; en: string; type?: string; guests?: boolean }[] = [
   { id: "tema", it: "Tema", en: "Theme" },
@@ -149,6 +152,8 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   const paidTotal = useMemo(() => totalCents(catalog, initial.config.model, initial.purchasedAddons), [catalog, initial.config.model, initial.purchasedAddons]);
   const extra = paidAlready ? total - paidTotal : 0;
   const block = config.blocks.find((b) => b.id === selected) ?? null;
+  const tabDef = BUILDER_TABS.find((t) => t.id === tab);
+  const tabMissingBlock = !block && !!tabDef?.type && !tabDef.guests && !config.blocks.some((b) => b.type === tabDef.type);
   const title = String(config.event.title ?? "") || L.unnamed;
   const hasRsvp = config.blocks.some((b) => b.type === "rsvp");
 
@@ -532,9 +537,18 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
         </nav>
         {panel === "ospiti" ? (
           <GuestsPanel lang={lang} invitationId={initial.id} paid={locked} hasRsvp={hasRsvp} guests={guests} onSent={(sent) => setGuests((g) => [...g, ...sent.map((email) => ({ email, sentAt: new Date().toISOString() }))])} />
+        ) : tabMissingBlock ? (
+          <div className="bl-inspector">
+            <p className="bl-kicker">{lang === "en" ? "Not in the invitation" : "Non presente nell'invito"}</p>
+            <p className="hint">{lang === "en"
+              ? "This function is not in the invitation yet. Add it from the structure column with the + button."
+              : "Questa funzione non è ancora nell'invito. Aggiungila dalla colonna della struttura con il pulsante +."}</p>
+          </div>
         ) : (
           <Inspector
             lang={lang}
+            section={GENERAL_TABS.includes(tab) && !block ? (tab as "dettagli" | "tema" | "lingua" | "link") : undefined}
+            shareUrl={shareUrl}
             config={config}
             catalog={catalog}
             block={block}

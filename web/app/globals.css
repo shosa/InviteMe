@@ -1846,3 +1846,10 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .atl-foot nav { display: flex; flex-wrap: wrap; gap: 26px; font-size: 14.5px; }
 .atl-foot nav a { color: #F0E3D8; text-decoration: none; }
 .atl-foot-copy { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #C9A36B; }
+
+/* Builder: palette di colori predefiniti nei campi colore, come nel riferimento; link dell'invito nel pannello. */
+.swatches { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 10px; }
+.swatch { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(43, 35, 32, .2); padding: 0; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6); }
+.swatch:hover { transform: scale(1.06); }
+.swatch.is-on { outline: 2px solid var(--brass); outline-offset: 2px; }
+.bl-link-url { display: block; word-break: break-all; font-size: 13px; padding: 10px 12px; background: var(--paper-light); border: 1px solid var(--line); border-radius: 8px; }
