@@ -109,3 +109,57 @@ Aggiornato a ogni checkpoint. Leggerlo prima di toccare il codice.
 - **Layout libero tolto**: i blocchi tornano in colonna.
 - **Documentazione per la generazione di stili**: `docs/MOTORE.md` (motore, registro dei blocchi, sfondi, font) e `docs/TEMI.md` (contratto per chi scrive uno stile, classi, validazione, richiesta modello).
 - Da verificare: deploy (non fatto, serve il tuo ok), sfondi animati su telefono reale, ricerca Pixabay con la chiave nel container.
+
+## Assistente del builder — Fase 1 (motore e validatore, senza interfaccia)
+
+Stato: **fase 1 e fase 2 complete, deployate il 2026-10-23 dal working tree di `ui-atelier` (non committate).**
+
+- **Validatore** (`shared/src/assistant/actions.ts`): sei strumenti (`setEvent`, `setBlockProp`, `addBlock`, `removeBlock`, `moveBlock`, `setTheme`), validati in sequenza su una copia della configurazione. Testi oltre il massimo si tagliano; file ed elenchi non si cambiano dall'assistente; funzioni non attive, blocchi unici, limite di blocchi, blocchi obbligatori e fissi, tema a invito pagato: rifiutati con il motivo. 17 test.
+- **Regole dell'invito pagato** estratte in `editRules` (`shared/src/invitation.ts`), usate da `PUT /api/invitations/:id` e dall'assistente.
+- **Rotta** `POST /api/invitations/:id/assistant` (`api/src/app.ts`, logica in `api/src/assistant.ts`): 404 a inviti altrui, 503 senza `ANTHROPIC_KEY`, 409 oltre 40 richieste per invito, 400 su messaggio non valido, 502 se il modello non risponde (senza dettagli). Modello `claude-opus-5-5` da `ASSISTANT_MODEL`. Strumenti in schema stretto, prompt di sistema in cache, configurazione nell'ultimo messaggio. Al modello vanno solo testi e impostazioni dell'invito, mai ospiti, risposte, email o ordini. 11 test con modello simulato.
+- **Migrazione**: `invitations.assistant_calls` e tabella `assistant_usage` (token e cache per richiesta), in `api/src/db.ts`.
+- **SDK**: `@anthropic-ai/sdk` 1.2.0 installato nel solo pacchetto `api`.
+- **Verifiche locali**: `shared` 43/43, `api` 55/55, typecheck di api e web puliti.
+
+Cose aperte della fase 1:
+- **Prova con chiave reale non fatta**: `ANTHROPIC_KEY` è letta dall'ambiente e passata al container API dal compose; la prova reale resta da fare dopo il deploy.
+- **Cache del prompt**: non verificata. Se il prefisso (sistema + strumenti) è sotto la soglia minima del modello, la cache non si attiva in silenzio. Da controllare con `usage.cache_read_input_tokens` alla prima chiamata reale.
+- **Schema stretto**: l'SDK lo accetta, ma non è stato provato contro il servizio reale.
+- **Elenchi non modificabili**: programma e colori dei blocchi restano fuori dall'assistente. Da decidere prima della fase 2.
+- **Contatore di richieste**: si incrementa a risposta riuscita; due richieste simultanee possono superare il tetto di 40 di poco.
+- **Nessun commit**: le modifiche sono nel working tree del branch `ui-atelier`.
+
+### Fase 2 — pannello nel builder
+
+- Pannello «Assistente» nella colonna destra, dopo l'anteprima (desktop, 20%), visibile solo se il server ha `ANTHROPIC_KEY` (`manage.assistant`). Chat in `web/components/builder/AssistantPanel.tsx`. Su telefono la colonna è nascosta: l'assistente non c'è.
+- Le azioni arrivate dall'API si riconvalidano nel builder (`validateActions`, stessi dati di `manage`) e si applicano con un solo `history.set(..., group)`: Ctrl+Z ritira tutta la risposta.
+- Allineati builder e validatore: cambio stile (colori dei blocchi tornano al template), rimozione dell'ultimo blocco di una funzione (la funzione esce dall'invito). Funzioni «già attive» = `purchased_addons`, o `config.addons` per le bozze, come in `manage`.
+- Verificato nel browser con il proprio account, risposta simulata lato browser (nessuna chiamata al modello): la scheda c'è, l'azione compare e viene salvata, Ctrl+Z la ritira.
+
+### Console admin — parametri dell'assistente
+
+- Scheda «Assistente» (gruppo Gestione): modello, sforzo (bassa/media/alta), richieste per invito (1–500).
+- L'elenco dei modelli è letto dall'API ufficiale di Anthropic (`client.models.list`, solo modelli attivi, in memoria 10 minuti). Il server accetta solo un modello presente in quell'elenco.
+- Salvataggio in `settings` (chiave `assistant`). Senza valore salvato: `ASSISTANT_MODEL`, poi il valore di base.
+- Verificato: elenco di 13 modelli, rifiuto di un modello inventato (400), menu caricato nel browser.
+
+### Deploy del 2026-10-23
+
+- `api` e `web` ricostruiti e riavviati dal working tree. Migrazione applicata all'avvio (`assistant_calls`, `assistant_usage`). `ANTHROPIC_KEY` presente nel container (solo presenza verificata).
+- L'IP del container API è cambiato a `10.0.9.3`: il dev server (`API_INTERNAL_URL`) è stato riavviato su quell'indirizzo. Ad ogni ricreazione del container l'IP può cambiare.
+
+### Cose aperte
+
+- Prova reale con il modello: non fatta (nessuna chiamata a Claude durante i test).
+- La riga `assistant` nel database è stata scritta alle 17:48:33 (modello `claude-haiku-5-5`, limite 10): non da questa sessione. Da confermare con Stefano.
+- Il pannello e la console non sono stati controllati su telefono.
+- File di backup non tracciati nella radice: `docker-compose.yml.bak-2026-10-23`, `.env.example.bak-2026-10-23`.
+- Nessun commit: le modifiche sono solo nel working tree di `ui-atelier`.
+
+### Assistente — copertura del builder (2026-10-23, decisioni prese in autonomia)
+
+- **Strumenti**: testi ed eventi (`setEvent`, `setBlockProp`), liste (`setBlockList`: colori dress code, voci programma), domande del modulo (`setRsvpQuestions`, tipi number/text/yes-no/choice), sfondo animato come decorazione (`setBackground`), tipo di evento (`setEventType`), blocchi (`addBlock` con id assegnato dal server, `removeBlock`, `moveBlock`, `setBlockHidden`), colori del blocco (`setBlockLook`), tema (`setTheme`), file (`setBlockMedia`, `searchPhotos` + `usePhoto` per Pixabay, musica dalla libreria).
+- **File**: l'assistente usa solo file importati in questa richiesta, tracce della libreria e file già nell'invito. Non può inserire URL liberi.
+- **Un solo passo di cronologia** per risposta: Ctrl+Z ritira tutto. Verificato con risposta simulata: quattro modifiche insieme, annullamento allo stato iniziale.
+- **Fuori dall'assistente, di proposito**: pagamenti, funzioni a pagamento, lista ospiti e risposte RSVP (dati personali e denaro). Il builder manuale resta come riserva: non è stato rimosso.
+- **Massimo giri di strumenti**: 8 per messaggio. Limite di richieste per invito dalla console (`callLimit`).

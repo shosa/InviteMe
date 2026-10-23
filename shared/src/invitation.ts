@@ -23,6 +23,13 @@ export type InviteConfig = {
   background?: BackgroundSpec; // sfondo animato scelto dal cliente; assente = quello proposto dallo stile
 };
 
+// Regole dell'invito acquistato: si modifica finché non si conferma; dopo l'acquisto il template non cambia più.
+// Usata sia dalla modifica dell'invito sia dall'assistente del builder: non duplicare la logica altrove.
+export function editRules(inv: { status: string; edit_count: number }): { readOnly: boolean; themeLocked: boolean } {
+  const paid = inv.status === "paid";
+  return { readOnly: paid && inv.edit_count >= 1, themeLocked: paid };
+}
+
 // Lo slug del link: minuscole, numeri e trattini, da 3 a 60 caratteri, senza trattini agli estremi.
 export function normalizeSlug(input: unknown): string | null {
   const s = String(input ?? "").trim().toLowerCase().replace(/\s+/g, "-");

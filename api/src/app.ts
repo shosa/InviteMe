@@ -10,6 +10,7 @@ import {
   EVENT_TYPES,
   activeFeatures,
   defaultConfig,
+  editRules,
   enabledThemes,
   formatPrice,
   getModel,
@@ -25,7 +26,10 @@ import {
   type RsvpQuestion,
   normalizeSlug,
 } from "@inviteme/shared";
+import Anthropic from "@anthropic-ai/sdk";
 import { pool, migrate, track } from "./db";
+import { handleAssistant, type OwnedInvitation } from "./assistant";
+import { EFFORTS, listAssistantModels, loadAssistantSettings, saveAssistantSettings, type ModelOption } from "./assistantSettings";
 import { invalidateCatalog, loadCatalog, loadFullCatalog, saveCatalog, themes } from "./catalog";
 import { previewShell } from "./engine/previewShell";
 import { renderInvitePage } from "./engine/page";
@@ -270,6 +274,9 @@ export async function buildApp() {
       editCount: inv.edit_count ?? 0,
       editSession: inv.edit_session ?? null,
       purchasedAddons: (inv.purchased_addons ?? inv.config.addons ?? []) as string[],
+      assistant: !!process.env.ANTHROPIC_KEY,
+      assistantLimit: (await loadAssistantSettings()).settings.callLimit,
+      assistantUsed: inv.assistant_calls ?? 0,
       catalog: c,
       hasRsvp: hasRsvp(c, inv.config),
     };
@@ -304,6 +311,84 @@ export async function buildApp() {
     return { slug };
   });
 
+  // Console admin: modello, sforzo e limite di richieste dell'assistente. I modelli arrivano dall'API di Anthropic.
+  app.get("/api/admin/assistant", async (req, reply) => {
+    if (!(await requireAdmin(req, reply))) return;
+    const { settings, source } = await loadAssistantSettings();
+    const key = process.env.ANTHROPIC_KEY;
+    let models: ModelOption[] = [];
+    let modelsError: string | null = null;
+    if (key) {
+      try {
+        models = await listAssistantModels(key);
+      } catch {
+        modelsError = "Non riesco a leggere i modelli da Anthropic. Riprova tra poco.";
+      }
+    }
+    return { configured: !!key, settings, source, models, modelsError, efforts: EFFORTS };
+  });
+
+  app.put("/api/admin/assistant", async (req, reply) => {
+    if (!(await requireAdmin(req, reply))) return;
+    const key = process.env.ANTHROPIC_KEY;
+    if (!key) return reply.code(409).send({ error: "Chiave del modello non configurata sul server" });
+    const b = (req.body ?? {}) as { model?: unknown; effort?: unknown; callLimit?: unknown };
+    let models: ModelOption[];
+    try {
+      models = await listAssistantModels(key);
+    } catch {
+      return reply.code(502).send({ error: "Non riesco a leggere i modelli da Anthropic. Riprova tra poco." });
+    }
+    // Solo un modello che Anthropic elenca per questa chiave: niente testo libero.
+    const model = models.find((m) => m.id === b.model)?.id;
+    if (!model) return reply.code(400).send({ error: "Modello non disponibile per questa chiave" });
+    const effort = EFFORTS.find((e) => e === b.effort);
+    if (!effort) return reply.code(400).send({ error: "Sforzo non valido" });
+    const callLimit = Number(b.callLimit);
+    if (!Number.isInteger(callLimit) || callLimit < 1 || callLimit > 500) return reply.code(400).send({ error: "Il limite deve essere un numero da 1 a 500" });
+    await saveAssistantSettings({ model, effort, callLimit });
+    return { ok: true };
+  });
+
+  // Assistente del builder: risponde e propone modifiche validate. La chiave del modello sta solo qui, da ANTHROPIC_KEY.
+  app.post<{ Params: { id: string }; Body: unknown }>("/api/invitations/:id/assistant", async (req, reply) => {
+    const user = await requireUser(req, reply);
+    if (!user) return;
+    const out = await handleAssistant(
+      {
+        findOwned: async (id, userId) => {
+          const inv = await ownedInvitation(id, userId);
+          // Stesso dato dell'editor: le funzioni già attive per l'invito (pagate, o scelte in bozza).
+          return inv ? { ...inv, purchased_addons: inv.purchased_addons ?? inv.config.addons ?? [] } as OwnedInvitation : null;
+        },
+        loadCatalog,
+        apiKey: process.env.ANTHROPIC_KEY || undefined,
+        loadSettings: async () => (await loadAssistantSettings()).settings,
+        // Foto stock solo se Pixabay è configurato: il modello cerca, il server importa il file.
+        stock: process.env.PIXABAY_API_KEY
+          ? {
+              search: async (query) => (await searchStock(parseStockFilters({ q: query }))).map((p) => ({ id: p.id, tags: p.tags })),
+              import: (id) => importStock(id),
+            }
+          : undefined,
+        makeCall: (apiKey) => {
+          const client = new Anthropic({ apiKey });
+          return (params) => client.messages.create(params);
+        },
+        recordUsage: async (invitationId, model, usage, actions) => {
+          await pool.query(
+            `WITH bump AS (UPDATE invitations SET assistant_calls = assistant_calls + 1 WHERE id = $1 RETURNING id)
+             INSERT INTO assistant_usage (invitation_id, model, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, actions)
+             SELECT id, $2, $3, $4, $5, $6, $7 FROM bump`,
+            [invitationId, model, usage.input, usage.output, usage.cacheRead, usage.cacheWrite, actions],
+          );
+        },
+      },
+      { id: req.params.id, userId: user.id, body: req.body },
+    );
+    return reply.code(out.status).send(out.body);
+  });
+
   app.put<{ Params: { id: string } }>("/api/invitations/:id", async (req, reply) => {
     const user = await requireUser(req, reply);
     if (!user) return;
@@ -311,12 +396,10 @@ export async function buildApp() {
     if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
     const config = sanitizeConfig(await loadCatalog(), req.body);
     if (!config) return reply.code(400).send({ error: "Configurazione non valida" });
-    if (inv.status === "paid") {
-      // Dopo l'acquisto: si modifica finché non si conferma; la conferma chiude la modifica. Il template non cambia più.
-      if (inv.edit_count >= 1) return reply.code(409).send({ error: "Modifica già confermata: l'invito non si modifica più" });
-      if (config.themeId !== (inv.config as InviteConfig).themeId) return reply.code(409).send({ error: "Dopo l'acquisto il template non si cambia" });
-      // Funzioni nuove: restano in bozza finché non sono pagate (vedi confirm-edit e checkout). Quelle già pagate sono gratuite.
-    }
+    const rules = editRules({ status: inv.status, edit_count: inv.edit_count });
+    if (rules.readOnly) return reply.code(409).send({ error: "Modifica già confermata: l'invito non si modifica più" });
+    if (rules.themeLocked && config.themeId !== (inv.config as InviteConfig).themeId) return reply.code(409).send({ error: "Dopo l'acquisto il template non si cambia" });
+    // Funzioni nuove: restano in bozza finché non sono pagate (vedi confirm-edit e checkout). Quelle già pagate sono gratuite.
     await pool.query("UPDATE invitations SET config = $1 WHERE id = $2", [JSON.stringify(config), inv.id]);
     return { ok: true };
   });

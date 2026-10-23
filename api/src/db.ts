@@ -84,6 +84,18 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS kind text NOT NULL DEFAULT 'initial'
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS addons jsonb;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub text;
 CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub_idx ON users (google_sub) WHERE google_sub IS NOT NULL;
+ALTER TABLE invitations ADD COLUMN IF NOT EXISTS assistant_calls integer NOT NULL DEFAULT 0;
+CREATE TABLE IF NOT EXISTS assistant_usage (
+  id bigserial PRIMARY KEY,
+  invitation_id uuid NOT NULL REFERENCES invitations(id) ON DELETE CASCADE,
+  model text NOT NULL,
+  input_tokens integer NOT NULL,
+  output_tokens integer NOT NULL,
+  cache_read_tokens integer NOT NULL,
+  cache_write_tokens integer NOT NULL,
+  actions integer NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin'));
 CREATE TABLE IF NOT EXISTS settings (
   key text PRIMARY KEY,

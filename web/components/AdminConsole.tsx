@@ -14,14 +14,16 @@ import { toast } from "sonner";
 import { Plus, Trash2, Upload } from "lucide-react";
 import { AdminInvitations } from "./admin/AdminInvitations";
 import { AdminMedia } from "./admin/AdminMedia";
+import { AdminAssistant } from "./admin/AdminAssistant";
 
-type Tab = "panoramica" | "inviti" | "file" | "utenti" | "ordini" | "modelli" | "funzioni" | "stili" | "musica";
+type Tab = "panoramica" | "inviti" | "file" | "utenti" | "ordini" | "assistente" | "modelli" | "funzioni" | "stili" | "musica";
 const TABS: { id: Tab; label: string; group: "Gestione" | "Catalogo" }[] = [
   { id: "panoramica", label: "Panoramica", group: "Gestione" },
   { id: "inviti", label: "Inviti", group: "Gestione" },
   { id: "file", label: "File caricati", group: "Gestione" },
   { id: "utenti", label: "Clienti", group: "Gestione" },
   { id: "ordini", label: "Ordini", group: "Gestione" },
+  { id: "assistente", label: "Assistente", group: "Gestione" },
   { id: "modelli", label: "Modelli", group: "Catalogo" },
   { id: "funzioni", label: "Funzioni e prezzi", group: "Catalogo" },
   { id: "stili", label: "Template", group: "Catalogo" },
@@ -94,6 +96,7 @@ export function AdminConsole() {
           {tab === "stili" && catalog && <ThemesAdmin catalog={catalog} onChanged={reload} />}
           {tab === "musica" && <MusicLibrary tracks={catalog?.music ?? []} onChange={reload} />}
           {tab === "ordini" && <Orders />}
+          {tab === "assistente" && <AdminAssistant />}
           {tab === "inviti" && <AdminInvitations initialUser={clientId} onClearUser={() => setClientId(undefined)} />}
           {tab === "file" && <AdminMedia />}
           {tab === "utenti" && <Users onOpenInvitations={(id) => { setClientId(id); setTab("inviti"); }} />}

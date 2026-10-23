@@ -9,3 +9,4 @@ export * from "./blocks";
 export * from "./fonts";
 export * from "./background";
 export * from "./categories";
+export * from "./assistant/actions";

@@ -10,6 +10,8 @@ import {
   makeBlock,
   newBlockId,
   totalCents,
+  validateActions,
+  type Action,
   type AddonKey,
   type BlockInstance,
   type BlockType,
@@ -25,6 +27,7 @@ import type { LucideIcon } from "lucide-react";
 import { ArrowLeft, CalendarDays, ClipboardCheck, Copy, Eye, ExternalLink, LayoutList, Languages, Link2, Mail, Maximize2, Menu, Minimize2, Monitor, Music, Palette, Redo2, RotateCw, Smartphone, Undo2, Users, X } from "lucide-react";
 import { Canvas } from "./builder/Canvas";
 import { Inspector } from "./builder/Inspector";
+import { AssistantPanel } from "./builder/AssistantPanel";
 import { GuestsPanel } from "./builder/guests";
 import { useHistory } from "./builder/history";
 import { parseFragments } from "@/lib/blockFragments";
@@ -42,6 +45,9 @@ export type Manage = {
   editSession: string | null;
   purchasedAddons: AddonKey[];
   catalog: Catalog;
+  assistant: boolean; // assistente attivo sul server (chiave del modello presente)
+  assistantLimit: number; // richieste per invito
+  assistantUsed: number; // richieste già usate
 };
 
 type MobileTab = "blocchi" | "anteprima" | "proprieta";
@@ -301,6 +307,21 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
 
   // Modifiche alla configurazione: ogni azione passa dalla cronologia.
   const edit = useCallback((next: (c: InviteConfig) => InviteConfig, group?: string) => history.set(next(config), group), [config, history]);
+  // Le risposte dell'assistente arrivano dopo: leggono sempre la configurazione attuale, non quella di quando hanno scritto.
+  const latest = useRef(config);
+  latest.current = config;
+  // Modifiche dell'assistente: una sola voce di cronologia per risposta, così Annulla (Ctrl+Z) le ritira tutte insieme.
+  function applyAssistant(actions: Action[], mediaAllowed: string[]): number {
+    const result = validateActions(latest.current, actions, {
+      catalog,
+      paid: initial.status === "paid",
+      purchased: new Set(initial.purchasedAddons),
+      mediaAllowed: new Set(mediaAllowed),
+    });
+    if (result.actions.length === 0) return 0;
+    history.set(result.config, `assistant-${Date.now()}`);
+    return result.actions.length;
+  }
 
   // Con una funzione a pagamento da attivare, la attiva e aggiunge il blocco in un solo passo.
   function addBlock(type: BlockType, feature?: AddonKey) {
@@ -482,8 +503,10 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
         <button role="tab" aria-selected={mobileTab === "proprieta"} onClick={() => setMobileTab("proprieta")}>{L.tabProps}</button>
       </nav>
 
-      <aside className="bl-left" aria-label="Blocchi">
+      <aside className="bl-left" aria-label={initial.assistant && isDesktop ? (lang === "en" ? "Assistant" : "Assistente") : "Blocchi"}>
         {!isDesktop && blocksPanel}
+        {/* Desktop: l'assistente sta nella colonna a destra dell'anteprima. Su telefono la colonna è nascosta. */}
+        {isDesktop && initial.assistant && <AssistantPanel lang={lang} invitationId={initial.id} readOnly={locked} limit={initial.assistantLimit} used={initial.assistantUsed} onApply={applyAssistant} />}
       </aside>
 
       <main className="bl-center" aria-label={L.previewAria}>

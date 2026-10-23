@@ -29,6 +29,8 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:-}
       # Ricerca foto Pixabay: la chiave si imposta in .env (o nell'ambiente), mai nel repository.
+      ANTHROPIC_KEY: ${ANTHROPIC_KEY:-}
+      ASSISTANT_MODEL: ${ASSISTANT_MODEL:-claude-opus-5-5}
       PIXABAY_API_KEY: ${PIXABAY_API_KEY:-}
       SHOPIFY_STORE_DOMAIN: ${SHOPIFY_STORE_DOMAIN:-}
       SHOPIFY_STOREFRONT_TOKEN: ${SHOPIFY_STOREFRONT_TOKEN:-}
