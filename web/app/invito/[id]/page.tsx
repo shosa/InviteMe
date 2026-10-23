@@ -35,7 +35,7 @@ export default async function InvitoPage({ params, searchParams }: { params: Pro
   const h = await headers();
   const url = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host") ?? "localhost"}/i/${manage.slug}`;
   const theme = manage.catalog.themes.find((t) => t.manifest.id === manage.config.themeId)?.manifest;
-  const color = theme?.themeColor ?? "#14B8A6";
+  const color = theme?.themeColor ?? "#B98D5F";
   const ink = inkOn(color);
   const accent = accentOf(color);
   const decor = theme ? themeDecor(theme) : undefined;
