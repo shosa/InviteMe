@@ -9,6 +9,7 @@ import { FontButton } from "./FontButton";
 import { TemplateSwitch } from "./TemplateSwitch";
 import { ui } from "@/lib/ui";
 import { blockCopy, blockDescCopy, fieldCopy } from "@/lib/catalogCopy";
+import { MusicPicker } from "./MusicPicker";
 
 // Luogo e indirizzo: con il blocco Mappa si modificano lì, non nel pannello Evento.
 const LOCATION_KEYS = ["address"];
@@ -178,7 +179,18 @@ export function Inspector(p: Props) {
         ) : def.fields.length === 0 && p.block.type !== "map" ? (
           <p className="hint">{L.blockHint}</p>
         ) : (
-          <BlockFields key={p.block.id} p={p} def={def} L={L} />
+          p.block.type === "music" ? (
+            <MusicPicker
+              lang={p.lang ?? "it"}
+              library={p.catalog.music}
+              value={String(p.block.props.music ?? "")}
+              onChange={(url) => p.onSetProp(p.block!.id, "music", url, `${p.block!.id}:music`)}
+              onUpload={(file) => p.onUpload("audio", file)}
+              busy={!!p.busy}
+            />
+          ) : (
+            <BlockFields key={p.block.id} p={p} def={def} L={L} />
+          )
         )}
         {p.block.type === "map" && (
           <section className="bl-group" aria-labelledby="bl-loc">

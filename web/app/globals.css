@@ -1897,3 +1897,23 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 @media (min-width: 901px) {
   .bl-right .bl-column { width: 70%; max-width: none; margin: 0 auto; }
 }
+
+/* Builder: scelta della musica (scheda Audio), come nel riferimento: schede con bordo, anteprima ascoltabile, brano proprio. */
+.mp { display: flex; flex-direction: column; gap: 10px; }
+.mp-title { margin: 0; font-family: var(--font-display), Georgia, serif; font-size: 22px; font-weight: 500; color: var(--brass); }
+.mp-lede { margin: 0 0 6px; font-size: 13.5px; color: var(--ink-soft); }
+.mp-pick, .mp-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 14px; border: 1px solid #DCCFC2; border-radius: 12px; background: #FFFFFF; color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: border-color .15s, background-color .15s; }
+.mp-pick:hover { border-color: var(--brass-light); }
+.mp-pick.is-on { border-color: var(--brass); background: #F7EEE6; }
+.mp-ico { width: 36px; height: 36px; border-radius: 50%; background: #F1E9E0; color: var(--brass); display: grid; place-items: center; flex: none; }
+.mp-text { display: grid; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.mp-text strong { font-size: 14.5px; font-weight: 600; }
+.mp-text small { font-size: 12.5px; color: var(--ink-soft); }
+.mp-preview { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid #DCCFC2; border-radius: 9px; background: #FFFFFF; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; flex: none; }
+.mp-preview:hover { border-color: var(--brass); color: var(--brass); }
+.mp-preview.is-playing { background: var(--brass); border-color: var(--brass); color: #FFFFFF; }
+.mp-check { width: 24px; height: 24px; border-radius: 50%; background: var(--brass); color: #FFFFFF; display: grid; place-items: center; flex: none; }
+.mp-upload { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 10px; padding: 14px; border: 1px dashed #CDBBA8; border-radius: 12px; background: #FBF7F2; }
+.mp-upload strong { font-size: 14px; }
+.mp-upload small { font-size: 12.5px; color: var(--ink-soft); flex: 1 1 100%; }
+.mp-upload-btn { cursor: pointer; }
