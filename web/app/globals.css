@@ -1542,13 +1542,12 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .addr-list button:hover { background: var(--paper); }
 
 /* Pannello proprietà: più largo, campi nei limiti, domande RSVP senza sforare. */
-/* Builder desktop, come nel riferimento: sezioni a sinistra, controlli al centro, anteprima telefono a destra.
-   La colonna DOM dell'anteprima (.bl-center) va nell'area di destra; quella dei controlli (.bl-right) al centro. */
+/* Builder desktop: 40% controlli (con le schede), 40% anteprima, 20% vuoto a destra dello stesso colore dell'area dell'anteprima. */
 @media (min-width: 901px) {
-  .bl-app { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 2fr); }
-  .bl-app .bl-center { grid-area: right; }
-  .bl-app .bl-right { grid-area: center; }
-  .bl-app .bl-right { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .bl-app { grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1fr); }
+  .bl-app .bl-right { grid-area: left; border-left: 0; border-right: 1px solid var(--line); }
+  .bl-app .bl-center { grid-area: center; }
+  .bl-app .bl-left { grid-area: right; background: #EADFD2; border: 0; }
 }
 .bl-right { min-width: 0; overflow-x: hidden; }
 .bl-back { font: inherit; font-size: 13px; font-weight: 600; background: none; border: 0; color: var(--brass); cursor: pointer; padding: 0 0 8px; text-align: left; }
