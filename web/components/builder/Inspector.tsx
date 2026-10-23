@@ -158,13 +158,17 @@ export function Inspector(p: Props) {
     if (!def) return null;
     return (
       <div className="bl-inspector">
+        {p.onBack && (
+          <div className="bl-back-row">
+            <button type="button" className="bl-back" onClick={p.onBack}>{p.lang === "en" ? "Back to blocks" : "Torna ai blocchi"}</button>
+          </div>
+        )}
         <header className="bl-insp-head">
           <div>
             <p className="bl-kicker">{L.block}</p>
             <h2>{blockCopy(def.type, def.label, p.lang ?? "it")}</h2>
             <p className="hint">{blockDescCopy(def.type, def.description, p.lang ?? "it")}</p>
           </div>
-          {p.onBack && <button type="button" className="bl-back" onClick={p.onBack}>{p.lang === "en" ? "Back to blocks" : "Torna ai blocchi"}</button>}
           <div className="bl-insp-actions">
             <button type="button" className="bl-icon" aria-label={p.block.hidden ? L.show : L.hide} onClick={() => p.onToggle(p.block!.id)}>
               {p.block.hidden ? <EyeOff size={17} /> : <Eye size={17} />}

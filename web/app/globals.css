@@ -1945,3 +1945,11 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
   .bl-right > *, .bl-right .bl-column > *, .bl-right .bl-inspector > * { animation: none !important; }
   .bl-insp-head > .bl-back { transition: none; }
 }
+
+/* Builder: "Torna ai blocchi" come pulsante compatto in una riga propria, colore ottone pieno. */
+.bl-back-row { display: flex; }
+.bl-back-row .bl-back { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--brass-light); color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color .15s, transform .15s; }
+.bl-back-row .bl-back::before { content: "←"; font-size: 14px; line-height: 1; }
+.bl-back-row .bl-back:hover { background: var(--brass); transform: translateX(-2px); }
+.bl-back-row .bl-back:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.bl-insp-head > .bl-back { display: none; }
