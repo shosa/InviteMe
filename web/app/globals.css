@@ -2023,3 +2023,9 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 .bl-app .bl-back-row .bl-back { font-size: 14px; }
 .bl-app .bl-preview-title { font-size: 15px; }
 .bl-app .bl-template, .bl-app .bl-tpl-chip strong { font-size: 17px; }
+
+/* Builder: anteprima del colore (input type=color) tonda, della stessa altezza e larghezza. */
+.bl-app .bl-right input[type="color"][type="color"], .bl-app .bl-fields input[type="color"][type="color"], .bl-app input[type="color"][type="color"] { width: 44px; height: 44px; min-width: 44px; min-height: 44px; max-width: 44px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: none; cursor: pointer; overflow: hidden; flex: none; }
+.bl-app input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.bl-app input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.bl-app input[type="color"]::-moz-color-swatch { border: 0; border-radius: 50%; }
