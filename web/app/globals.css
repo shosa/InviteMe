@@ -1954,3 +1954,10 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-back-row .bl-back:hover { background: #FFFFFF; color: var(--brass); border-color: var(--brass); box-shadow: 0 0 0 3px rgba(90, 27, 35, .14); transform: translateX(-2px); }
 .bl-back-row .bl-back:focus-visible { outline: 2px solid var(--brass-light); outline-offset: 2px; }
 .bl-insp-head > .bl-back { display: none; }
+
+/* Builder, pannello Ospiti senza invito pagato: avviso centrato nel pannello, testo più grande. */
+.bl-right:has(> .guests-empty), .bl-right:has(.guests-empty) { display: flex; flex-direction: column; }
+.guests-empty { flex: 1 1 auto; display: grid; place-items: center; align-content: center; gap: 16px; padding: 40px 24px; text-align: center; min-height: 100%; }
+.guests-empty p { margin: 0; max-width: 30ch; font-family: var(--font-display), Georgia, serif; font-size: 24px; line-height: 1.35; color: var(--brass); }
+.guests-empty-ico { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: #F7EEE6; color: var(--brass); margin: 0 auto; }
+.bl-right > .bl-tabs-head, .bl-right > .bl-switcher { flex: none; }

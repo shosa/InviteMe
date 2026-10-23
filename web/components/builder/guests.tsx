@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { RsvpQuestion } from "@inviteme/shared";
 import { ui, type Lang } from "@/lib/ui";
+import { Send } from "lucide-react";
 
 export type RsvpSummary = {
   total: number;
@@ -59,7 +60,12 @@ export function GuestsPanel({ invitationId, paid, hasRsvp, guests, onSent, lang 
     }
   }
 
-  if (!paid) return <p className="hint">{L.guestsNone}</p>;
+  if (!paid) return (
+    <div className="guests-empty" role="status">
+      <span className="guests-empty-ico" aria-hidden="true"><Send size={22} /></span>
+      <p>{L.guestsNone}</p>
+    </div>
+  );
 
   return (
     <div className="stack">
