@@ -1886,7 +1886,7 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
    hover con bordo e sfondo più chiari; scheda attiva piena in bordeaux con testo bianco. */
 .bl-switcher { display: flex; gap: 8px; margin: 0 0 18px; padding: 2px 0 2px; overflow-x: auto; scrollbar-width: none; }
 .bl-switcher::-webkit-scrollbar { display: none; }
-.bl-switcher-tab { flex: none; display: inline-flex; align-items: center; gap: 9px; min-height: 50px; padding: 0 18px; border: 1px solid #DCCFC2; border-radius: 12px; background: #FFFFFF; color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; white-space: nowrap; cursor: pointer; box-shadow: 0 1px 2px rgba(43, 35, 32, .05); transition: border-color .15s, background-color .15s, color .15s, box-shadow .15s, transform .15s; }
+.bl-switcher-tab { flex: none; display: inline-flex; align-items: center; gap: 9px; min-height: 50px; padding: 0 13px; border: 1px solid #DCCFC2; border-radius: 12px; background: #FFFFFF; color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; white-space: nowrap; cursor: pointer; box-shadow: 0 1px 2px rgba(43, 35, 32, .05); transition: border-color .15s, background-color .15s, color .15s, box-shadow .15s, transform .15s; }
 .bl-switcher-tab .sw-ico { display: inline-flex; color: var(--brass-light); transition: color .15s; }
 .bl-switcher-tab:hover { border-color: var(--brass-light); background: #FBF5EE; box-shadow: 0 6px 14px -10px rgba(90, 27, 35, .45); transform: translateY(-1px); }
 .bl-switcher-tab:focus-visible { outline: 2px solid var(--brass-light); outline-offset: 2px; }
