@@ -1961,3 +1961,22 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .guests-empty p { margin: 0; max-width: 30ch; font-family: var(--font-display), Georgia, serif; font-size: 24px; line-height: 1.35; color: var(--brass); }
 .guests-empty-ico { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: #F7EEE6; color: var(--brass); margin: 0 auto; }
 .bl-right > .bl-tabs-head, .bl-right > .bl-switcher { flex: none; }
+
+/* Builder: select, campi e aree di caricamento trascinabili (drop-zone) con angoli tondi, come il resto dei controlli. */
+.bl-right select, .bl-right input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), .bl-right textarea,
+.bl-fields select, .bl-fields input:not([type="checkbox"]):not([type="radio"]), .bl-fields textarea {
+  border-radius: 12px; border: 1px solid var(--line); background: var(--paper-light); min-height: 42px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.bl-right select:hover, .bl-right input:hover:not([type="checkbox"]):not([type="radio"]), .bl-right textarea:hover,
+.bl-fields select:hover, .bl-fields textarea:hover { border-color: var(--brass-light); }
+.bl-right select:focus, .bl-right input:focus, .bl-right textarea:focus, .bl-fields select:focus, .bl-fields textarea:focus {
+  border-color: var(--brass); box-shadow: 0 0 0 3px rgba(185, 141, 95, .18); outline: none;
+}
+.bl-right .upload, .bl-fields .upload, .bl-right .media-actions > .upload {
+  border: 1.5px dashed #CDBBA8; border-radius: 16px; background: #FBF7F2; color: var(--ink);
+  transition: border-color .15s, background-color .15s, transform .15s;
+}
+.bl-right .upload:hover, .bl-fields .upload:hover, .bl-right .media-actions > .upload:hover { background: #F7EEE6; border-color: var(--brass-light); transform: translateY(-1px); }
+.bl-right .media-preview, .bl-fields .media-preview { border-radius: 14px; }
+.bl-right .media-stock, .bl-right .media-actions > .media-stock { background: transparent; }
