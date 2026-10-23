@@ -1545,7 +1545,7 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 /* Builder desktop, come nel riferimento: sezioni a sinistra, controlli al centro, anteprima telefono a destra.
    La colonna DOM dell'anteprima (.bl-center) va nell'area di destra; quella dei controlli (.bl-right) al centro. */
 @media (min-width: 901px) {
-  .bl-app { grid-template-columns: 300px minmax(0, 1fr) 420px; }
+  .bl-app { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 2fr); }
   .bl-app .bl-center { grid-area: right; }
   .bl-app .bl-right { grid-area: center; }
   .bl-app .bl-right { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
