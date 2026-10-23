@@ -2064,3 +2064,7 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 
 /* Builder: etichette dei campi (es. "Titolo della data") più grandi, come i titoli delle sezioni. */
 .bl-app .field-label, .bl-app .field > span, .bl-app .bl-fields .field > span { font-size: 16px !important; font-weight: 500; color: var(--ink); }
+
+/* Builder: il telefono nell'anteprima è centrato verticalmente e orizzontalmente nello spazio sotto la barra. */
+.bl-preview-card { display: flex; flex-direction: column; }
+.bl-preview-card > .bl-frame { margin: auto; flex: 0 0 auto; }
