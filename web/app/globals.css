@@ -2037,3 +2037,11 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 .bl-app .bl-crumb.is-current { font-weight: 700; }
 .bl-app .bl-back-row .bl-back { height: 40px; font-size: 15px; padding: 0 18px 0 14px; }
 .bl-app .bl-back-row { align-items: center; }
+
+/* Builder: campo di testo e pulsante "Aa" (font) come un unico blocco: angoli tondi solo sul lato esterno. */
+.bl-app .field-control { align-items: stretch; }
+.bl-app .field-control > input, .bl-app .field-control > textarea { border-radius: 12px 0 0 12px; min-height: 44px; }
+.bl-app .field-control > input:focus, .bl-app .field-control > textarea:focus { position: relative; z-index: 1; }
+.bl-app .font-btn { width: 48px; min-height: 44px; border: 1px solid #DCCFC2; border-radius: 0 12px 12px 0; background: #FFFFFF; font-size: 15px; }
+.bl-app .font-btn:hover, .bl-app .font-btn[aria-expanded="true"] { border-color: var(--brass-light); }
+.bl-app .font-btn.is-set { background: var(--brass); border-color: var(--brass); color: #FFFFFF; }
