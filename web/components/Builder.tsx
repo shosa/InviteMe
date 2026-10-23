@@ -583,7 +583,7 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
             );
           })}
         </nav>
-        {isDesktop && tab === "blocchi" ? blocksPanel : panel === "ospiti" ? (
+        {isDesktop && tab === "blocchi" && !block ? blocksPanel : panel === "ospiti" ? (
           <GuestsPanel lang={lang} invitationId={initial.id} paid={locked} hasRsvp={hasRsvp} guests={guests} onSent={(sent) => setGuests((g) => [...g, ...sent.map((email) => ({ email, sentAt: new Date().toISOString() }))])} />
         ) : tabMissingBlock && tabDef?.type ? (
           <div className="bl-inspector bl-missing-block">
