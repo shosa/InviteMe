@@ -2029,3 +2029,11 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 .bl-app input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
 .bl-app input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
 .bl-app input[type="color"]::-moz-color-swatch { border: 0; border-radius: 50%; }
+
+/* Builder: la riga di navigazione (Blocchi › blocco › scheda) più grande e leggibile, allineata al pulsante Torna ai blocchi. */
+.bl-app .bl-crumbs { font-size: 16px !important; gap: 8px; }
+.bl-app .bl-crumb, .bl-app button.bl-crumb { font-size: 16px; }
+.bl-app .bl-crumb-sep { font-size: 18px; }
+.bl-app .bl-crumb.is-current { font-weight: 700; }
+.bl-app .bl-back-row .bl-back { height: 40px; font-size: 15px; padding: 0 18px 0 14px; }
+.bl-app .bl-back-row { align-items: center; }
