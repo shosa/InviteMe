@@ -1,20 +1,30 @@
-/* Nuova UI: palette chiara, titoli Space Grotesk, accento teal (vedi l'artifact di restyling). */
+/* Nuova UI "Atelier" (artifact di design InviteMe Atelier): ceralacca, ottone, avorio e lino; titoli Cormorant Garamond, testo Jost. */
 
 /* ───────────── Token ───────────── */
 :root {
-  --paper: #f5f6f8;
-  --paper-light: #ffffff;
-  --paper-deep: #e8ebef;
-  --ink: #0e1116;
-  --ink-soft: #4a5361;
-  --brass: #0b6e65;
-  --brass-light: #14b8a6;
-  --line: #e2e5ea;
-  --line-soft: #eef0f3;
-  --danger: #b42318;
-  --ok: #0b6e65;
+  /* Atelier: ceralacca per le azioni, ottone per filetti e cornici, avorio e lino come carte. */
+  --paper: #F2E9DF;
+  --paper-light: #FCF8F3;
+  --paper-deep: #EADFD2;
+  --ink: #2B2320;
+  --ink-soft: #6E5A55;
+  --brass: #5A1B23;
+  --brass-light: #B98D5F;
+  --line: #DCCBB8;
+  --line-soft: #EBDFD2;
+  --danger: #7A2320;
+  --ok: #27452D;
   color-scheme: light;
 }
+
+/* Carosello degli stili e cornici telefono: restano com'erano, con la palette precedente, mentre il resto del sito passa ad Atelier. */
+.tpl-carousel, .hm-gallery, .pick-phone, .tpl-admin-card, .style-admin {
+  --paper: #f5f6f8; --paper-light: #ffffff; --paper-deep: #e8ebef;
+  --ink: #0e1116; --ink-soft: #4a5361; --brass: #0b6e65; --brass-light: #14b8a6;
+  --line: #e2e5ea; --line-soft: #eef0f3;
+}
+
+.tpl-carousel .btn.solid, .hm-gallery .btn.solid { background: #0e1116; border-color: #0e1116; }
 
 /* ───────────── Base ───────────── */
 * { box-sizing: border-box; }
@@ -25,6 +35,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-text), "Helvetica Neue", Arial, sans-serif;
+  font-weight: 300;
   font-size: 17px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -68,8 +79,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   transition: background-color .2s ease, color .2s ease, border-color .2s ease;
 }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
-.btn.solid { background: var(--ink); color: var(--paper-light); }
-.btn.solid:hover:not(:disabled) { background: #0d171b; }
+.btn.solid { background: var(--brass); color: var(--paper-light); border-color: var(--brass); }
+.btn.solid:hover:not(:disabled) { background: #3A0E15; }
 .btn.outline { background: transparent; color: var(--ink); border-color: var(--ink); }
 .btn.outline:hover:not(:disabled) { background: var(--ink); color: var(--paper-light); }
 .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }

@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Cormorant_Garamond, Jost } from "next/font/google";
 import "flag-icons/css/flag-icons.min.css";
 import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
 import { getLang } from "@/lib/i18n";
 
-// Titoli in Space Grotesk, testo in Inter: scaricati in build e serviti dal nostro dominio.
-const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", display: "swap", weight: ["500", "700"] });
-const text = Inter({ subsets: ["latin"], variable: "--font-text", display: "swap", weight: ["400", "500", "600"] });
+// Titoli in Cormorant Garamond, interfaccia in Jost: scaricati in build e serviti dal nostro dominio.
+const display = Cormorant_Garamond({ subsets: ["latin"], variable: "--font-display", display: "swap", weight: ["300", "400", "500", "600"], style: ["normal", "italic"] });
+const text = Jost({ subsets: ["latin"], variable: "--font-text", display: "swap", weight: ["300", "400", "500", "600"] });
 
 export const metadata: Metadata = {
   title: "InviteMe · Inviti digitali con musica e conferma di presenza",
