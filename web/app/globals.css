@@ -2006,3 +2006,20 @@ button.bl-crumb { cursor: pointer; text-decoration: underline; text-decoration-c
 button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass); }
 .bl-crumb-sep { opacity: .5; }
 .bl-crumb.is-current { color: var(--brass); font-weight: 600; }
+
+/* Builder: testi e componenti più grandi in tutto il pannello (la base sale a 15 px, le etichette e i suggerimenti a 14 px). */
+.bl-app { font-size: 15px; }
+.bl-app label, .bl-app .field-label, .bl-app .hint, .bl-app small, .bl-app .bl-kicker, .bl-app .bl-crumbs, .bl-app .bl-tpl-kicker, .bl-app .bl-save { font-size: 14px !important; }
+.bl-app .bl-kicker { font-size: 12.5px !important; letter-spacing: .12em; }
+.bl-app .bl-item .bl-name, .bl-app .bl-item .bl-name span { font-size: 15px; }
+.bl-app .bl-item small { font-size: 13px !important; }
+.bl-app .bl-switcher-tab { font-size: 16px; min-height: 54px; }
+.bl-app .bl-tab { font-size: 15px; }
+.bl-app .bl-tabs-head h2 { font-size: 30px; }
+.bl-app .bl-fields input, .bl-app .bl-fields select, .bl-app .bl-fields textarea, .bl-app .bl-right input, .bl-app .bl-right select, .bl-app .bl-right textarea { font-size: 16px; }
+.bl-app .seg-opt, .bl-app .swatch-chip { font-size: 15px; }
+.bl-app .std-text strong, .bl-app .mp-text strong { font-size: 16px; }
+.bl-app .mp-preview { font-size: 14px; }
+.bl-app .bl-back-row .bl-back { font-size: 14px; }
+.bl-app .bl-preview-title { font-size: 15px; }
+.bl-app .bl-template, .bl-app .bl-tpl-chip strong { font-size: 17px; }
