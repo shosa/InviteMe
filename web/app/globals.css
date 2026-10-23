@@ -1892,3 +1892,8 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 0 0 18px; }
 @media (max-width: 900px) { .bl-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .bl-tab { min-height: 50px; padding: 9px 8px; font-size: 14px; gap: 5px; border-radius: 10px; }
+
+/* Builder desktop: l'elenco dei blocchi occupa il 70% dello spazio della colonna, centrato, con margini ai lati. */
+@media (min-width: 901px) {
+  .bl-right .bl-column { width: 70%; max-width: none; margin: 0 auto; }
+}

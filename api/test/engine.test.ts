@@ -206,9 +206,11 @@ describe("configurazione a blocchi", () => {
     const m = getModel(c, "invitation-rsvp")!;
     const features = activeFeatures(c, m.id, []);
     assert.ok(features.has("rsvp"));
-    const config = defaultConfig(loadThemes().themes[0].manifest, m.id, "wedding", features);
+    const tm = loadThemes().themes[0].manifest;
+    const config = defaultConfig(tm, m.id, "wedding", features);
     assert.ok(config.blocks.some((b) => b.type === "rsvp"));
-    assert.ok(config.blocks.some((b) => b.type === "countdown")); // inclusa nel modello Smart
+    // Il conto alla rovescia entra nell'invito solo se lo stile lo prevede nella sua demo (funzione inclusa nel modello Smart).
+    assert.equal(config.blocks.some((b) => b.type === "countdown"), "countdown" in tm.demo);
     const base = getModel(c, "save-the-date")!;
     const baseConfig = defaultConfig(loadThemes().themes[0].manifest, base.id, "wedding", activeFeatures(c, base.id, []));
     assert.ok(!baseConfig.blocks.some((b) => b.type === "countdown")); // opzione del modello Base: non acquistata

@@ -452,6 +452,19 @@ export function makeBlock(type: BlockType, locale: "it" | "en" = "it"): BlockIns
   return { id: newBlockId(), type, props: JSON.parse(JSON.stringify(base)) };
 }
 
+// Blocchi di partenza di un nuovo invito: quelli previsti dalla demo dello stile, nello stesso ordine e con gli stessi scambi
+// (es. data da grattare al posto della data). Busta e intestazione ci sono sempre. Le funzioni non acquistate restano fuori.
+export function templateBlocks(demo: Record<string, unknown> | undefined, features: ReadonlySet<AddonKey> | AddonKey[]): BlockInstance[] {
+  if (!demo) return defaultBlocks(features);
+  const has = (k?: AddonKey) => !k || (Array.isArray(features) ? features.includes(k) : features.has(k));
+  const swap = (demo.blockSwap ?? {}) as Record<string, string>;
+  const dropped = new Set<string>(["date", ...Object.values(swap)]);
+  const out = BLOCKS.filter((d) => !dropped.has(d.type) && (d.locked || d.anchored || d.type in demo))
+    .filter((d) => has(d.feature))
+    .map((d) => makeBlock((swap[d.type] ?? d.type) as BlockType));
+  return out.length ? out : defaultBlocks(features);
+}
+
 export function defaultBlocks(features: ReadonlySet<AddonKey> | AddonKey[]): BlockInstance[] {
   const has = (k?: AddonKey) => !k || (Array.isArray(features) ? features.includes(k) : features.has(k));
   return DEFAULT_BLOCKS.map((t) => blockDef(t)!).filter((d) => has(d.feature)).map((d) => makeBlock(d.type));

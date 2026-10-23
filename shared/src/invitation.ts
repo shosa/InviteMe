@@ -2,7 +2,7 @@ import { EVENT_TYPES, activeFeatures, enabledModels, enabledThemes, getModel, ge
 import type { AddonKey } from "./addons";
 import { sanitizeValues } from "./engine/values";
 import { sanitizeQuestions, type RsvpQuestion, type ThemeManifest } from "./engine/manifest";
-import { BLOCK_TYPES, EVENT_DEFAULTS, EVENT_FIELDS, HERO_EVENT_KEYS, blockDef, defaultBlocks, makeBlock, newBlockId, type BlockInstance, type BlockType } from "./blocks";
+import { BLOCK_TYPES, EVENT_DEFAULTS, EVENT_FIELDS, HERO_EVENT_KEYS, blockDef, defaultBlocks, makeBlock, newBlockId, templateBlocks, type BlockInstance, type BlockType } from "./blocks";
 import { sanitizeFontMap } from "./fonts";
 import { sanitizeBackground, type BackgroundSpec } from "./background";
 
@@ -64,7 +64,7 @@ export function defaultConfig(theme: ThemeManifest, model: string, eventType: Ev
     eventType,
     locale: "it",
     event,
-    blocks: defaultBlocks(features),
+    blocks: templateBlocks(theme.demo, features),
     rsvpQuestions: DEFAULT_RSVP,
   };
 }
