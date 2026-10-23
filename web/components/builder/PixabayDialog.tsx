@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 import { importStock, searchStock, type StockFilters, type StockPhoto } from "@/lib/stock";
 
 // L'invito aperto nel builder: serve alla ricerca e all'importazione delle foto.
@@ -81,7 +83,8 @@ export function PixabayDialog({ invitationId, onClose, onPick }: Props) {
 
   const filtersOn = JSON.stringify(filters) !== JSON.stringify(DEFAULT_FILTERS);
 
-  return (
+  // Nel portale (body): il pannello del builder ha animazioni con trasformazioni che sposterebbero il modale.
+  return createPortal(
     <div className="bl-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}>
       <div className="bl-modal stock-modal" role="dialog" aria-modal="true" aria-labelledby="stock-title">
         <header className="bl-modal-head">
@@ -89,7 +92,7 @@ export function PixabayDialog({ invitationId, onClose, onPick }: Props) {
             <h2 id="stock-title">Foto da Pixabay</h2>
             <p className="hint">La foto scelta viene salvata nel tuo invito.</p>
           </div>
-          <button type="button" className="bl-icon" aria-label="Chiudi" onClick={onClose}>×</button>
+          <button type="button" className="bl-icon" aria-label="Chiudi" onClick={onClose}><X size={18} aria-hidden="true" /></button>
         </header>
         <form className="stock-search" onSubmit={onSubmit} role="search">
           <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Es. fiori, mare, lanterne" aria-label="Cerca una foto" autoFocus />
@@ -163,6 +166,7 @@ export function PixabayDialog({ invitationId, onClose, onPick }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

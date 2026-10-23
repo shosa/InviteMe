@@ -1980,3 +1980,20 @@ h2 { font-size: clamp(2rem, 3.2vw, 2.7rem); }
 .bl-right .upload:hover, .bl-fields .upload:hover, .bl-right .media-actions > .upload:hover { background: #F7EEE6; border-color: var(--brass-light); transform: translateY(-1px); }
 .bl-right .media-preview, .bl-fields .media-preview { border-radius: 14px; }
 .bl-right .media-stock, .bl-right .media-actions > .media-stock { background: transparent; }
+
+/* Modale Pixabay: stesso linguaggio dei controlli (angoli tondi, accento ceralacca). */
+.stock-modal { border-radius: 20px; padding: 26px 26px 22px; }
+.stock-modal .bl-modal-head h2 { font-family: var(--font-display), Georgia, serif; font-size: 26px; font-weight: 500; color: var(--brass); margin: 0; }
+.stock-search input, .stock-search input[type="search"] { border-radius: 12px; min-height: 46px; padding: 0 14px; border: 1px solid #DCCFC2; background: #FFFFFF; font-size: 15px; }
+.stock-search input:focus { border-color: var(--brass); box-shadow: 0 0 0 3px rgba(185, 141, 95, .18); outline: none; }
+.stock-search .btn { border-radius: 12px; }
+.stock-filters { border-radius: 16px; border-color: #E3D7C8; }
+.stock-filters legend { color: #8A5F13; }
+.stock-seg button { border-radius: 999px; min-height: 34px; border-color: #DCCFC2; }
+.stock-seg button:hover { border-color: var(--brass-light); }
+.stock-seg button[aria-pressed="true"] { background: var(--brass); border-color: var(--brass); color: #FFFFFF; font-weight: 600; }
+.stock-grid-filters select { border-radius: 12px; min-height: 40px; border-color: #DCCFC2; background: #FFFFFF; }
+.stock-grid-filters select:focus { border-color: var(--brass); outline: none; }
+.stock-check input { accent-color: var(--brass); }
+.stock-item { border-radius: 14px; }
+.stock-foot .link, .stock-filter-foot .link { color: var(--brass); }
