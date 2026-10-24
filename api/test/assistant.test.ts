@@ -269,3 +269,24 @@ describe("assistente: cronologia lunga", () => {
     assert.equal(model.calls[0].messages[0].role, "user");
   });
 });
+
+describe("assistente: risposte a una domanda non contano", () => {
+  it("dopo una domanda la risposta è gratuita anche a limite raggiunto, e non consuma richieste", async () => {
+    const shared = { ...invitation(), assistant_calls: SETTINGS.callLimit, assistant_asked: true, assistant_free_run: 0 };
+    const model = fakeModel([{ content: [{ type: "text", text: "Ok, scelta registrata." }], stop_reason: "end_turn" }]);
+    const { d, recorded } = deps({ model, findOwned: async () => shared });
+    const out = await handleAssistant(d, { id: INV_ID, userId: OWNER, body: chat });
+    assert.equal(out.status, 200);
+    assert.equal((out.body as { counted: boolean }).counted, false);
+    assert.equal(recorded.length, 1);
+  });
+
+  it("dopo cinque risposte gratuite di fila torna a contare, e a limite raggiunto si ferma", async () => {
+    const shared = { ...invitation(), assistant_calls: SETTINGS.callLimit, assistant_asked: true, assistant_free_run: 5 };
+    const model = fakeModel([{ content: [{ type: "text", text: "x" }], stop_reason: "end_turn" }]);
+    const { d } = deps({ model, findOwned: async () => shared });
+    const out = await handleAssistant(d, { id: INV_ID, userId: OWNER, body: chat });
+    assert.equal(out.status, 409);
+    assert.equal(model.calls.length, 0);
+  });
+});

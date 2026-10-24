@@ -377,12 +377,14 @@ export async function buildApp() {
           const client = new Anthropic({ apiKey });
           return (params) => client.messages.create(params);
         },
-        recordUsage: async (invitationId, model, usage, actions) => {
+        recordUsage: async (invitationId, model, usage, actions, state) => {
           await pool.query(
-            `WITH bump AS (UPDATE invitations SET assistant_calls = assistant_calls + 1 WHERE id = $1 RETURNING id)
-             INSERT INTO assistant_usage (invitation_id, model, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, actions)
-             SELECT id, $2, $3, $4, $5, $6, $7 FROM bump`,
-            [invitationId, model, usage.input, usage.output, usage.cacheRead, usage.cacheWrite, actions],
+            `WITH bump AS (
+               UPDATE invitations SET assistant_calls = assistant_calls + $8, assistant_asked = $9, assistant_free_run = $10
+               WHERE id = $1 RETURNING id)
+             INSERT INTO assistant_usage (invitation_id, model, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, actions, counted)
+             SELECT id, $2, $3, $4, $5, $6, $7, $11 FROM bump`,
+            [invitationId, model, usage.input, usage.output, usage.cacheRead, usage.cacheWrite, actions, state.counted ? 1 : 0, state.asked, state.freeRun, state.counted],
           );
         },
       },

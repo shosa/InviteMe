@@ -24,6 +24,7 @@ const MAX_ROUNDS = 8; // giri di strumenti per messaggio
 const MAX_CHAT = 12; // messaggi di cronologia inviati al modello
 const MAX_MESSAGE = 1000; // caratteri per messaggio del cliente
 const MAX_PHOTO_HITS = 8; // foto proposte per ogni ricerca
+const MAX_FREE_RUN = 5; // risposte gratuite di fila dopo una domanda: oltre, si torna a contare
 
 export type ModelCall = (params: Anthropic.MessageCreateParamsNonStreaming) => Promise<Anthropic.Message>;
 
@@ -33,6 +34,8 @@ export type OwnedInvitation = {
   edit_count: number;
   config: InviteConfig;
   assistant_calls: number;
+  assistant_asked: boolean; // l'ultima risposta ha fatto una domanda o una scelta: la risposta a seguire è gratuita
+  assistant_free_run: number; // risposte gratuite di fila già date
   purchased_addons: AddonKey[] | null;
 };
 
@@ -48,7 +51,7 @@ export type AssistantDeps = {
   apiKey: string | undefined;
   loadSettings: () => Promise<AssistantSettings>; // modello, sforzo e limite scelti dalla console
   makeCall: (apiKey: string) => ModelCall;
-  recordUsage: (invitationId: string, model: string, usage: Usage, actions: number) => Promise<void>;
+  recordUsage: (invitationId: string, model: string, usage: Usage, actions: number, state: { counted: boolean; asked: boolean; freeRun: number }) => Promise<void>;
   stock?: StockPort; // assente se la ricerca foto non è configurata
   places?: (query: string) => Promise<string[]>; // ricerca indirizzi reali
 };
@@ -58,6 +61,7 @@ export type Choice = { question: string; options: string[] };
 export type Usage = { input: number; output: number; cacheRead: number; cacheWrite: number };
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 export type AssistantBody = {
+  counted: boolean; // false se la risposta non ha consumato una richiesta
   reply: string;
   actions: Action[];
   usage: Usage;
@@ -85,6 +89,9 @@ Le funzioni e i prezzi reali sono nello stato dell'invito (campo prodotto): usa 
 Domande per chi risponde: sono domande vere che la persona vede nel modulo. Non scriverle mai nel testo introduttivo.
 Foto: quando la persona vuole un'immagine, cercala e mostrale le possibilità con una scelta, poi usa quella che sceglie. Se nessuna va bene, proponi un'altra ricerca.
 Indirizzo: cerca i luoghi reali e fai scegliere la persona tra le opzioni trovate. Non inventare mai un indirizzo.
+Quando la persona risponde a una scelta che le hai proposto, o scrive lei l'indirizzo, salvalo subito con setEvent nello stesso giro: non chiedere di nuovo quello che ha già detto.
+Scrivi che una cosa è fatta solo se l'hai davvero applicata in questo giro di strumenti. Se non l'hai applicata, dillo e spiega cosa manca.
+Quando la persona chiede di mostrare o nascondere una parte dell'invito (per esempio la mappa, o «come arrivare»), usa setBlockHidden sul blocco giusto; per cambiarne la posizione usa moveBlock.
 Scelte: quando la persona deve scegliere tra alcune possibilità, usa la scelta con i pulsanti e aspetta la risposta.
 Se la persona chiede più cose insieme, falle tutte in un solo giro e poi racconta il risultato.
 
@@ -230,6 +237,12 @@ function describeInvitation(config: InviteConfig, catalog: Catalog, readOnly: bo
   };
 }
 
+function parseOffered(body: unknown): string[] {
+  const raw = body && typeof body === "object" ? (body as { placesAllowed?: unknown }).placesAllowed : undefined;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((x): x is string => typeof x === "string" && x.length > 0 && x.length <= 200).slice(0, 30);
+}
+
 function hasValue(v: unknown): boolean {
   return Array.isArray(v) ? v.length > 0 : typeof v === "string" && v.length > 0;
 }
@@ -285,7 +298,9 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
   if (!inv) return { status: 404, body: { error: "Invito non trovato" } };
   if (!deps.apiKey) return { status: 503, body: { error: "L'assistente non è attivo: manca la chiave del modello" } };
   const settings = await deps.loadSettings();
-  if (inv.assistant_calls >= settings.callLimit) {
+  // Risposta a una domanda dell'assistente: non consuma richieste, entro il limite di risposte gratuite di fila.
+  const free = inv.assistant_asked && inv.assistant_free_run < MAX_FREE_RUN;
+  if (!free && inv.assistant_calls >= settings.callLimit) {
     return { status: 409, body: { error: "Hai usato tutte le richieste dell'assistente per questo invito" } };
   }
   const chat = parseChat(input.body);
@@ -296,7 +311,9 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
   const tools = rules.readOnly ? undefined : TOOLS;
   // File ammessi: libreria musica, file già nell'invito, e le foto importate in questa richiesta.
   const mediaAllowed = new Set<string>([...catalog.music.filter((t) => t.enabled).map((t) => t.url), ...mediaInConfig(inv.config)]);
-  const placesAllowed = new Set<string>();
+  // Indirizzi già proposti nella conversazione (il browser li rimanda) e quelli scritti dalla persona stessa.
+  const placesAllowed = new Set<string>(parseOffered(input.body));
+  for (const m of chat) if (m.role === "user") placesAllowed.add(m.content);
   const ctx: ActionContext = { catalog, paid: rules.themeLocked, purchased: new Set(inv.purchased_addons ?? []), mediaAllowed, placesAllowed };
   const call = deps.makeCall(deps.apiKey);
   const photoHits = new Map<number, string>(); // foto proposte in questa richiesta: id → descrizione
@@ -425,15 +442,17 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
     messages.push({ role: "user", content: results });
   }
 
-  await deps.recordUsage(inv.id, settings.model, usage, actions.length);
   const reply = refused ? "Non posso aiutarti con questa richiesta. Prova a riformularla." : texts.join("\n").trim() || "Fatto.";
+  const asked = !refused && (choice !== undefined || reply.trimEnd().endsWith("?"));
+  await deps.recordUsage(inv.id, settings.model, usage, actions.length, { counted: !free, asked, freeRun: free ? inv.assistant_free_run + 1 : 0 });
   return {
     status: 200,
     body: {
       reply,
       actions,
       usage,
-      remaining: Math.max(0, settings.callLimit - inv.assistant_calls - 1),
+      remaining: Math.max(0, settings.callLimit - inv.assistant_calls - (free ? 0 : 1)),
+      counted: !free,
       mediaAllowed: [...mediaAllowed],
       placesAllowed: [...placesAllowed],
       ...(choice ? { choice } : {}),

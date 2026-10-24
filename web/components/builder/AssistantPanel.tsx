@@ -60,6 +60,8 @@ export function AssistantPanel({
 
   const [picks, setPicks] = useState<Record<number, string>>({});
   const [wizardOpen, setWizardOpen] = useState(false);
+  // Indirizzi proposti finora: il server li riconosce anche nelle richieste successive.
+  const [offered, setOffered] = useState<string[]>([]);
 
   async function send(override?: string, answeredAt?: number) {
     const text = (override ?? draft).trim();
@@ -75,10 +77,11 @@ export function AssistantPanel({
       const res = await fetch(`/api/invitations/${invitationId}/assistant`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify({ messages, placesAllowed: offered }),
       });
       const data = (await res.json().catch(() => ({}))) as { reply?: string; actions?: Action[]; remaining?: number; mediaAllowed?: string[]; placesAllowed?: string[]; choice?: Choice; error?: string };
       if (!res.ok || typeof data.reply !== "string") throw new Error(data.error ?? (it ? "L'assistente non risponde." : "The assistant is not responding."));
+      if (data.placesAllowed?.length) setOffered((o) => [...new Set([...o, ...(data.placesAllowed ?? [])])].slice(-30));
       const applied = data.actions?.length ? onApply(data.actions, { mediaAllowed: data.mediaAllowed ?? [], placesAllowed: data.placesAllowed ?? [] }) : 0;
       if (typeof data.remaining === "number") setRemaining(data.remaining);
       setLines((l) => [...l, { role: "assistant", text: data.reply ?? "", applied, ...(data.choice ? { choice: { ...data.choice } } : {}) }]);
