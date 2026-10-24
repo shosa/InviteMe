@@ -17,11 +17,13 @@ export const demoMode = () => !shopifyConfigured() && process.env.DEMO_MODE === 
 export const localCheckoutAllowed = () =>
   demoMode() || process.env.NODE_ENV !== "production" || process.env.ALLOW_LOCAL_CHECKOUT === "true";
 
-export type CheckoutInput = { invitationId: string; slug: string; addons: string[]; totalCents: number; origin: string; kind?: "initial" | "upgrade" };
+// Due casi: invito già esistente (upgrade o bozza vecchia: invitationId) oppure acquisto prima dell'invito (orderId).
+export type CheckoutInput = { invitationId?: string; orderId?: string; slug?: string; addons: string[]; totalCents: number; origin: string; kind?: "initial" | "upgrade" };
 
 export async function createCheckout(input: CheckoutInput): Promise<{ checkoutUrl: string; source: "shopify" | "local" }> {
   if (!shopifyConfigured()) {
-    return { checkoutUrl: `${input.origin}/checkout/local?invitation=${input.invitationId}`, source: "local" };
+    const target = input.orderId ? `order=${input.orderId}` : `invitation=${input.invitationId}`;
+    return { checkoutUrl: `${input.origin}/checkout/local?${target}`, source: "local" };
   }
   const domain = process.env.SHOPIFY_STORE_DOMAIN!;
   const token = process.env.SHOPIFY_STOREFRONT_TOKEN!;
@@ -35,8 +37,8 @@ export async function createCheckout(input: CheckoutInput): Promise<{ checkoutUr
       }
     }`;
   const attributes = [
-    { key: "invitationId", value: input.invitationId },
-    { key: "slug", value: input.slug },
+    ...(input.orderId ? [{ key: "orderId", value: input.orderId }] : [{ key: "invitationId", value: input.invitationId ?? "" }]),
+    { key: "slug", value: input.slug ?? "" },
     { key: "addons", value: input.addons.join(",") || "none" },
     { key: "totalCents", value: String(input.totalCents) },
     { key: "kind", value: input.kind ?? "initial" },
@@ -49,8 +51,8 @@ export async function createCheckout(input: CheckoutInput): Promise<{ checkoutUr
       variables: {
         input: {
           lines: [{ merchandiseId: variantId, quantity: 1, attributes }],
-          attributes: [{ key: "invitationId", value: input.invitationId }],
-          note: `InviteMe ${input.slug}`,
+          attributes: input.orderId ? [{ key: "orderId", value: input.orderId }] : [{ key: "invitationId", value: input.invitationId ?? "" }],
+          note: `InviteMe ${input.slug ?? input.orderId}`,
         },
       },
     }),
@@ -78,6 +80,19 @@ export function verifyShopifyWebhook(rawBody: string, hmacHeader: string | undef
 }
 
 // Id invito dagli attributi dell'ordine (note_attributes o proprietà delle righe).
+export function orderIdFromOrder(order: {
+  note_attributes?: { name: string; value: string }[];
+  line_items?: { properties?: { name: string; value: string }[] }[];
+}): string | undefined {
+  const fromNotes = order.note_attributes?.find((a) => a.name === "orderId")?.value;
+  if (fromNotes) return fromNotes;
+  for (const item of order.line_items ?? []) {
+    const p = item.properties?.find((x) => x.name === "orderId")?.value;
+    if (p) return p;
+  }
+  return undefined;
+}
+
 export function invitationIdFromOrder(order: {
   note_attributes?: { name: string; value: string }[];
   line_items?: { properties?: { name: string; value: string }[] }[];

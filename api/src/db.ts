@@ -88,6 +88,8 @@ ALTER TABLE invitations ADD COLUMN IF NOT EXISTS assistant_calls integer NOT NUL
 ALTER TABLE invitations ADD COLUMN IF NOT EXISTS assistant_asked boolean NOT NULL DEFAULT false;
 ALTER TABLE invitations ADD COLUMN IF NOT EXISTS assistant_free_run integer NOT NULL DEFAULT 0;
 ALTER TABLE assistant_usage ADD COLUMN IF NOT EXISTS counted boolean NOT NULL DEFAULT true;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS draft jsonb;
 CREATE TABLE IF NOT EXISTS assistant_usage (
   id bigserial PRIMARY KEY,
   invitation_id uuid NOT NULL REFERENCES invitations(id) ON DELETE CASCADE,

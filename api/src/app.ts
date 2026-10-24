@@ -21,6 +21,7 @@ import {
   addonsCents,
   totalCents,
   type AddonKey,
+  type EventType,
   type Catalog,
   type InviteConfig,
   type RsvpQuestion,
@@ -53,7 +54,7 @@ import { appUrl, inviteEmail, orderEmail, resetEmail, rsvpNoticeEmail, sendMail,
 import { registerGoogle, googleEnabled } from "./google";
 import { registerAdminInvitations } from "./adminInvitations";
 import { registerAdminMedia } from "./adminMedia";
-import { createCheckout, invitationIdFromOrder, localCheckoutAllowed, shopifyConfigured, verifyShopifyWebhook } from "./shopify";
+import { createCheckout, invitationIdFromOrder, orderIdFromOrder, localCheckoutAllowed, shopifyConfigured, verifyShopifyWebhook } from "./shopify";
 
 const isProd = process.env.NODE_ENV === "production";
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -727,7 +728,14 @@ export async function buildApp() {
     if (shopifyConfigured() || !localCheckoutAllowed()) return reply.code(403).send({ error: "Checkout di prova non disponibile" });
     const user = await requireUser(req, reply);
     if (!user) return;
-    const b = (req.body ?? {}) as { invitationId?: string };
+    const b = (req.body ?? {}) as { invitationId?: string; orderId?: string };
+    if (b.orderId) {
+      const { rows } = await pool.query("SELECT id, user_id, draft, amount_cents, invitation_id FROM orders WHERE id = $1 AND user_id = $2 AND status = 'pending' AND draft IS NOT NULL", [b.orderId, user.id]);
+      if (!rows[0]) return reply.code(404).send({ error: "Ordine non trovato" });
+      if (rows[0].invitation_id) return { ok: true, invitationId: rows[0].invitation_id };
+      const invitationId = await createInvitationFromOrder(rows[0], "local", `TEST-${Date.now()}`);
+      return { ok: true, invitationId };
+    }
     const inv = b.invitationId && UUID.test(b.invitationId) ? await ownedInvitation(b.invitationId, user.id) : null;
     if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
     if (inv.status === "paid") {
@@ -756,6 +764,62 @@ export async function buildApp() {
     );
     await track("upgrade_paid", invitationId);
   }
+
+  // Dopo il pagamento di un ordine nato dalla home: l'invito nasce nel profilo, acquistato e ancora non pubblicato.
+  // Resta modificabile dal builder finché non si pubblica (conferma).
+  async function createInvitationFromOrder(order: { id: string; user_id: string; draft: { model: string; themeId: string; eventType: string; addons: string[] }; amount_cents: number }, source: "shopify" | "local", orderRef: string): Promise<string> {
+    const c = await loadCatalog();
+    const d = order.draft;
+    const theme = getTheme(c, d.themeId, d.model) ?? enabledThemes(c, d.model)[0];
+    if (!theme) throw new Error("Nessun tema disponibile");
+    const eventType = (EVENT_TYPES.find((e) => e.id === d.eventType)?.id ?? "wedding") as EventType;
+    const addons = d.addons as AddonKey[];
+    const config = { ...defaultConfig(theme, d.model, eventType, activeFeatures(c, d.model, addons)), addons };
+    const id = randomUUID();
+    const slug = makeSlug(titleOf(config));
+    await pool.query(
+      "INSERT INTO invitations (id, slug, user_id, config, status, purchased_addons, published_config, order_ref) VALUES ($1, $2, $3, $4, 'paid', $5, $4, $6)",
+      [id, slug, order.user_id, JSON.stringify(config), JSON.stringify(d.addons), orderRef],
+    );
+    await pool.query("UPDATE orders SET status = 'paid', invitation_id = $2, source = $3 WHERE id = $1", [order.id, id, source]);
+    await track("order_paid", id);
+    const { rows } = await pool.query("SELECT email FROM users WHERE id = $1", [order.user_id]);
+    if (rows[0]) {
+      await sendMail(orderEmail({ to: rows[0].email, title: titleOf(config), amount: formatPrice(order.amount_cents), slug })).catch((e) => app.log.warn({ err: e }, "conferma d'ordine non inviata"));
+    }
+    return id;
+  }
+
+  // Acquisto prima dell'invito: si crea il pagamento con la scelta; l'invito nasce al pagamento riuscito.
+  app.post("/api/checkout/new", async (req, reply) => {
+    const user = await requireUser(req, reply);
+    if (!user) return;
+    if (!shopifyConfigured() && !localCheckoutAllowed()) return reply.code(503).send({ error: "I pagamenti non sono ancora attivi su questo server" });
+    const c = await loadCatalog();
+    const b = (req.body ?? {}) as { model?: string; themeId?: string; eventType?: string; addons?: unknown };
+    const model = getModel(c, String(b.model ?? ""));
+    if (!model) return reply.code(400).send({ error: "Modello non disponibile" });
+    const requested = b.themeId ? getTheme(c, String(b.themeId), model.id) : undefined;
+    if (b.themeId && !requested) return reply.code(400).send({ error: "Tema non disponibile per questo modello" });
+    const theme = requested ?? enabledThemes(c, model.id)[0];
+    if (!theme) return reply.code(400).send({ error: "Nessun tema disponibile per questo modello" });
+    const eventType = EVENT_TYPES.find((e) => e.id === b.eventType)?.id ?? "wedding";
+    const addons = Array.isArray(b.addons) ? [...new Set(b.addons.filter((k): k is string => typeof k === "string" && model.options.includes(k as AddonKey)))] : [];
+    const amount = totalCents(c, model.id, addons);
+    const orderId = randomUUID();
+    const draft = { model: model.id, themeId: theme.id, eventType, addons };
+    try {
+      const checkout = await createCheckout({ orderId, addons, totalCents: amount, origin: appUrl(), kind: "initial" });
+      await pool.query(
+        "INSERT INTO orders (id, user_id, invitation_id, amount_cents, currency, source, status, checkout_url, kind, draft) VALUES ($1, $2, NULL, $3, 'EUR', $4, 'pending', $5, 'initial', $6)",
+        [orderId, user.id, amount, checkout.source, checkout.checkoutUrl, JSON.stringify(draft)],
+      );
+      await track("checkout_started", orderId);
+      return { checkoutUrl: checkout.checkoutUrl };
+    } catch (e) {
+      return reply.code(502).send({ error: e instanceof Error ? e.message : "Errore checkout" });
+    }
+  });
 
   async function markPaid(invitationId: string, orderRef: string, amountCents: number, source: "shopify" | "local") {
     // Al pagamento si registra cosa è stato acquistato e la versione che va online.
@@ -795,6 +859,11 @@ export async function buildApp() {
       note_attributes?: { name: string; value: string }[];
       line_items?: { properties?: { name: string; value: string }[] }[];
     };
+    const orderId = orderIdFromOrder(order);
+    if (orderId) {
+      const { rows } = await pool.query("SELECT id, user_id, draft, amount_cents, invitation_id FROM orders WHERE id = $1 AND status = 'pending' AND draft IS NOT NULL", [orderId]);
+      if (rows[0] && !rows[0].invitation_id) await createInvitationFromOrder(rows[0], "shopify", order.name);
+    }
     const invitationId = invitationIdFromOrder(order);
     const amountCents = Math.round(Number(order.total_price) * 100);
     if (invitationId && UUID.test(invitationId)) {
