@@ -60,9 +60,12 @@ export function composeBrief(a: Answers, lang: Lang): string {
   if (a.date) lines.push(`${it ? "Data" : "Date"}: ${a.date}`);
   if (a.time) lines.push(`${it ? "Ora" : "Time"}: ${a.time}`);
   if (a.venue) lines.push(`${it ? "Luogo" : "Venue"}: ${a.venue} (${it ? "cerca l'indirizzo e fammelo scegliere" : "find the address and let me choose it"})`);
-  if (a.dress || a.colors.length) lines.push(`${it ? "Dress code" : "Dress code"}: ${[a.dress, a.colors.join(", ")].filter(Boolean).join(" · ")}`);
-  if (a.background) lines.push(`${it ? "Sfondo" : "Background"}: ${a.background}`);
-  if (a.questions.length) lines.push(`${it ? "Domande per chi risponde" : "Questions for guests"}: ${a.questions.join("; ")}`);
+  const colorNames = COLORS.filter((c) => a.colors.includes(c.hex)).map((c) => (it ? c.it : c.en));
+  if (a.dress || colorNames.length) lines.push(`Dress code: ${[a.dress, colorNames.join(", ")].filter(Boolean).join(" · ")}`);
+  const bg = BACKGROUNDS.find((b) => b.kind === a.background);
+  if (bg && bg.kind !== "none") lines.push(`${it ? "Sfondo" : "Background"}: ${it ? bg.it : bg.en}`);
+  const qs = GUEST_QUESTIONS.filter((q) => a.questions.includes(q.id)).map((q) => (it ? q.it : q.en));
+  if (qs.length) lines.push(`${it ? "Domande per chi risponde (nel modulo, come domande vere)" : "Questions for guests (as real form questions)"}: ${qs.join("; ")}`);
   if (a.photo) lines.push(`${it ? "Foto nell'intestazione" : "Header photo"}: ${a.photo}`);
   lines.push(a.music ? (it ? "Musica: sì, dalla libreria." : "Music: yes, from the library.") : it ? "Musica: nessuna per ora." : "Music: none for now.");
   return lines.join("\n");
