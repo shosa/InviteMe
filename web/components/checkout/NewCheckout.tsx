@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Check, Plus, Sparkles } from "lucide-react";
 import { formatPrice, totalCents, type AddonKey, type Catalog } from "@inviteme/shared";
 import type { Lang } from "@/lib/ui";
 
-// Pagina di pagamento prima dell'invito: si scelgono le funzioni a pagamento, si paga, poi l'invito nasce nel profilo.
+// Pagamento prima dell'invito: si scelgono le funzioni a pagamento, si paga, poi l'invito nasce nel profilo.
 export function NewCheckout({ catalog, lang, model, theme, event }: { catalog: Catalog; lang: Lang; model: string; theme: string; event: string }) {
   const it = lang !== "en";
   const m = catalog.models.find((x) => x.id === model && x.enabled);
@@ -16,7 +17,17 @@ export function NewCheckout({ catalog, lang, model, theme, event }: { catalog: C
   const total = useMemo(() => (m ? totalCents(catalog, m.id, addons) : 0), [catalog, m, addons]);
   const options = m ? m.options.map((k) => catalog.addons.find((a) => a.key === k)).filter((a): a is NonNullable<typeof a> => !!a && a.enabled) : [];
 
-  if (!m) return <main className="wrap narrow"><p className="hint">{it ? "Scegli prima un modello dalla home." : "Choose a model from the home page first."}</p><a href="/#modelli">{it ? "Torna alla scelta" : "Back to choice"}</a></main>;
+  if (!m) {
+    return (
+      <main className="ck">
+        <section className="ck-empty">
+          <h1 className="ck-title">{it ? "Scegli prima un modello" : "Choose a model first"}</h1>
+          <p>{it ? "Il pagamento parte dalla scelta fatta in home." : "Payment starts from the choice made on the home page."}</p>
+          <a className="ck-pay" href="/#modelli">{it ? "Vai alla scelta" : "Go to the choice"}</a>
+        </section>
+      </main>
+    );
+  }
 
   async function pay() {
     if (!m) return;
@@ -38,40 +49,78 @@ export function NewCheckout({ catalog, lang, model, theme, event }: { catalog: C
   }
 
   return (
-    <main className="wrap narrow checkout-new">
-      <p className="kicker">{it ? "Pagamento" : "Payment"}</p>
-      <h1>{m.name}</h1>
-      <p className="hint">{m.tagline}</p>
-      {t && <p>{it ? "Stile: " : "Style: "}<strong>{t.name}</strong></p>}
+    <main className="ck">
+      <header className="ck-head">
+        <p className="ck-kicker">{it ? "Il tuo invito" : "Your invitation"}</p>
+        <h1 className="ck-title">{m.name}</h1>
+        <p className="ck-lede">{m.tagline}</p>
+      </header>
 
-      <section className="checkout-included">
-        <h2>{it ? "Incluso nel prezzo" : "Included in the price"}</h2>
-        <ul>{m.included.map((k) => <li key={k}>{catalog.addons.find((a) => a.key === k)?.label ?? k}</li>)}</ul>
-      </section>
-
-      {options.length > 0 && (
-        <section className="checkout-options">
-          <h2>{it ? "Funzioni in più" : "Extra features"}</h2>
-          {options.map((a) => (
-            <label key={a.key} className="checkout-option">
-              <input type="checkbox" checked={addons.includes(a.key)} onChange={() => setAddons((x) => (x.includes(a.key) ? x.filter((k) => k !== a.key) : [...x, a.key]))} />
-              <span>{a.label}</span>
-              <small>{a.description}</small>
-              <strong>+ {money(a.cents)}</strong>
-            </label>
-          ))}
+      <div className="ck-grid">
+        <section className="ck-card">
+          <h2 className="ck-h">{it ? "Incluso nel prezzo" : "Included in the price"}</h2>
+          <ul className="ck-list">
+            {m.included.map((k) => (
+              <li key={k}>
+                <span className="ck-tick"><Check size={14} aria-hidden="true" /></span>
+                {catalog.addons.find((a) => a.key === k)?.label ?? k}
+              </li>
+            ))}
+          </ul>
+          {t && (
+            <div className="ck-style">
+              <span className="ck-style-label">{it ? "Stile scelto" : "Chosen style"}</span>
+              <strong>{t.name}</strong>
+            </div>
+          )}
         </section>
-      )}
 
-      <div className="checkout-total">
-        <span>{it ? "Totale, pagamento unico" : "Total, one-time payment"}</span>
-        <strong>{money(total)}</strong>
+        <aside className="ck-card ck-pay-card">
+          {options.length > 0 && (
+            <>
+              <h2 className="ck-h">{it ? "Funzioni in più" : "Extra features"}</h2>
+              <div className="ck-options">
+                {options.map((a) => {
+                  const on = addons.includes(a.key);
+                  return (
+                    <button
+                      key={a.key}
+                      type="button"
+                      role="checkbox"
+                      aria-checked={on}
+                      className={`ck-option${on ? " is-on" : ""}`}
+                      onClick={() => setAddons((x) => (x.includes(a.key) ? x.filter((k) => k !== a.key) : [...x, a.key]))}
+                    >
+                      <span className="ck-option-ico">{on ? <Check size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}</span>
+                      <span className="ck-option-text">
+                        <strong>{a.label}</strong>
+                        <small>{a.description}</small>
+                      </span>
+                      <span className="ck-option-price">+ {money(a.cents)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          <div className="ck-total">
+            <span>{it ? "Totale, pagamento unico" : "Total, one-time payment"}</span>
+            <strong>{money(total)}</strong>
+          </div>
+
+          {error && <p role="alert" className="ck-error">{error}</p>}
+          <button type="button" className="ck-pay" disabled={busy} onClick={pay}>
+            <Sparkles size={16} aria-hidden="true" />
+            {busy ? (it ? "Un momento…" : "One moment…") : it ? "Paga e crea il mio invito" : "Pay and create my invitation"}
+          </button>
+          <p className="ck-note">
+            {it
+              ? "Dopo il pagamento l'invito compare nel tuo profilo e si apre il builder. Resta in bozza finché non lo pubblichi."
+              : "After payment the invitation appears in your profile and the builder opens. It stays a draft until you publish it."}
+          </p>
+        </aside>
       </div>
-      {error && <p role="alert" className="error">{error}</p>}
-      <button type="button" className="btn solid" disabled={busy} onClick={pay}>
-        {busy ? (it ? "Un momento…" : "One moment…") : it ? "Paga e crea il mio invito" : "Pay and create my invitation"}
-      </button>
-      <p className="hint">{it ? "Dopo il pagamento l'invito compare nel tuo profilo e si apre il builder. Resta in bozza finché non lo pubblichi." : "After payment the invitation appears in your profile and the builder opens. It stays a draft until you publish it."}</p>
     </main>
   );
 }
