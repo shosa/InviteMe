@@ -101,7 +101,7 @@ REGOLE DELLE SCELTE (sono importanti, sbagliarle fa perdere tempo alla persona):
 - Non chiedere mai due volte la stessa cosa. Prima di fare una domanda controlla lo stato: se un dato è già impostato (luogo, foto, colori, domande, data), non chiederlo di nuovo.
 - Foto: cerca una volta sola per ogni richiesta. Le foto proposte sono nello stato (fotoProposte): quando la persona ne sceglie una, applicala subito con usePhoto usando l'id di quella foto. Non cercare di nuovo per la stessa scelta.
 - Quando la persona risponde a una scelta, applica subito la risposta nello stesso giro. Non rifare la domanda.
-Scelte: quando la persona deve scegliere tra alcune possibilità, usa askChoice (pulsanti) con al massimo tre opzioni. Se non hai candidati sicuri, o la persona vuole cercare da sé un luogo, usa askPlace (campo di ricerca) e non proporre opzioni a parole.
+Scelte: quando la persona deve scegliere tra alcune possibilità, usa askChoice (pulsanti) con al massimo tre opzioni. Per le foto usa sempre askPhoto dopo searchPhotos. Se non hai candidati sicuri, o la persona vuole cercare da sé un luogo, usa askPlace (campo di ricerca) e non proporre opzioni a parole.
 Con askChoice o askPlace non fare altre modifiche nello stesso giro: aspetta la risposta.
 Se la persona chiede più cose insieme, falle tutte in un solo giro e poi racconta il risultato.
 
@@ -192,13 +192,16 @@ const TOOLS: Anthropic.Tool[] = [
     question: str,
     options: { type: "array", items: { type: "string" } },
   }),
+  tool("askPhoto", "Mostra alla persona le foto trovate con searchPhotos, come scelta (al massimo tre). Usalo sempre dopo searchPhotos, al posto di askChoice.", {
+    question: str,
+  }),
   tool("usePhoto", "Importa una foto trovata con searchPhotos e la mette nel campo foto del blocco.", {
     stockId: { type: "integer" },
     blockId: str,
     key: str,
   }),
 ];
-const SERVER_TOOLS = new Set(["searchPhotos", "usePhoto", "searchPlaces", "askChoice", "askPlace"]);
+const SERVER_TOOLS = new Set(["searchPhotos", "usePhoto", "searchPlaces", "askChoice", "askPlace", "askPhoto"]);
 const MAX_PLACE_HITS = 5;
 
 // Lo stato dell'invito che va al modello: solo testi e impostazioni dell'invito, mai ospiti, risposte, email o ordini.
@@ -370,6 +373,16 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
       if (found.length === 0) return { text: "nessun indirizzo trovato: chiedi al cliente di scriverlo completo", error: false };
       return { text: `trovati ${found.length} indirizzi:\n${found.map((f) => `- ${f}`).join("\n")}`, error: false };
     }
+    if (name === "askPhoto") {
+      const question = typeof args.question === "string" ? args.question.trim().slice(0, 200) : "";
+      if (!question) return { text: "rifiutata: serve una domanda", error: true };
+      // Le opzioni sono le foto proposte (la descrizione), non parole scritte dal modello.
+      const labels: string[] = [];
+      for (const label of [...photoHits.values()].slice(0, MAX_CHOICE)) labels.push(labels.includes(label) ? `${label} (altra)` : label);
+      if (labels.length === 0) return { text: "rifiutata: prima cerca le foto con searchPhotos", error: true };
+      choice = { question, options: labels };
+      return { text: "foto inviate al cliente: attendi la sua scelta", error: false };
+    }
     if (name === "askPlace") {
       const question = typeof args.question === "string" ? args.question.trim().slice(0, 200) : "";
       if (!question) return { text: "rifiutata: serve una domanda", error: true };
@@ -475,7 +488,8 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
     messages.push({ role: "user", content: results });
   }
 
-  const reply = refused ? "Non posso aiutarti con questa richiesta. Prova a riformularla." : texts.join("\n").trim() || "Fatto.";
+  const fallback = choice || placeAsk ? "" : actions.length > 0 ? "Fatto." : "Non ho ancora cambiato nulla: dimmi di più.";
+  const reply = refused ? "Non posso aiutarti con questa richiesta. Prova a riformularla." : texts.join("\n").trim() || fallback;
   const asked = !refused && (choice !== undefined || placeAsk !== undefined || reply.trimEnd().endsWith("?"));
   await deps.recordUsage(inv.id, settings.model, usage, actions.length, { counted: !free, asked, freeRun: free ? inv.assistant_free_run + 1 : 0 });
   return {
