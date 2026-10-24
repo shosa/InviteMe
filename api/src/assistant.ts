@@ -258,6 +258,8 @@ function parseChat(body: unknown): ChatMessage[] | null {
     if (typeof content !== "string" || content.trim().length === 0 || content.length > MAX_MESSAGE) return null;
     out.push({ role, content: content.trim() });
   }
+  // Il taglio della cronologia può lasciare in testa una risposta dell'assistente: il modello vuole il cliente per primo.
+  while (out.length > 0 && out[0].role === "assistant") out.shift();
   return out.at(-1)?.role === "user" ? out : null;
 }
 
@@ -392,8 +394,10 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
         ...(tools ? { tools } : {}),
         messages,
       });
-    } catch {
-      // Il dettaglio dell'errore resta fuori dalla risposta: può contenere dati della richiesta.
+    } catch (e) {
+      // Nei log solo codice e tipo dell'errore: il messaggio può contenere dati della richiesta.
+      console.error("assistente: chiamata al modello non riuscita", (e as { status?: number }).status ?? "", (e as Error).name);
+      // Il dettaglio dell'errore resta fuori dalla risposta.
       return { status: 502, body: { error: "L'assistente non risponde in questo momento. Riprova tra poco." } };
     }
     usage.input += res.usage.input_tokens;

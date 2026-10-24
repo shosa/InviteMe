@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { DEFAULT_CATALOG, defaultConfig, makeBlock, type Catalog, type InviteConfig, type ThemeManifest } from "@inviteme/shared";
-import { handleAssistant, type AssistantDeps, type ModelCall, type OwnedInvitation } from "../src/assistant";
+import { handleAssistant, type AssistantDeps, type ChatMessage, type ModelCall, type OwnedInvitation } from "../src/assistant";
 import type { AssistantSettings } from "../src/assistantSettings";
 
 const SETTINGS: AssistantSettings = { model: "claude-opus-5-5", effort: "medium", callLimit: 40 };
@@ -253,5 +253,19 @@ describe("assistente: risposte del modello", () => {
     const out = await handleAssistant(d, { id: INV_ID, userId: OWNER, body: chat });
     assert.deepEqual(imported, []);
     assert.equal((out.body as { actions: unknown[] }).actions.length, 0);
+  });
+});
+
+describe("assistente: cronologia lunga", () => {
+  it("con più di dodici messaggi la conversazione inviata al modello comincia sempre dal cliente", async () => {
+    const shared = invitation();
+    const history: ChatMessage[] = [];
+    for (let i = 0; i < 14; i++) history.push({ role: i % 2 === 0 ? "user" : "assistant", content: `messaggio ${i}` });
+    history.push({ role: "user", content: "ultima domanda" });
+    const model = fakeModel([{ content: [{ type: "text", text: "ok" }], stop_reason: "end_turn" }]);
+    const { d } = deps({ model, findOwned: async () => shared });
+    const out = await handleAssistant(d, { id: INV_ID, userId: OWNER, body: { messages: history.map((m) => ({ role: m.role, content: m.content })) } });
+    assert.equal(out.status, 200);
+    assert.equal(model.calls[0].messages[0].role, "user");
   });
 });
