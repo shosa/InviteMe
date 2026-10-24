@@ -192,8 +192,9 @@ const TOOLS: Anthropic.Tool[] = [
     question: str,
     options: { type: "array", items: { type: "string" } },
   }),
-  tool("askPhoto", "Mostra alla persona le foto trovate con searchPhotos, come scelta (al massimo tre). Usalo sempre dopo searchPhotos, al posto di askChoice.", {
+  tool("askPhoto", "Mostra alla persona le foto trovate con searchPhotos, come scelta (al massimo tre). captions è una descrizione breve e chiara per ciascuna foto, nello stesso ordine. Usalo sempre dopo searchPhotos, al posto di askChoice.", {
     question: str,
+    captions: { type: "array", items: { type: "string" } },
   }),
   tool("usePhoto", "Importa una foto trovata con searchPhotos e la mette nel campo foto del blocco.", {
     stockId: { type: "integer" },
@@ -376,10 +377,15 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
     if (name === "askPhoto") {
       const question = typeof args.question === "string" ? args.question.trim().slice(0, 200) : "";
       if (!question) return { text: "rifiutata: serve una domanda", error: true };
-      // Le opzioni sono le foto proposte (la descrizione), non parole scritte dal modello.
-      const labels: string[] = [];
-      for (const label of [...photoHits.values()].slice(0, MAX_CHOICE)) labels.push(labels.includes(label) ? `${label} (altra)` : label);
-      if (labels.length === 0) return { text: "rifiutata: prima cerca le foto con searchPhotos", error: true };
+      // Le opzioni sono le foto trovate. La descrizione breve scritta dal modello diventa l'etichetta, e resta nello stato.
+      const found = [...photoHits.entries()].slice(0, MAX_CHOICE);
+      if (found.length === 0) return { text: "rifiutata: prima cerca le foto con searchPhotos", error: true };
+      const captions = Array.isArray(args.captions) ? args.captions.filter((c): c is string => typeof c === "string" && c.trim().length > 0) : [];
+      const labels = found.map(([id, tags], i) => {
+        const label = (captions[i]?.trim() || tags).slice(0, 60);
+        photoHits.set(id, label);
+        return label;
+      });
       choice = { question, options: labels };
       return { text: "foto inviate al cliente: attendi la sua scelta", error: false };
     }
