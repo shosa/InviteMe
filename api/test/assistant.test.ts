@@ -302,3 +302,16 @@ describe("assistente: campo di ricerca luoghi", () => {
     assert.equal(model.calls.length, 1);
   });
 });
+
+describe("assistente: risposte vuote nella cronologia", () => {
+  it("una risposta dell'assistente senza testo (solo scelta) non fa fallire la richiesta", async () => {
+    const model = fakeModel([{ content: [{ type: "text", text: "ok" }], stop_reason: "end_turn" }]);
+    const { d } = deps({ model });
+    const out = await handleAssistant(d, { id: INV_ID, userId: OWNER, body: { messages: [
+      { role: "user", content: "una foto del mare" },
+      { role: "assistant", content: "" },
+      { role: "user", content: "la seconda" },
+    ] } });
+    assert.equal(out.status, 200);
+  });
+});

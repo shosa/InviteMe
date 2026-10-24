@@ -295,6 +295,8 @@ function parseChat(body: unknown): ChatMessage[] | null {
     if (!m || typeof m !== "object") return null;
     const { role, content } = m as { role?: unknown; content?: unknown };
     if (role !== "user" && role !== "assistant") return null;
+    // Una risposta dell'assistente senza testo (solo una scelta) non è un messaggio: si salta.
+    if (role === "assistant" && (typeof content !== "string" || content.trim().length === 0)) continue;
     if (typeof content !== "string" || content.trim().length === 0 || content.length > MAX_MESSAGE) return null;
     out.push({ role, content: content.trim() });
   }
