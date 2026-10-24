@@ -94,6 +94,8 @@ export function AssistantPanel({
   }, [lang]);
   // Indirizzi proposti finora: il server li riconosce anche nelle richieste successive.
   const [offered, setOffered] = useState<string[]>([]);
+  // Foto proposte: il server le rimanda ad ogni risposta, così la scelta si applica senza cercare di nuovo.
+  const [photosOffered, setPhotosOffered] = useState<{ id: number; label: string }[]>([]);
 
   async function send(override?: string, answeredAt?: number) {
     const text = (override ?? draft).trim();
@@ -109,10 +111,11 @@ export function AssistantPanel({
       const res = await fetch(`/api/invitations/${invitationId}/assistant`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages, placesAllowed: offered }),
+        body: JSON.stringify({ messages, placesAllowed: offered, photosOffered }),
       });
-      const data = (await res.json().catch(() => ({}))) as { reply?: string; actions?: Action[]; remaining?: number; mediaAllowed?: string[]; placesAllowed?: string[]; choice?: Choice; placeAsk?: { question: string }; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { reply?: string; actions?: Action[]; remaining?: number; mediaAllowed?: string[]; placesAllowed?: string[]; photosOffered?: { id: number; label: string }[]; choice?: Choice; placeAsk?: { question: string }; error?: string };
       if (!res.ok || typeof data.reply !== "string") throw new Error(data.error ?? (it ? "L'assistente non risponde." : "The assistant is not responding."));
+      if (data.photosOffered) setPhotosOffered(data.photosOffered);
       if (data.placesAllowed?.length) setOffered((o) => [...new Set([...o, ...(data.placesAllowed ?? [])])].slice(-30));
       const applied = data.actions?.length ? onApply(data.actions, { mediaAllowed: data.mediaAllowed ?? [], placesAllowed: data.placesAllowed ?? [] }) : 0;
       if (typeof data.remaining === "number") setRemaining(data.remaining);
