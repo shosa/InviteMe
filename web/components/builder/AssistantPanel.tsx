@@ -86,6 +86,25 @@ export function AssistantPanel({
 
   const [picks, setPicks] = useState<Record<number, string>>({});
   const [wizardOpen, setWizardOpen] = useState(false);
+  // «Creiamolo insieme» si usa una volta sola per invito: il ricordo sta nel browser (dopo il montaggio, per non sfasare il rendering).
+  const wizardKey = `inviteme-wizard-used-${invitationId}`;
+  const [wizardUsed, setWizardUsed] = useState(true);
+  useEffect(() => {
+    try {
+      setWizardUsed(window.localStorage.getItem(wizardKey) === "1");
+    } catch {
+      setWizardUsed(false);
+    }
+  }, [wizardKey]);
+  const startWizard = () => {
+    try {
+      window.localStorage.setItem(wizardKey, "1");
+    } catch {
+      // Senza memoria del browser il pulsante resta usabile per questa visita.
+    }
+    setWizardUsed(true);
+    setWizardOpen(true);
+  };
   // Sei richieste a caso, scelte dopo il montaggio (così server e browser non divergono).
   const [ideas, setIdeas] = useState<{ text: string; icon: LucideIcon }[]>(() => (it ? IDEAS_IT : IDEAS_EN).slice(0, 6));
   useEffect(() => {
@@ -144,7 +163,8 @@ export function AssistantPanel({
 
       {lines.length === 0 && !readOnly && !wizardOpen && (
         <div className="as-start">
-          <button type="button" className="as-cta" onClick={() => setWizardOpen(true)}>
+          {!wizardUsed && (
+          <button type="button" className="as-cta" onClick={startWizard}>
             <span className="as-cta-ico">
               <Wand2 size={22} aria-hidden="true" />
             </span>
@@ -154,6 +174,7 @@ export function AssistantPanel({
             </span>
             <ArrowRight size={18} aria-hidden="true" />
           </button>
+          )}
           <p className="as-ideas-title">{it ? "Oppure chiedi direttamente:" : "Or ask directly:"}</p>
           <div className="as-ideas" aria-label={it ? "Richieste" : "Requests"}>
             {ideas.map((idea) => {
