@@ -5,8 +5,13 @@ import { Models } from "@/components/Models";
 import { type Catalog, formatPrice } from "@inviteme/shared";
 import { apiPublic } from "@/lib/api";
 import { themeCopy } from "@/lib/catalogCopy";
+import { Typing } from "@/components/Typing";
 
 export const dynamic = "force-dynamic";
+
+// Frasi del titolo dell'hero: si scrivono lettera per lettera, poi si cancellano e passano alla successiva.
+const HERO_PHRASES = ["Il vostro invito, pronto in un pomeriggio.", "Una data, un link, tutti gli ospiti.", "Sapete chi viene prima del giorno.", "Si paga una volta, senza abbonamenti."];
+const HERO_PHRASES_EN = ["Your invitation, ready in an afternoon.", "One date, one link, every guest.", "Know who is coming before the day.", "Pay once, no subscriptions."];
 
 // Home "Atelier": hero con l'invito di anteprima, nastro dei modelli, tre passi, scelta del modello, domande, chiusura.
 const COPY = {
@@ -74,7 +79,7 @@ export default async function Home() {
           <div className="wrap atl-hero-grid">
             <div className="atl-copy">
               <p className="atl-eyebrow">{c.eyebrow}</p>
-              <h1 className="atl-title">{c.titleA}<br /><em>{c.titleB}</em></h1>
+              <h1 className="atl-title"><Typing phrases={lang === "en" ? HERO_PHRASES_EN : HERO_PHRASES} /></h1>
               <p className="atl-lede">{c.lede}</p>
               <div className="atl-cta">
                 <a className="atl-btn" href="#modelli">{c.cta}</a>
