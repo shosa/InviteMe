@@ -69,6 +69,7 @@ export type AssistantBody = {
   mediaAllowed: string[];
   placesAllowed: string[];
   choice?: Choice; // scelta da far fare al cliente con i radio button: la risposta arriva come nuovo messaggio
+  placeAsk?: { question: string }; // campo di ricerca luoghi: il cliente cerca e sceglie, la scelta arriva come nuovo messaggio
 };
 export type AssistantOutcome = { status: number; body: AssistantBody | { error: string } };
 
@@ -92,7 +93,8 @@ Indirizzo: cerca i luoghi reali e fai scegliere la persona tra le opzioni trovat
 Quando la persona risponde a una scelta che le hai proposto, o scrive lei l'indirizzo, salvalo subito con setEvent nello stesso giro: non chiedere di nuovo quello che ha già detto.
 Scrivi che una cosa è fatta solo se l'hai davvero applicata in questo giro di strumenti. Se non l'hai applicata, dillo e spiega cosa manca.
 Quando la persona chiede di mostrare o nascondere una parte dell'invito (per esempio la mappa, o «come arrivare»), usa setBlockHidden sul blocco giusto; per cambiarne la posizione usa moveBlock.
-Scelte: quando la persona deve scegliere tra alcune possibilità, usa la scelta con i pulsanti e aspetta la risposta.
+Scelte: quando la persona deve scegliere tra alcune possibilità, usa askChoice (pulsanti) se hai da 2 a 6 opzioni concrete. Se non hai candidati sicuri, o la persona vuole cercare da sé un luogo, usa askPlace (campo di ricerca) e non proporre opzioni a parole.
+Con askChoice o askPlace non fare altre modifiche nello stesso giro: aspetta la risposta.
 Se la persona chiede più cose insieme, falle tutte in un solo giro e poi racconta il risultato.
 
 Scrivi in markdown semplice: frasi brevi, elenchi puntati solo se servono, **grassetto** per i valori cambiati.`;
@@ -175,6 +177,9 @@ const TOOLS: Anthropic.Tool[] = [
   tool("setTheme", "Cambia lo stile (template) dell'invito. Non è possibile dopo l'acquisto.", { themeId: str }),
   tool("searchPhotos", "Cerca foto stock (Pixabay). Restituisce id e descrizione: poi usa usePhoto con l'id scelto.", { query: str }),
   tool("searchPlaces", "Cerca indirizzi reali (via, numero, comune). Restituisce le opzioni trovate.", { query: str }),
+  tool("askPlace", "Mostra un campo di ricerca luoghi: il cliente cerca il posto da sé e sceglie. Usalo quando non hai candidati sicuri o quando il cliente vuole cercare lui. Chiude il giro.", {
+    question: str,
+  }),
   tool("askChoice", "Fa scegliere il cliente tra alcune opzioni con i radio button (da 2 a 6). Chiude il giro: la scelta arriva come nuovo messaggio.", {
     question: str,
     options: { type: "array", items: { type: "string" } },
@@ -185,7 +190,7 @@ const TOOLS: Anthropic.Tool[] = [
     key: str,
   }),
 ];
-const SERVER_TOOLS = new Set(["searchPhotos", "usePhoto", "searchPlaces", "askChoice"]);
+const SERVER_TOOLS = new Set(["searchPhotos", "usePhoto", "searchPlaces", "askChoice", "askPlace"]);
 const MAX_PLACE_HITS = 5;
 
 // Lo stato dell'invito che va al modello: solo testi e impostazioni dell'invito, mai ospiti, risposte, email o ordini.
@@ -334,6 +339,7 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
 
   // Le ricerche di foto le fa il server; l'importazione diventa una modifica normale del campo foto.
   let choice: Choice | undefined;
+  let placeAsk: { question: string } | undefined;
 
   const serverTool = async (name: string, args: Record<string, unknown>): Promise<ToolOutcome> => {
     if (name === "searchPlaces") {
@@ -343,6 +349,12 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
       found.forEach((f) => placesAllowed.add(f));
       if (found.length === 0) return { text: "nessun indirizzo trovato: chiedi al cliente di scriverlo completo", error: false };
       return { text: `trovati ${found.length} indirizzi:\n${found.map((f) => `- ${f}`).join("\n")}`, error: false };
+    }
+    if (name === "askPlace") {
+      const question = typeof args.question === "string" ? args.question.trim().slice(0, 200) : "";
+      if (!question) return { text: "rifiutata: serve una domanda", error: true };
+      placeAsk = { question };
+      return { text: "campo di ricerca inviato al cliente: attendi la sua scelta", error: false };
     }
     if (name === "askChoice") {
       const question = typeof args.question === "string" ? args.question.trim().slice(0, 200) : "";
@@ -438,12 +450,12 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
       results.push({ type: "tool_result", tool_use_id: u.id, content: outcome.text, is_error: outcome.error });
     }
     // Con una scelta in attesa il giro si chiude: il cliente risponde con i radio button.
-    if (choice) break;
+    if (choice || placeAsk) break;
     messages.push({ role: "user", content: results });
   }
 
   const reply = refused ? "Non posso aiutarti con questa richiesta. Prova a riformularla." : texts.join("\n").trim() || "Fatto.";
-  const asked = !refused && (choice !== undefined || reply.trimEnd().endsWith("?"));
+  const asked = !refused && (choice !== undefined || placeAsk !== undefined || reply.trimEnd().endsWith("?"));
   await deps.recordUsage(inv.id, settings.model, usage, actions.length, { counted: !free, asked, freeRun: free ? inv.assistant_free_run + 1 : 0 });
   return {
     status: 200,
@@ -456,6 +468,7 @@ export async function handleAssistant(deps: AssistantDeps, input: { id: string; 
       mediaAllowed: [...mediaAllowed],
       placesAllowed: [...placesAllowed],
       ...(choice ? { choice } : {}),
+      ...(placeAsk ? { placeAsk } : {}),
     },
   };
 }

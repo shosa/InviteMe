@@ -4,12 +4,13 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { ArrowRight, CalendarDays, ClipboardCheck, ImagePlus, MapPin, Music, Palette, Shirt, Sparkles, Wand2, type LucideIcon } from "lucide-react";
 import { AssistantWizard } from "./AssistantWizard";
+import { PlaceSearch } from "./PlaceSearch";
 import type { Action } from "@inviteme/shared";
 
 // Chat dell'assistente nel builder: il cliente scrive, il server propone modifiche già validate.
 // Le modifiche si applicano dal builder in un solo passo di cronologia: Annulla (Ctrl+Z) le ritira tutte.
 type Choice = { question: string; options: string[]; answered?: boolean };
-type Line = { role: "user" | "assistant"; text: string; error?: boolean; applied?: number; choice?: Choice };
+type Line = { role: "user" | "assistant"; text: string; error?: boolean; applied?: number; choice?: Choice; placeAsk?: { question: string; answered?: boolean } };
 
 // Richieste di partenza: un clic le scrive nel campo, poi si invia (o si modifica prima).
 const IDEAS_IT: { text: string; icon: LucideIcon }[] = [
@@ -66,7 +67,7 @@ export function AssistantPanel({
   async function send(override?: string, answeredAt?: number) {
     const text = (override ?? draft).trim();
     if (!text || busy || out) return;
-    const base = answeredAt === undefined ? lines : lines.map((x, j) => (j === answeredAt && x.choice ? { ...x, choice: { ...x.choice, answered: true } } : x));
+    const base = answeredAt === undefined ? lines : lines.map((x, j) => (j === answeredAt ? { ...x, choice: x.choice && { ...x.choice, answered: true }, placeAsk: x.placeAsk && { ...x.placeAsk, answered: true } } : x));
     const next: Line[] = [...base, { role: "user", text }];
     setLines(next);
     setDraft("");
@@ -79,12 +80,12 @@ export function AssistantPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages, placesAllowed: offered }),
       });
-      const data = (await res.json().catch(() => ({}))) as { reply?: string; actions?: Action[]; remaining?: number; mediaAllowed?: string[]; placesAllowed?: string[]; choice?: Choice; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { reply?: string; actions?: Action[]; remaining?: number; mediaAllowed?: string[]; placesAllowed?: string[]; choice?: Choice; placeAsk?: { question: string }; error?: string };
       if (!res.ok || typeof data.reply !== "string") throw new Error(data.error ?? (it ? "L'assistente non risponde." : "The assistant is not responding."));
       if (data.placesAllowed?.length) setOffered((o) => [...new Set([...o, ...(data.placesAllowed ?? [])])].slice(-30));
       const applied = data.actions?.length ? onApply(data.actions, { mediaAllowed: data.mediaAllowed ?? [], placesAllowed: data.placesAllowed ?? [] }) : 0;
       if (typeof data.remaining === "number") setRemaining(data.remaining);
-      setLines((l) => [...l, { role: "assistant", text: data.reply ?? "", applied, ...(data.choice ? { choice: { ...data.choice } } : {}) }]);
+      setLines((l) => [...l, { role: "assistant", text: data.reply ?? "", applied, ...(data.choice ? { choice: { ...data.choice } } : {}), ...(data.placeAsk ? { placeAsk: { ...data.placeAsk } } : {}) }]);
     } catch (e) {
       setLines((l) => [...l, { role: "assistant", text: e instanceof Error ? e.message : "Errore", error: true }]);
     } finally {
@@ -190,6 +191,12 @@ export function AssistantPanel({
                     {it ? "Conferma" : "Confirm"}
                   </button>
                 )}
+              </fieldset>
+            )}
+            {l.placeAsk && (
+              <fieldset className="as-choice as-choice-place" disabled={l.placeAsk.answered || busy || out}>
+                <legend>{l.placeAsk.question}</legend>
+                <PlaceSearch lang={lang} disabled={l.placeAsk.answered || busy || out} onPick={(addr) => void send(addr, i)} />
               </fieldset>
             )}
             {l.applied ? <p className="as-applied">{it ? `Modifiche applicate: ${l.applied}. Annulla (Ctrl+Z) le ritira.` : `Changes applied: ${l.applied}. Undo (Ctrl+Z) reverts them.`}</p> : null}

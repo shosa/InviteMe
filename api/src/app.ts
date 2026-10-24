@@ -639,6 +639,13 @@ export async function buildApp() {
     }
   });
 
+  // Ricerca luoghi per il campo di ricerca (assistente e wizard): solo utenti registrati, risultati in cache.
+  app.get<{ Querystring: { q?: string } }>("/api/places", async (req, reply) => {
+    const user = await requireUser(req, reply);
+    if (!user) return;
+    return { places: await searchPlaces(String(req.query.q ?? "")) };
+  });
+
   app.post("/api/rsvp", async (req, reply) => {
     const b = (req.body ?? {}) as { slug?: string; answers?: Record<string, unknown>; website?: unknown };
     // Campo trappola: un ospite vero non lo compila mai. Se arriva pieno è un bot: risposta ok, nulla salvato.

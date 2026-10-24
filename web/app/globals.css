@@ -2250,3 +2250,19 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 @media (prefers-reduced-motion: reduce) {
   .bl-app *, .bl-app *::before, .bl-app *::after, .admin-body section { animation: none !important; transition: none !important; }
 }
+
+/* Campo di ricerca luoghi (assistente e wizard). */
+.bl-app .as-place { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.bl-app .as-place-field { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1px solid #DCCFC2; border-radius: 12px; background: #FDFBF7; transition: border-color .2s, box-shadow .2s; }
+.bl-app .as-place-field:focus-within { border-color: var(--brass); box-shadow: 0 0 0 4px rgba(184, 146, 74, .15); }
+.bl-app .as-place-field svg { color: var(--ink-soft); flex: none; }
+.bl-app .as-place-field input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 16px; padding: 10px 0; outline: none; }
+.bl-app .as-spin { animation: asSpin .9s linear infinite; }
+.bl-app .as-place-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.bl-app .as-place-list li { animation: asMsgIn .35s cubic-bezier(.2, .7, .2, 1) both; }
+.bl-app .as-place-opt { width: 100%; display: flex; align-items: flex-start; gap: 8px; padding: 9px 12px; border: 1px solid #DCCFC2; border-radius: 12px; background: #FFFFFF; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.bl-app .as-place-opt svg { color: var(--brass); margin-top: 2px; flex: none; }
+.bl-app .as-place-opt:hover, .bl-app .as-place-opt[aria-checked="true"] { border-color: var(--brass); background: #FBF6EE; }
+.bl-app .as-place-ok { margin: 0; font-size: 13px; color: var(--brass); animation: asFade .4s both; }
+.bl-app .as-place-none { margin: 0; font-size: 13px; color: var(--ink-soft); }
+@keyframes asSpin { to { transform: rotate(360deg); } }

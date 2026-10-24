@@ -175,7 +175,7 @@ describe("assistente: risposte del modello", () => {
     const { d } = deps({ model });
     await handleAssistant(d, { id: INV_ID, userId: OWNER, body: chat });
     const tools = model.calls[0].tools as Array<{ name: string; strict: boolean; input_schema: { additionalProperties: boolean; required: string[]; properties: object } }>;
-    assert.equal(tools.length, 17);
+    assert.equal(tools.length, 18);
     for (const t of tools) {
       assert.equal(t.strict, true, t.name);
       assert.equal(t.input_schema.additionalProperties, false, t.name);
@@ -288,5 +288,17 @@ describe("assistente: risposte a una domanda non contano", () => {
     const out = await handleAssistant(d, { id: INV_ID, userId: OWNER, body: chat });
     assert.equal(out.status, 409);
     assert.equal(model.calls.length, 0);
+  });
+});
+
+describe("assistente: campo di ricerca luoghi", () => {
+  it("con askPlace chiude il giro, non applica modifiche e manda il campo al cliente", async () => {
+    const model = fakeModel([{ content: [{ type: "tool_use", id: "p1", name: "askPlace", input: { question: "Dove si svolge la festa?" } }], stop_reason: "tool_use" }]);
+    const { d } = deps({ model });
+    const out = await handleAssistant(d, { id: INV_ID, userId: OWNER, body: chat });
+    const body = out.body as { placeAsk?: { question: string }; actions: unknown[] };
+    assert.equal(body.placeAsk?.question, "Dove si svolge la festa?");
+    assert.equal(body.actions.length, 0);
+    assert.equal(model.calls.length, 1);
   });
 });

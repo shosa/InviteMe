@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PlaceSearch } from "./PlaceSearch";
 import { ArrowLeft, ArrowRight, Baby, CalendarDays, Check, ClipboardCheck, Clock, Heart, ImagePlus, MapPin, Music, Shirt, Sparkles, Users, Wand2, type LucideIcon } from "lucide-react";
 
 // Percorso guidato «Creiamolo insieme»: fa le domande una alla volta e compone un unico messaggio per l'assistente.
@@ -34,6 +35,7 @@ type Answers = {
   date: string;
   time: string;
   venue: string;
+  venueConfirmed: boolean; // true se il luogo è stato scelto dalla ricerca
   dress: string;
   colors: string[];
   background: string;
@@ -42,7 +44,7 @@ type Answers = {
   music: boolean;
 };
 
-const EMPTY: Answers = { names: "", date: "", time: "", venue: "", dress: "", colors: [], background: "", questions: [], photo: "", music: false };
+const EMPTY: Answers = { names: "", date: "", time: "", venue: "", venueConfirmed: false, dress: "", colors: [], background: "", questions: [], photo: "", music: false };
 
 const STEPS = [
   { it: "Evento", en: "Event", icon: CalendarDays },
@@ -59,7 +61,10 @@ export function composeBrief(a: Answers, lang: Lang): string {
   if (a.names) lines.push(`${it ? "Nomi" : "Names"}: ${a.names}`);
   if (a.date) lines.push(`${it ? "Data" : "Date"}: ${a.date}`);
   if (a.time) lines.push(`${it ? "Ora" : "Time"}: ${a.time}`);
-  if (a.venue) lines.push(`${it ? "Luogo" : "Venue"}: ${a.venue} (${it ? "cerca l'indirizzo e fammelo scegliere" : "find the address and let me choose it"})`);
+  if (a.venue) {
+    const note = a.venueConfirmed ? (it ? "indirizzo scelto dalla ricerca" : "address chosen from the search") : (it ? "cerca l'indirizzo e fammelo scegliere" : "find the address and let me choose it");
+    lines.push(`${it ? "Luogo" : "Venue"}: ${a.venue} (${note})`);
+  }
   const colorNames = COLORS.filter((c) => a.colors.includes(c.hex)).map((c) => (it ? c.it : c.en));
   if (a.dress || colorNames.length) lines.push(`Dress code: ${[a.dress, colorNames.join(", ")].filter(Boolean).join(" · ")}`);
   const bg = BACKGROUNDS.find((b) => b.kind === a.background);
@@ -119,11 +124,13 @@ export function AssistantWizard({ lang, onCompose, onCancel }: { lang: Lang; onC
         {step === 1 && (
           <>
             <h3 className="aw-q">{it ? "Dove si festeggia?" : "Where is the celebration?"}</h3>
-            <label className="aw-field">
-              <span>{it ? "Luogo" : "Venue"}</span>
-              <input value={a.venue} placeholder={it ? "Es. Villa Zaira, Maglie" : "E.g. Villa Zaira, Maglie"} onChange={(e) => set("venue", e.target.value)} />
-            </label>
-            <p className="aw-hint">{it ? "Non serve l'indirizzo esatto: lo cerco io e tu scegli tra le opzioni." : "No need for the exact address: I'll look it up and you pick from the options."}</p>
+            <PlaceSearch
+              lang={lang}
+              initial={a.venue}
+              onType={(t) => setA((x) => ({ ...x, venue: t, venueConfirmed: false }))}
+              onPick={(addr) => setA((x) => ({ ...x, venue: addr, venueConfirmed: true }))}
+            />
+            <p className="aw-hint">{it ? "Scrivi il nome e la città, poi scegli l'indirizzo tra i risultati. Se non lo trovi, puoi anche lasciarlo vuoto." : "Type the name and city, then pick the address from the results. If you can't find it, you can leave it empty."}</p>
           </>
         )}
 
