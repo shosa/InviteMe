@@ -82,23 +82,9 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
     const list = enabledThemes(catalog, model.id);
     const pick = list.find((t) => t.id === themeId)?.id ?? list[0]?.id;
     if (!pick) return setError(L.createFailed);
+    // Prima il pagamento: l'invito nasce solo dopo, con la scelta fatta qui.
     setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/invitations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: model.id, themeId: pick, eventType: "wedding" }),
-      });
-      if (res.status === 401) return router.push("/accedi?next=/#modelli");
-      const data = (await res.json()) as { id?: string; error?: string };
-      if (!res.ok || !data.id) throw new Error(data.error ?? L.createFailed);
-      // Prima il pagamento: il builder si apre solo dopo, e la pagina dell'invito mostra il pagamento.
-      router.push(`/invito/${data.id}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : L.unexpected);
-      setBusy(false);
-    }
+    router.push(`/checkout/new?model=${encodeURIComponent(model.id)}&theme=${encodeURIComponent(pick)}&event=wedding`);
   }
 
   const blockCount = BLOCKS.filter((b) => blockState(b, model) !== "na").length;

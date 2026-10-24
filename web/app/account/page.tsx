@@ -72,10 +72,10 @@ export default async function Account({ searchParams }: { searchParams: Promise<
                     <div><dt>{t.guests}</dt><dd>{r.guests}</dd></div>
                   </dl>
                   <div className="invite-actions">
-                    <a className="btn solid small" href={`/invito/${r.id}`}>{r.status === "paid" ? t.manage : t.edit}</a>
+                    <a className="btn solid small" href={r.status === "paid" ? `/editor/${r.id}` : `/invito/${r.id}`}>{r.status === "paid" ? t.manage : t.edit}</a>
                     {r.status === "paid" && <a className="btn outline small" href={`/i/${r.slug}`}>{t.viewInvite}</a>}
                     {r.status === "paid" && <CopyLink path={`/i/${r.slug}`} lang={lang} />}
-                    {r.status === "paid" && <a className="btn outline small" href={`/invito/${r.id}`}>{t.managePlanner}</a>}
+                    {r.status === "paid" && <a className="btn outline small" href={r.status === "paid" ? `/editor/${r.id}` : `/invito/${r.id}`}>{t.managePlanner}</a>}
                     {r.status !== "paid" && <DeleteDraft id={r.id} lang={lang} />}
                   </div>
                 </li>
