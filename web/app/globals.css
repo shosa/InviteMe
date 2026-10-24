@@ -2187,3 +2187,66 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 .bl-app .as-input { min-height: 56px; padding: 10px 14px; }
 .bl-app .as-send { min-width: 110px; }
 .bl-app .as-log { overflow: visible; max-height: none; flex: none; }
+
+/* Assistente: contatore fluttuante in alto mentre si scorre, animazioni d'ingresso e di interazione. */
+.bl-app .as-counter { position: sticky; top: 0; z-index: 3; align-self: flex-end; width: auto; padding: 5px 12px; gap: 10px; border-radius: 999px; font-size: 12px; background: rgba(255, 255, 255, .88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 6px 18px -10px rgba(40, 20, 20, .45); }
+.bl-app .as-counter strong { font-size: 15px; line-height: 1; }
+.bl-app .as-tick { display: inline-block; animation: asTick .55s cubic-bezier(.2, .7, .2, 1) both; }
+
+.bl-app .as-msg { animation: asMsgIn .42s cubic-bezier(.2, .7, .2, 1) both; }
+.bl-app .as-msg.is-user { animation-name: asMsgUser; }
+.bl-app .as-applied { animation: asFade .5s .15s both; }
+.bl-app .as-choice { animation: asMsgIn .45s .05s cubic-bezier(.2, .7, .2, 1) both; }
+.bl-app .as-radio input { transition: transform .2s; }
+.bl-app .as-radio input:checked { animation: asPop .3s cubic-bezier(.2, .7, .2, 1); }
+.bl-app .as-radio:hover span { color: var(--brass); }
+.bl-app .as-radio span { transition: color .2s; }
+.bl-app .as-thinking { animation: asFade .3s both; }
+.bl-app .as-empty, .bl-app .as-hint { animation: asFade .5s both; }
+.bl-app .as-ideas-title { animation: asFade .5s .1s both; }
+.bl-app .as-ideas .as-idea { animation: asMsgIn .4s cubic-bezier(.2, .7, .2, 1) both; }
+.bl-app .as-ideas .as-idea:nth-child(1) { animation-delay: .05s; }
+.bl-app .as-ideas .as-idea:nth-child(2) { animation-delay: .1s; }
+.bl-app .as-ideas .as-idea:nth-child(3) { animation-delay: .15s; }
+.bl-app .as-ideas .as-idea:nth-child(4) { animation-delay: .2s; }
+.bl-app .as-ideas .as-idea:nth-child(5) { animation-delay: .25s; }
+.bl-app .as-ideas .as-idea:nth-child(6) { animation-delay: .3s; }
+.bl-app .as-ideas .as-idea:nth-child(7) { animation-delay: .35s; }
+.bl-app .as-ideas .as-idea:nth-child(8) { animation-delay: .4s; }
+.bl-app .as-idea:hover { transform: translateX(3px); }
+.bl-app .as-idea:hover .as-idea-ico svg { animation: asWiggle .6s ease-in-out; }
+.bl-app .as-cta-ico svg { animation: asFloat 3s ease-in-out infinite; }
+.bl-app .as-cta:active { transform: scale(.98); }
+.bl-app .as-input { transition: border-color .2s, box-shadow .2s; }
+.bl-app .as-input:focus { box-shadow: 0 0 0 4px rgba(184, 146, 74, .15); }
+.bl-app .as-send { transition: transform .2s, opacity .2s, background-color .2s; }
+.bl-app .as-send:not(:disabled):hover { transform: translateY(-1px); }
+.bl-app .as-send:not(:disabled):active { transform: scale(.97); }
+.bl-app .as-choice-send { transition: transform .2s, opacity .2s; }
+.bl-app .as-choice-send:not(:disabled):hover { transform: translateY(-1px); }
+
+/* Ovunque: pulsanti e schede del builder reagiscono al passaggio e al clic. */
+.bl-app button { transition: transform .15s ease, background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease, opacity .2s ease; }
+.bl-app button:not(:disabled):active { transform: scale(.97); }
+.bl-app .bl-switcher-tab:hover { transform: translateY(-2px); }
+.bl-app .bl-tab { transition: color .2s ease, border-color .25s ease; }
+.bl-app .bl-tab:hover { color: var(--brass); }
+.bl-app .field input, .bl-app .field select, .bl-app .field textarea { transition: border-color .2s ease, box-shadow .2s ease; }
+.bl-app .field input:focus, .bl-app .field select:focus, .bl-app .field textarea:focus { box-shadow: 0 0 0 4px rgba(184, 146, 74, .15); }
+.bl-app .bl-preview-card { transition: box-shadow .3s ease; }
+.bl-app .bl-back { transition: transform .2s ease, background-color .2s ease, color .2s ease; }
+.bl-app .bl-back:hover { transform: translateX(-2px); }
+.admin-body section { animation: asFade .4s both; }
+.admin-body .adm-panel .btn:not(:disabled):hover { transform: translateY(-1px); }
+
+@keyframes asMsgIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes asMsgUser { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+@keyframes asFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes asTick { 0% { transform: scale(1.35); color: var(--brass); } 100% { transform: scale(1); } }
+@keyframes asPop { 0% { transform: scale(.7); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@keyframes asFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes asWiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-app *, .bl-app *::before, .bl-app *::after, .admin-body section { animation: none !important; transition: none !important; }
+}

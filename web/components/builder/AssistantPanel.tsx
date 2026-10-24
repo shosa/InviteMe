@@ -99,7 +99,7 @@ export function AssistantPanel({
 
       <div className="as-counter" aria-live="polite">
         <span>{it ? "Richieste disponibili" : "Requests left"}</span>
-        <strong>
+        <strong key={remaining} className="as-tick">
           {remaining} / {limit}
         </strong>
       </div>
