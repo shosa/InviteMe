@@ -2177,3 +2177,12 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 .bl-app .aw-label { display: none; }
 .bl-app .aw-step.is-current .aw-label { display: block; font-size: 12px; white-space: nowrap; }
 .bl-app .aw-track { grid-template-columns: repeat(5, auto); justify-content: space-between; }
+
+/* Assistente: colonna a tutta altezza. Il corpo della chat scorre, il campo e «Invia» restano in basso. */
+.bl-app .bl-left:has(> .as-panel) { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 14px; }
+.bl-app .as-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.bl-app .as-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 2px 6px 2px 2px; overscroll-behavior: contain; }
+.bl-app .as-log { min-height: 0; max-height: none; }
+.bl-app .as-form { flex: none; gap: 8px; }
+.bl-app .as-input { min-height: 56px; padding: 10px 14px; }
+.bl-app .as-send { min-width: 110px; }

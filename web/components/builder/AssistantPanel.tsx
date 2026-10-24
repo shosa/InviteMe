@@ -91,6 +91,7 @@ export function AssistantPanel({
 
   return (
     <div className="bl-inspector as-panel">
+      <div className="as-body">
       <div className="bl-tabs-head">
         <span className="bl-kicker">Chat</span>
         <h2>{it ? "Assistente" : "Assistant"}</h2>
@@ -203,6 +204,8 @@ export function AssistantPanel({
         )}
       </div>
 
+      </div>
+
       <form
         className="as-form"
         onSubmit={(e) => {
@@ -212,7 +215,7 @@ export function AssistantPanel({
       >
         <textarea
           className="as-input"
-          rows={3}
+          rows={2}
           maxLength={1000}
           value={draft}
           disabled={busy || out}
