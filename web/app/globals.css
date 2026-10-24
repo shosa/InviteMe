@@ -2186,3 +2186,4 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 .bl-app .as-form { flex: none; gap: 8px; }
 .bl-app .as-input { min-height: 56px; padding: 10px 14px; }
 .bl-app .as-send { min-width: 110px; }
+.bl-app .as-log { overflow: visible; max-height: none; flex: none; }
