@@ -90,7 +90,7 @@ describe("assistente: risposte del modello", () => {
     const model = fakeModel([
       {
         content: [
-          { type: "tool_use", id: "t1", name: "setEvent", input: { key: "address", value: "Via Roma 1" } },
+          { type: "tool_use", id: "t1", name: "setEvent", input: { key: "title", value: "Marco & Anna" } },
           { type: "tool_use", id: "t2", name: "runShell", input: { command: "rm -rf /" } },
         ],
         stop_reason: "tool_use",
@@ -102,7 +102,7 @@ describe("assistente: risposte del modello", () => {
     assert.equal(out.status, 200);
     const body = out.body as { reply: string; actions: unknown[]; usage: { input: number } };
     assert.equal(body.reply, "Ho messo l'indirizzo.");
-    assert.deepEqual(body.actions, [{ tool: "setEvent", key: "address", value: "Via Roma 1" }]);
+    assert.deepEqual(body.actions, [{ tool: "setEvent", key: "title", value: "Marco & Anna" }]);
     // Il secondo strumento torna al modello come errore, con il motivo.
     const sent = model.calls[1].messages.at(-1).content as Array<{ is_error: boolean; content: string }>;
     assert.equal(sent[1].is_error, true);
@@ -175,7 +175,7 @@ describe("assistente: risposte del modello", () => {
     const { d } = deps({ model });
     await handleAssistant(d, { id: INV_ID, userId: OWNER, body: chat });
     const tools = model.calls[0].tools as Array<{ name: string; strict: boolean; input_schema: { additionalProperties: boolean; required: string[]; properties: object } }>;
-    assert.equal(tools.length, 15);
+    assert.equal(tools.length, 17);
     for (const t of tools) {
       assert.equal(t.strict, true, t.name);
       assert.equal(t.input_schema.additionalProperties, false, t.name);

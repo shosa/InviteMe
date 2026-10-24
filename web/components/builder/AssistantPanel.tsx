@@ -6,7 +6,30 @@ import type { Action } from "@inviteme/shared";
 
 // Chat dell'assistente nel builder: il cliente scrive, il server propone modifiche già validate.
 // Le modifiche si applicano dal builder in un solo passo di cronologia: Annulla (Ctrl+Z) le ritira tutte.
-type Line = { role: "user" | "assistant"; text: string; error?: boolean; applied?: number };
+type Choice = { question: string; options: string[]; answered?: boolean };
+type Line = { role: "user" | "assistant"; text: string; error?: boolean; applied?: number; choice?: Choice };
+
+// Richieste di partenza: un clic le scrive nel campo, poi si invia (o si modifica prima).
+const IDEAS_IT = [
+  "Cambia la data e l'ora del matrimonio",
+  "Trova l'indirizzo del luogo",
+  "Metti il dress code con i colori",
+  "Imposta le domande per chi risponde",
+  "Cambia lo sfondo con i petali",
+  "Metti una foto nell'intestazione",
+  "Metti una musica di sottofondo",
+  "Nascondi un blocco dell'invito",
+];
+const IDEAS_EN = [
+  "Change the date and time of the wedding",
+  "Find the address of the venue",
+  "Set the dress code with colours",
+  "Set the questions for guests",
+  "Change the background to petals",
+  "Put a photo in the header",
+  "Add background music",
+  "Hide a block of the invitation",
+];
 
 // Solo questi elementi dal markdown della risposta: niente titoli, immagini o link.
 const ALLOWED = ["p", "strong", "em", "ul", "ol", "li", "br"];
@@ -24,7 +47,7 @@ export function AssistantPanel({
   readOnly: boolean;
   limit: number;
   used: number;
-  onApply: (actions: Action[], mediaAllowed: string[]) => number;
+  onApply: (actions: Action[], allowed: { mediaAllowed: string[]; placesAllowed: string[] }) => number;
 }) {
   const it = lang !== "en";
   const [lines, setLines] = useState<Line[]>([]);
@@ -33,10 +56,13 @@ export function AssistantPanel({
   const [remaining, setRemaining] = useState(Math.max(0, limit - used));
   const out = remaining <= 0;
 
-  async function send() {
-    const text = draft.trim();
+  const [picks, setPicks] = useState<Record<number, string>>({});
+
+  async function send(override?: string, answeredAt?: number) {
+    const text = (override ?? draft).trim();
     if (!text || busy || out) return;
-    const next: Line[] = [...lines, { role: "user", text }];
+    const base = answeredAt === undefined ? lines : lines.map((x, j) => (j === answeredAt && x.choice ? { ...x, choice: { ...x.choice, answered: true } } : x));
+    const next: Line[] = [...base, { role: "user", text }];
     setLines(next);
     setDraft("");
     setBusy(true);
@@ -48,11 +74,11 @@ export function AssistantPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages }),
       });
-      const data = (await res.json().catch(() => ({}))) as { reply?: string; actions?: Action[]; remaining?: number; mediaAllowed?: string[]; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { reply?: string; actions?: Action[]; remaining?: number; mediaAllowed?: string[]; placesAllowed?: string[]; choice?: Choice; error?: string };
       if (!res.ok || typeof data.reply !== "string") throw new Error(data.error ?? (it ? "L'assistente non risponde." : "The assistant is not responding."));
-      const applied = data.actions?.length ? onApply(data.actions, data.mediaAllowed ?? []) : 0;
+      const applied = data.actions?.length ? onApply(data.actions, { mediaAllowed: data.mediaAllowed ?? [], placesAllowed: data.placesAllowed ?? [] }) : 0;
       if (typeof data.remaining === "number") setRemaining(data.remaining);
-      setLines((l) => [...l, { role: "assistant", text: data.reply ?? "", applied }]);
+      setLines((l) => [...l, { role: "assistant", text: data.reply ?? "", applied, ...(data.choice ? { choice: { ...data.choice } } : {}) }]);
     } catch (e) {
       setLines((l) => [...l, { role: "assistant", text: e instanceof Error ? e.message : "Errore", error: true }]);
     } finally {
@@ -74,6 +100,16 @@ export function AssistantPanel({
         </strong>
       </div>
 
+      {lines.length === 0 && !readOnly && (
+        <div className="as-ideas" aria-label={it ? "Cose che puoi chiedere" : "Things you can ask"}>
+          <p className="as-ideas-title">{it ? "Puoi chiedermi, per esempio:" : "You can ask me, for example:"}</p>
+          {(it ? IDEAS_IT : IDEAS_EN).map((idea) => (
+            <button key={idea} type="button" className="as-idea" onClick={() => { setDraft(idea); }}>
+              {idea}
+            </button>
+          ))}
+        </div>
+      )}
       {lines.length === 0 && (
         <p className="as-hint">
           {readOnly
@@ -97,6 +133,29 @@ export function AssistantPanel({
                   {l.text}
                 </ReactMarkdown>
               </div>
+            )}
+            {l.choice && (
+              <fieldset className="as-choice" disabled={l.choice.answered || busy || out}>
+                <legend>{l.choice.question}</legend>
+                {l.choice.options.map((o) => (
+                  <label key={o} className="as-radio">
+                    <input type="radio" name={`choice-${i}`} value={o} checked={picks[i] === o} disabled={l.choice?.answered || busy || out} onChange={() => setPicks((p) => ({ ...p, [i]: o }))} />
+                    <span>{o}</span>
+                  </label>
+                ))}
+                {!l.choice.answered && (
+                  <button
+                    type="button"
+                    className="btn solid as-choice-send"
+                    disabled={!picks[i]}
+                    onClick={() => {
+                      void send(picks[i], i);
+                    }}
+                  >
+                    {it ? "Conferma" : "Confirm"}
+                  </button>
+                )}
+              </fieldset>
             )}
             {l.applied ? <p className="as-applied">{it ? `Modifiche applicate: ${l.applied}. Annulla (Ctrl+Z) le ritira.` : `Changes applied: ${l.applied}. Undo (Ctrl+Z) reverts them.`}</p> : null}
           </div>

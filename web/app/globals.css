@@ -2100,3 +2100,17 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
 .bl-app .as-dots i:nth-child(3) { animation-delay: .3s; }
 @keyframes asDot { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .bl-app .as-dots i { animation: none; opacity: .7; } }
+
+/* Assistente: scelta con radio button proposta dalla chat. */
+.bl-app .as-choice { margin: 10px 0 0; padding: 12px 14px; border: 1px solid #DCCFC2; border-radius: 12px; background: #FFFFFF; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.bl-app .as-choice legend { padding: 0 4px; font-size: 14px; color: var(--ink-soft); }
+.bl-app .as-radio { display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; }
+.bl-app .as-radio input { accent-color: var(--brass); width: 18px; height: 18px; margin: 0; }
+.bl-app .as-choice-send { align-self: flex-end; margin-top: 4px; }
+.bl-app .as-choice:disabled { opacity: .6; }
+
+/* Assistente: idee cliccabili a chat vuota (riempiono il campo, non inviano). */
+.bl-app .as-ideas { display: flex; flex-direction: column; gap: 8px; }
+.bl-app .as-ideas-title { margin: 0 0 2px; font-size: 14px; color: var(--ink-soft); }
+.bl-app .as-idea { text-align: left; padding: 10px 14px; border: 1px solid #DCCFC2; border-radius: 12px; background: #FFFFFF; color: var(--ink); font: inherit; font-size: 15px; cursor: pointer; transition: border-color .15s, background .15s; }
+.bl-app .as-idea:hover, .bl-app .as-idea:focus-visible { border-color: var(--brass); background: #FBF6EE; outline: none; }

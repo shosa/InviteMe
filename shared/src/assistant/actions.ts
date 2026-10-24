@@ -37,6 +37,7 @@ export type ActionContext = {
   catalog: Catalog;
   paid: boolean; // invito acquistato: il template non si cambia
   purchased: ReadonlySet<AddonKey>; // funzioni già pagate: il loro blocco non si toglie
+  placesAllowed?: ReadonlySet<string>; // indirizzi trovati dalla ricerca in questa richiesta: l'indirizzo si salva solo se è uno di questi
   mediaAllowed?: ReadonlySet<string>; // file che il modello può usare: importati in questa richiesta, libreria musica, già nell'invito
 };
 
@@ -150,6 +151,9 @@ function applyAction(config: InviteConfig, action: Action, ctx: ActionContext): 
     case "setEvent": {
       const field = EVENT_FIELDS.find((f) => f.key === action.key);
       if (!field) return { error: `campo dell'evento sconosciuto: ${action.key}` };
+      if (field.key === "address" && action.value !== "" && ctx.placesAllowed && !ctx.placesAllowed.has(action.value)) {
+        return { error: "indirizzo non verificato: cercalo con la ricerca luoghi e fai scegliere il cliente" };
+      }
       const value = coerce(field, action.value);
       if (value === undefined) return { error: `valore non valido per ${field.label}` };
       const clean = sanitizeValues([field], { [field.key]: value }, features)[field.key];

@@ -292,3 +292,15 @@ describe("azioni dell'assistente: sfondo, tipo di evento, blocchi e immagini", (
     assert.equal(r.actions.length, 0);
   });
 });
+
+describe("azioni dell'assistente: indirizzo verificato", () => {
+  it("salva l'indirizzo solo se è tra i risultati della ricerca", () => {
+    const c = base();
+    const ok = validateActions(c, [{ tool: "setEvent", key: "address", value: "Via Roma 1, Maglie" }], ctx({ placesAllowed: new Set(["Via Roma 1, Maglie"]) }));
+    assert.equal(ok.rejected.length, 0);
+    assert.equal(ok.config.event.address, "Via Roma 1, Maglie");
+    const no = validateActions(c, [{ tool: "setEvent", key: "address", value: "Via Inventata 9" }], ctx({ placesAllowed: new Set(["Via Roma 1, Maglie"]) }));
+    assert.equal(no.actions.length, 0);
+    assert.match(no.rejected[0].reason, /non verificato/);
+  });
+});

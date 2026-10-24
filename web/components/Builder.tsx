@@ -311,12 +311,13 @@ function BuilderEditor({ initial, lang }: { initial: Manage; lang: Lang }) {
   const latest = useRef(config);
   latest.current = config;
   // Modifiche dell'assistente: una sola voce di cronologia per risposta, così Annulla (Ctrl+Z) le ritira tutte insieme.
-  function applyAssistant(actions: Action[], mediaAllowed: string[]): number {
+  function applyAssistant(actions: Action[], allowed: { mediaAllowed: string[]; placesAllowed: string[] }): number {
     const result = validateActions(latest.current, actions, {
       catalog,
       paid: initial.status === "paid",
       purchased: new Set(initial.purchasedAddons),
-      mediaAllowed: new Set(mediaAllowed),
+      mediaAllowed: new Set(allowed.mediaAllowed),
+      placesAllowed: new Set(allowed.placesAllowed),
     });
     if (result.actions.length === 0) return 0;
     history.set(result.config, `assistant-${Date.now()}`);

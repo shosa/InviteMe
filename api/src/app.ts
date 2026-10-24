@@ -29,6 +29,7 @@ import {
 import Anthropic from "@anthropic-ai/sdk";
 import { pool, migrate, track } from "./db";
 import { handleAssistant, type OwnedInvitation } from "./assistant";
+import { searchPlaces } from "./places";
 import { EFFORTS, listAssistantModels, loadAssistantSettings, saveAssistantSettings, type ModelOption } from "./assistantSettings";
 import { invalidateCatalog, loadCatalog, loadFullCatalog, saveCatalog, themes } from "./catalog";
 import { previewShell } from "./engine/previewShell";
@@ -365,6 +366,7 @@ export async function buildApp() {
         apiKey: process.env.ANTHROPIC_KEY || undefined,
         loadSettings: async () => (await loadAssistantSettings()).settings,
         // Foto stock solo se Pixabay è configurato: il modello cerca, il server importa il file.
+        places: searchPlaces,
         stock: process.env.PIXABAY_API_KEY
           ? {
               search: async (query) => (await searchStock(parseStockFilters({ q: query }))).map((p) => ({ id: p.id, tags: p.tags })),
