@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { ArrowRight, CalendarDays, ClipboardCheck, ImagePlus, MapPin, Music, Palette, Shirt, Sparkles, Wand2, type LucideIcon } from "lucide-react";
+import { AssistantWizard } from "./AssistantWizard";
 import type { Action } from "@inviteme/shared";
 
 // Chat dell'assistente nel builder: il cliente scrive, il server propone modifiche già validate.
@@ -10,25 +12,25 @@ type Choice = { question: string; options: string[]; answered?: boolean };
 type Line = { role: "user" | "assistant"; text: string; error?: boolean; applied?: number; choice?: Choice };
 
 // Richieste di partenza: un clic le scrive nel campo, poi si invia (o si modifica prima).
-const IDEAS_IT = [
-  "Cambia la data e l'ora del matrimonio",
-  "Trova l'indirizzo del luogo",
-  "Metti il dress code con i colori",
-  "Imposta le domande per chi risponde",
-  "Cambia lo sfondo con i petali",
-  "Metti una foto nell'intestazione",
-  "Metti una musica di sottofondo",
-  "Nascondi un blocco dell'invito",
+const IDEAS_IT: { text: string; icon: LucideIcon }[] = [
+  { text: "Cambia la data e l'ora", icon: CalendarDays },
+  { text: "Trova l'indirizzo del luogo", icon: MapPin },
+  { text: "Metti il dress code con i colori", icon: Shirt },
+  { text: "Imposta le domande per chi risponde", icon: ClipboardCheck },
+  { text: "Cambia lo sfondo con i petali", icon: Sparkles },
+  { text: "Metti una foto nell'intestazione", icon: ImagePlus },
+  { text: "Metti una musica di sottofondo", icon: Music },
+  { text: "Cambia i colori dell'invito", icon: Palette },
 ];
-const IDEAS_EN = [
-  "Change the date and time of the wedding",
-  "Find the address of the venue",
-  "Set the dress code with colours",
-  "Set the questions for guests",
-  "Change the background to petals",
-  "Put a photo in the header",
-  "Add background music",
-  "Hide a block of the invitation",
+const IDEAS_EN: { text: string; icon: LucideIcon }[] = [
+  { text: "Change the date and time", icon: CalendarDays },
+  { text: "Find the address of the venue", icon: MapPin },
+  { text: "Set the dress code with colours", icon: Shirt },
+  { text: "Set the questions for guests", icon: ClipboardCheck },
+  { text: "Change the background to petals", icon: Sparkles },
+  { text: "Put a photo in the header", icon: ImagePlus },
+  { text: "Add background music", icon: Music },
+  { text: "Change the colours of the invitation", icon: Palette },
 ];
 
 // Solo questi elementi dal markdown della risposta: niente titoli, immagini o link.
@@ -57,6 +59,7 @@ export function AssistantPanel({
   const out = remaining <= 0;
 
   const [picks, setPicks] = useState<Record<number, string>>({});
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   async function send(override?: string, answeredAt?: number) {
     const text = (override ?? draft).trim();
@@ -100,17 +103,45 @@ export function AssistantPanel({
         </strong>
       </div>
 
-      {lines.length === 0 && !readOnly && (
-        <div className="as-ideas" aria-label={it ? "Cose che puoi chiedere" : "Things you can ask"}>
-          <p className="as-ideas-title">{it ? "Puoi chiedermi, per esempio:" : "You can ask me, for example:"}</p>
-          {(it ? IDEAS_IT : IDEAS_EN).map((idea) => (
-            <button key={idea} type="button" className="as-idea" onClick={() => { setDraft(idea); }}>
-              {idea}
-            </button>
-          ))}
+      {lines.length === 0 && !readOnly && !wizardOpen && (
+        <div className="as-start">
+          <button type="button" className="as-cta" onClick={() => setWizardOpen(true)}>
+            <span className="as-cta-ico">
+              <Wand2 size={22} aria-hidden="true" />
+            </span>
+            <span className="as-cta-text">
+              <strong>{it ? "Creiamolo insieme" : "Let's create it together"}</strong>
+              <small>{it ? "Ti faccio qualche domanda, poi compongo l'invito" : "I'll ask a few questions, then compose the invitation"}</small>
+            </span>
+            <ArrowRight size={18} aria-hidden="true" />
+          </button>
+          <p className="as-ideas-title">{it ? "Oppure chiedi direttamente:" : "Or ask directly:"}</p>
+          <div className="as-ideas" aria-label={it ? "Richieste" : "Requests"}>
+            {(it ? IDEAS_IT : IDEAS_EN).map((idea) => {
+              const Icon = idea.icon;
+              return (
+                <button key={idea.text} type="button" className="as-idea" onClick={() => setDraft(idea.text)}>
+                  <span className="as-idea-ico">
+                    <Icon size={15} aria-hidden="true" />
+                  </span>
+                  {idea.text}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
-      {lines.length === 0 && (
+      {wizardOpen && !readOnly && (
+        <AssistantWizard
+          lang={lang}
+          onCancel={() => setWizardOpen(false)}
+          onCompose={(brief) => {
+            setWizardOpen(false);
+            void send(brief);
+          }}
+        />
+      )}
+      {lines.length === 0 && !wizardOpen && (
         <p className="as-hint">
           {readOnly
             ? it
