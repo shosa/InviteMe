@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PlaceSearch } from "./PlaceSearch";
-import { ArrowLeft, ArrowRight, Baby, CalendarDays, Check, ClipboardCheck, Clock, Heart, ImagePlus, MapPin, Music, Shirt, Sparkles, Users, Wand2, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, Baby, CalendarDays, Check, CircleDot, ClipboardCheck, Heart, ImagePlus, MapPin, Music, Shirt, Snowflake, Sparkles, Users, Wand2, Waves, type LucideIcon } from "lucide-react";
 
 // Percorso guidato «Creiamolo insieme»: fa le domande una alla volta e compone un unico messaggio per l'assistente.
 // L'assistente riceve tutto insieme e applica le modifiche in un solo giro (Ctrl+Z le ritira tutte).
@@ -15,12 +15,22 @@ const COLORS = [
   { hex: "#B8924A", it: "Oro", en: "Gold" },
   { hex: "#F3EBDD", it: "Avorio", en: "Ivory" },
   { hex: "#1D1B19", it: "Nero", en: "Black" },
+  { hex: "#1F2A44", it: "Blu notte", en: "Midnight blue" },
+  { hex: "#B5654A", it: "Terracotta", en: "Terracotta" },
+  { hex: "#E2B7B0", it: "Rosa cipria", en: "Dusty pink" },
+  { hex: "#2F4F3A", it: "Verde bosco", en: "Forest green" },
+  { hex: "#B9A8D4", it: "Lavanda", en: "Lavender" },
+  { hex: "#E9DCC0", it: "Champagne", en: "Champagne" },
+  { hex: "#8C8C8C", it: "Grigio perla", en: "Pearl grey" },
 ];
 
 const BACKGROUNDS: { kind: string; icon: LucideIcon; it: string; en: string }[] = [
   { kind: "petals", icon: Sparkles, it: "Petali", en: "Petals" },
   { kind: "sparkles", icon: Wand2, it: "Scintille", en: "Sparkles" },
   { kind: "confetti", icon: Heart, it: "Coriandoli", en: "Confetti" },
+  { kind: "snow", icon: Snowflake, it: "Neve", en: "Snow" },
+  { kind: "waves", icon: Waves, it: "Onde", en: "Waves" },
+  { kind: "bubbles", icon: CircleDot, it: "Bolle", en: "Bubbles" },
   { kind: "none", icon: Check, it: "Niente", en: "None" },
 ];
 
@@ -28,7 +38,31 @@ const GUEST_QUESTIONS = [
   { id: "count", icon: Users, it: "Quante persone vengono", en: "How many people are coming" },
   { id: "allergy", icon: Heart, it: "Allergie o intolleranze", en: "Allergies or intolerances" },
   { id: "highchair", icon: Baby, it: "Serve il seggiolone", en: "Need a high chair" },
+  { id: "diet", icon: Check, it: "Preferenza alimentare", en: "Food preference" },
+  { id: "kids", icon: Baby, it: "Quanti bambini vengono", en: "How many children are coming" },
+  { id: "ride", icon: Users, it: "Serve un passaggio", en: "Need a ride" },
+  { id: "plusone", icon: Users, it: "Porta un accompagnatore", en: "Bringing a plus-one" },
+  { id: "hotel", icon: MapPin, it: "Serve un alloggio", en: "Need accommodation" },
+  { id: "song", icon: Music, it: "Un brano da dedicare", en: "A song to dedicate" },
+  { id: "note", icon: Heart, it: "Un messaggio per noi", en: "A message for us" },
 ];
+
+// Esempi nei campi: generici, mai i dati di nessun invito reale. Ne esce uno a caso ad ogni apertura.
+const NAME_HINTS = ["Nome e Nome", "Nome & Nome", "Nome e Nome, o il festeggiato"];
+const DRESS_HINTS = ["Es. elegante, casual, a tema", "Es. formale, cocktail, bianco e nero", "Es. abbigliamento sportivo"];
+const PHOTO_HINTS = ["Es. un paesaggio", "Es. dettagli di fiori", "Es. una foto di gruppo", "Es. una città di sera"];
+
+// Casuale: Fisher-Yates su una copia; `pickN` prende n elementi a caso, nell'ordine casuale.
+function shuffled<T>(list: readonly T[]): T[] {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+const pick = <T,>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)];
+const pickN = <T,>(list: readonly T[], n: number): T[] => shuffled(list).slice(0, n);
 
 type Answers = {
   names: string;
@@ -80,6 +114,15 @@ export function AssistantWizard({ lang, onCompose, onCancel }: { lang: Lang; onC
   const it = lang === "it";
   const [step, setStep] = useState(0);
   const [a, setA] = useState<Answers>(EMPTY);
+  // Opzioni e suggerimenti: scelti a caso ad ogni apertura del percorso.
+  const [pool] = useState(() => ({
+    colors: pickN(COLORS, 6),
+    backgrounds: shuffled(BACKGROUNDS),
+    questions: pickN(GUEST_QUESTIONS, 6),
+    names: pick(NAME_HINTS),
+    dress: pick(DRESS_HINTS),
+    photo: pick(PHOTO_HINTS),
+  }));
   const set = <K extends keyof Answers>(k: K, v: Answers[K]) => setA((x) => ({ ...x, [k]: v }));
   const last = step === STEPS.length - 1;
   const toggle = <T extends string>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -106,7 +149,7 @@ export function AssistantWizard({ lang, onCompose, onCancel }: { lang: Lang; onC
             <h3 className="aw-q">{it ? "Chi si sposa, o chi festeggia?" : "Who is getting married, or who is celebrating?"}</h3>
             <label className="aw-field">
               <span>{it ? "Nomi" : "Names"}</span>
-              <input value={a.names} placeholder={it ? "Es. Marco & Anna" : "E.g. Marco & Anna"} onChange={(e) => set("names", e.target.value)} />
+              <input value={a.names} placeholder={it ? pool.names : "Name & name"} onChange={(e) => set("names", e.target.value)} />
             </label>
             <div className="aw-row">
               <label className="aw-field">
@@ -139,10 +182,10 @@ export function AssistantWizard({ lang, onCompose, onCancel }: { lang: Lang; onC
             <h3 className="aw-q">{it ? "Che atmosfera vuoi?" : "What atmosphere do you want?"}</h3>
             <label className="aw-field">
               <span>{it ? "Dress code" : "Dress code"}</span>
-              <input value={a.dress} placeholder={it ? "Es. Eleganza naturale" : "E.g. Natural elegance"} onChange={(e) => set("dress", e.target.value)} />
+              <input value={a.dress} placeholder={it ? pool.dress : "E.g. formal, casual, themed"} onChange={(e) => set("dress", e.target.value)} />
             </label>
             <div className="aw-chips" role="group" aria-label={it ? "Colori" : "Colours"}>
-              {COLORS.map((c) => {
+              {pool.colors.map((c) => {
                 const on = a.colors.includes(c.hex);
                 return (
                   <button key={c.hex} type="button" className={`aw-swatch${on ? " is-on" : ""}`} aria-pressed={on} onClick={() => set("colors", toggle(a.colors, c.hex))}>
@@ -154,7 +197,7 @@ export function AssistantWizard({ lang, onCompose, onCancel }: { lang: Lang; onC
             </div>
             <p className="aw-sub">{it ? "Sfondo animato" : "Animated background"}</p>
             <div className="aw-chips" role="radiogroup" aria-label={it ? "Sfondo" : "Background"}>
-              {BACKGROUNDS.map((b) => {
+              {pool.backgrounds.map((b) => {
                 const Icon = b.icon;
                 const on = a.background === b.kind;
                 return (
@@ -172,7 +215,7 @@ export function AssistantWizard({ lang, onCompose, onCancel }: { lang: Lang; onC
           <>
             <h3 className="aw-q">{it ? "Cosa vuoi chiedere a chi risponde?" : "What do you want to ask guests?"}</h3>
             <div className="aw-chips" role="group" aria-label={it ? "Domande" : "Questions"}>
-              {GUEST_QUESTIONS.map((q) => {
+              {pool.questions.map((q) => {
                 const Icon = q.icon;
                 const on = a.questions.includes(q.id);
                 return (
@@ -192,7 +235,7 @@ export function AssistantWizard({ lang, onCompose, onCancel }: { lang: Lang; onC
             <h3 className="aw-q">{it ? "Ultimo passo: foto e musica" : "Last step: photo and music"}</h3>
             <label className="aw-field">
               <span>{it ? "Foto di copertina (che soggetto?)" : "Cover photo (what subject?)"}</span>
-              <input value={a.photo} placeholder={it ? "Es. tramonto sul mare" : "E.g. sunset over the sea"} onChange={(e) => set("photo", e.target.value)} />
+              <input value={a.photo} placeholder={it ? pool.photo : "E.g. a landscape"} onChange={(e) => set("photo", e.target.value)} />
             </label>
             <div className="aw-chips" role="group" aria-label={it ? "Musica" : "Music"}>
               <button type="button" className={`aw-pick${a.music ? " is-on" : ""}`} aria-pressed={a.music} onClick={() => set("music", !a.music)}>

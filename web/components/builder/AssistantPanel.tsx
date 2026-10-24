@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { ArrowRight, CalendarDays, ClipboardCheck, ImagePlus, MapPin, Music, Palette, Shirt, Sparkles, Wand2, type LucideIcon } from "lucide-react";
+import { ArrowRight, ArrowUp, CalendarDays, ClipboardCheck, EyeOff, ImagePlus, MapPin, MessageSquare, Music, Palette, Plus, Shirt, Sparkles, Wand2, type LucideIcon } from "lucide-react";
 import { AssistantWizard } from "./AssistantWizard";
 import { PlaceSearch } from "./PlaceSearch";
 import type { Action } from "@inviteme/shared";
@@ -22,6 +22,14 @@ const IDEAS_IT: { text: string; icon: LucideIcon }[] = [
   { text: "Metti una foto nell'intestazione", icon: ImagePlus },
   { text: "Metti una musica di sottofondo", icon: Music },
   { text: "Cambia i colori dell'invito", icon: Palette },
+  { text: "Cambia il tipo di evento", icon: Wand2 },
+  { text: "Aggiungi un blocco che manca", icon: Plus },
+  { text: "Nascondi una parte dell'invito", icon: EyeOff },
+  { text: "Sposta un blocco più in alto", icon: ArrowUp },
+  { text: "Scrivi un messaggio per gli invitati", icon: MessageSquare },
+  { text: "Cambia il dress code", icon: Shirt },
+  { text: "Metti la musica di sottofondo", icon: Music },
+  { text: "Cambia la copertina", icon: ImagePlus },
 ];
 const IDEAS_EN: { text: string; icon: LucideIcon }[] = [
   { text: "Change the date and time", icon: CalendarDays },
@@ -32,7 +40,24 @@ const IDEAS_EN: { text: string; icon: LucideIcon }[] = [
   { text: "Put a photo in the header", icon: ImagePlus },
   { text: "Add background music", icon: Music },
   { text: "Change the colours of the invitation", icon: Palette },
+  { text: "Change the type of event", icon: Wand2 },
+  { text: "Add a block that is missing", icon: Plus },
+  { text: "Hide a part of the invitation", icon: EyeOff },
+  { text: "Move a block higher up", icon: ArrowUp },
+  { text: "Write a message for the guests", icon: MessageSquare },
+  { text: "Change the dress code", icon: Shirt },
+  { text: "Add background music", icon: Music },
+  { text: "Change the cover", icon: ImagePlus },
 ];
+
+function shuffleIdeas<T>(list: readonly T[]): T[] {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 // Solo questi elementi dal markdown della risposta: niente titoli, immagini o link.
 const ALLOWED = ["p", "strong", "em", "ul", "ol", "li", "br"];
@@ -61,6 +86,12 @@ export function AssistantPanel({
 
   const [picks, setPicks] = useState<Record<number, string>>({});
   const [wizardOpen, setWizardOpen] = useState(false);
+  // Sei richieste a caso, scelte dopo il montaggio (così server e browser non divergono).
+  const [ideas, setIdeas] = useState<{ text: string; icon: LucideIcon }[]>(() => (it ? IDEAS_IT : IDEAS_EN).slice(0, 6));
+  useEffect(() => {
+    setIdeas(shuffleIdeas(it ? IDEAS_IT : IDEAS_EN).slice(0, 6));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
   // Indirizzi proposti finora: il server li riconosce anche nelle richieste successive.
   const [offered, setOffered] = useState<string[]>([]);
 
@@ -122,7 +153,7 @@ export function AssistantPanel({
           </button>
           <p className="as-ideas-title">{it ? "Oppure chiedi direttamente:" : "Or ask directly:"}</p>
           <div className="as-ideas" aria-label={it ? "Richieste" : "Requests"}>
-            {(it ? IDEAS_IT : IDEAS_EN).map((idea) => {
+            {ideas.map((idea) => {
               const Icon = idea.icon;
               return (
                 <button key={idea.text} type="button" className="as-idea" onClick={() => setDraft(idea.text)}>
