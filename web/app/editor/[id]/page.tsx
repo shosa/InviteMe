@@ -9,6 +9,8 @@ export default async function Editor({ params }: { params: Promise<{ id: string 
   const { id } = await params;
   try {
     const manage = await apiServer<Manage>(`/api/invitations/${id}/manage`);
+    // Il builder si apre solo dopo il pagamento: una bozza va alla pagina dell'invito, dove si paga.
+    if (manage.status !== "paid") redirect(`/invito/${id}`);
     return <Builder initial={manage} lang={await getLang()} />;
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) redirect(`/accedi?next=${encodeURIComponent(`/editor/${id}`)}`);

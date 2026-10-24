@@ -93,7 +93,8 @@ export function Models({ catalog, lang = "it" }: { catalog: Catalog; lang?: Lang
       if (res.status === 401) return router.push("/accedi?next=/#modelli");
       const data = (await res.json()) as { id?: string; error?: string };
       if (!res.ok || !data.id) throw new Error(data.error ?? L.createFailed);
-      router.push(`/editor/${data.id}`);
+      // Prima il pagamento: il builder si apre solo dopo, e la pagina dell'invito mostra il pagamento.
+      router.push(`/invito/${data.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : L.unexpected);
       setBusy(false);
