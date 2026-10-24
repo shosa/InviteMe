@@ -2168,3 +2168,12 @@ button.bl-crumb:hover { color: var(--brass); text-decoration-color: var(--brass)
   .bl-app .as-cta, .bl-app .aw-card, .bl-app .aw-go, .bl-app .aw-step.is-current .aw-dot { animation: none; }
   .bl-app .aw-bar { transition: none; }
 }
+
+/* Percorso guidato in colonna stretta: pulsante principale a tutta larghezza, etichetta solo del passo attuale. */
+.bl-app .aw-nav { flex-direction: column-reverse; align-items: stretch; gap: 6px; }
+.bl-app .aw-next { justify-content: center; width: 100%; white-space: nowrap; }
+.bl-app .aw-go { white-space: normal; text-align: center; line-height: 1.25; min-height: 48px; }
+.bl-app .aw-back { align-self: flex-start; }
+.bl-app .aw-label { display: none; }
+.bl-app .aw-step.is-current .aw-label { display: block; font-size: 12px; white-space: nowrap; }
+.bl-app .aw-track { grid-template-columns: repeat(5, auto); justify-content: space-between; }
