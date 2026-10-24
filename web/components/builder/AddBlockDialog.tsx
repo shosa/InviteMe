@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { BLOCKS, formatPrice, getAddon, getModel, type AddonKey, type BlockType, type Catalog, type InviteConfig } from "@inviteme/shared";
 import { ui, type Lang } from "@/lib/ui";
 import { blockCopy, blockDescCopy } from "@/lib/catalogCopy";
@@ -31,7 +32,8 @@ export function AddBlockDialog(p: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [p.onClose]);
 
-  return (
+  // Nel portale (body): la colonna del builder ha animazioni con trasformazioni, che sposterebbero il modale.
+  return createPortal(
     <div className="bl-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) p.onClose(); }}>
       <div className="bl-modal" role="dialog" aria-modal="true" aria-labelledby="bl-modal-title">
         <header className="bl-modal-head">
@@ -83,6 +85,7 @@ export function AddBlockDialog(p: Props) {
           })}
         </ul>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
