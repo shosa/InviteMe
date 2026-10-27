@@ -365,6 +365,7 @@ const SCRATCH_LOOK: FieldDef[] = [
 ];
 for (const b of BLOCKS) {
   if (b.type === "music") continue; // il lettore audio non ha superfici da colorare
+  if (b.type === "cover") continue; // la busta ha i suoi colori (busta e sigillo): il motore non applica l'aspetto alla copertura
   b.fields = [...b.fields, ...LOOK_FIELDS, ...(b.type === "scratchdate" ? SCRATCH_LOOK : [])];
 }
 // Forma della foto: predefinite, scelte dal cliente per ogni blocco che mostra una o più foto.
