@@ -57,7 +57,7 @@ Il registro è in `shared/src/blocks.ts`. Ogni tipo ha un template di default in
 
 | Tipo | Nome | Proprietà (tipo) | Vincoli |
 |---|---|---|---|
-| `cover` | Busta | `topText`, `sealText` (testo), `envelopeColor`, `sealColor` (colore), `coverVideo` (video), `coverSound` (audio), `tapLabel` (testo). Con `envelope` nel manifest del tema: nessuna proprietà, il filmato è dello stile | unica, sempre prima, non spostabile |
+| `cover` | Busta | `topText` (testo sopra), `envelopeColor`, `sealColor` (colore), `sealText` (testo nel sigillo), `coverVideo` (video), `tapLabel` (testo per aprire), `tapBounce` (rimbalzo), `tapBackground` (sfondo dietro la scritta). Con `envelope` nel manifest del tema: colori, sigillo e filmato sono dello stile; restano testo sopra, scritta per aprire, rimbalzo, sfondo | unica, sempre prima, non spostabile |
 | `hero` | Intestazione | `kicker`, `occasion` (testo), `couplePhoto` (foto), `scrollLabel` (testo) + nomi, data, ora, sottotitolo dell'evento | unica, bloccata (non eliminabile) |
 | `scratchdate` | Data da grattare | `dateTitle`, `dayLabel`, `monthLabel`, `yearLabel`, `revealLabel` (testi), `lookShape` (square/round/pill), `lookCover` (colore) | unica |
 | `date` | Data | `dateTitle` (testo), `cellShape` (box/round/pill/plain), `showLabels` (sì/no) | unica |

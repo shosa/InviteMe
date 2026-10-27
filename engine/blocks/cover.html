@@ -12,8 +12,7 @@
   {{/coverVideo}}
   <div data-cover-tap{{#tapBounce}} data-tap-bounce{{/tapBounce}}{{^tapBackground}} data-tap-plain{{/tapBackground}}>
     <div class="wei-chevron"></div>
-    <div data-cover-label>{{#tapText}}{{tapText}}{{/tapText}}{{^tapText}}{{t.tapToOpen}}{{/tapText}}</div>
+    <div data-cover-label>{{t.tapToOpen}}</div>
   </div>
 </div>
-{{#coverSound}}<audio data-base-audio preload="auto" src="{{coverSound}}"></audio>{{/coverSound}}
 {{/preview}}

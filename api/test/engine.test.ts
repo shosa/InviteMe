@@ -87,13 +87,14 @@ describe("busta-video", () => {
   const loaded = loadThemes();
   const theme = loaded.themes.find((t) => t.manifest.id === "avorio-botanico")!;
 
-  it("la busta del tema è il filmato, e il blocco Busta non porta proprietà dell'invito", () => {
+  it("la busta del tema è il filmato; il cliente sceglie solo testo sopra e comportamento della scritta", () => {
     const config = sampleConfig(theme.manifest);
     const cover = config.blocks.find((b) => b.type === "cover")!;
-    cover.props = { topText: "Testo da ignorare", sealText: "X", coverVideo: "assets/altro.mp4" };
+    cover.props = { topText: "Testo visibile", sealText: "X", coverVideo: "assets/altro.mp4", tapBounce: false };
     const html = renderInvitePage({ theme, config, slug: "x", features: new Set(ADDON_KEYS), runtime });
     assert.match(html, /<video data-cover-video[^>]*src="\/api\/themes\/avorio-botanico\/assets\/apertura\.mp4"/);
-    assert.doesNotMatch(html, /Testo da ignorare|altro\.mp4|class="env-card"/);
+    assert.match(html, /Testo visibile/);
+    assert.doesNotMatch(html, /altro\.mp4|class="env-card"|<div data-cover-tap[^>]*data-tap-bounce/);
   });
 
   it("gli stili con busta disegnata restano invariati", () => {

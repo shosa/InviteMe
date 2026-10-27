@@ -26,6 +26,9 @@ export const RUNTIME_PATH = fileURLToPath(new URL("../../../engine/runtime.js", 
 export type LoadedTheme = StyleFiles;
 export type ThemeLoad = { theme: LoadedTheme | null; errors: string[]; warnings: string[] };
 
+// Blocchi con una foto e il campo che la contiene: nella demo ciascuno deve avere una foto stock dello stile.
+const PHOTO_SLOTS: Record<string, string> = { hero: "couplePhoto", gallery: "photos", image: "photo", venue: "photo" };
+
 // Host che uno stile può citare: font di Google e la mappa di Google. Nessun altro sito.
 const ALLOWED_HOSTS = new Set(["fonts.googleapis.com", "fonts.gstatic.com", "www.google.com", "maps.google.com", "www.w3.org"]);
 const FORBIDDEN_TAG = /<\s*\/?\s*(script|style|link|html|head|body|base|meta)\b/i;
@@ -71,6 +74,12 @@ export function loadTheme(dir: string): ThemeLoad {
         if (typeof f === "string" && f.startsWith("assets/") && !fs.existsSync(path.join(dir, f))) errors.push(`${name}: demo.${block} usa un file mancante (${f})`);
       }
     }
+  }
+  // Ogni blocco con foto deve avere nella demo una foto stock dello stile: altrimenti il blocco appare vuoto.
+  for (const [block, key] of Object.entries(PHOTO_SLOTS)) {
+    const v = (manifest?.demo as Record<string, Record<string, unknown>> | undefined)?.[block]?.[key];
+    const files = (Array.isArray(v) ? v : [v]).filter((f): f is string => typeof f === "string" && f.startsWith("assets/"));
+    if (!files.some((f) => fs.existsSync(path.join(dir, f)))) warnings.push(`${name}: demo.${block}.${key} senza foto stock: il blocco comparirebbe vuoto`);
   }
 
   const { errors: partialErrors } = blockPartials();

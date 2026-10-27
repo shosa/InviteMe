@@ -63,7 +63,8 @@ export function FieldEditor({
       return textField(label, <input aria-label={label} value={text} maxLength={max ?? 200} onChange={(e) => onChange(e.target.value)} />, addon);
     case "longtext":
       return textField(label, <textarea aria-label={label} rows={4} maxLength={max ?? 1500} value={text} onChange={(e) => onChange(e.target.value)} />, addon);
-    case "color":
+    case "color": {
+      const clearLabel = copy ? copy("transparent", "Trasparente") : "Trasparente";
       return (
         <Field label={label}>
           <div className="swatches" role="group" aria-label={label}>
@@ -79,6 +80,14 @@ export function FieldEditor({
                 onClick={() => onChange(c.hex)}
               />
             ))}
+            <button
+              type="button"
+              className={`swatch swatch-clear${text === "transparent" ? " is-on" : ""}`}
+              title={clearLabel}
+              aria-label={clearLabel}
+              aria-pressed={text === "transparent"}
+              onClick={() => onChange("transparent")}
+            />
           </div>
           <div className="color-row">
             <input type="color" aria-label={label} value={text || "#ffffff"} onChange={(e) => onChange(e.target.value)} />
@@ -86,6 +95,7 @@ export function FieldEditor({
           </div>
         </Field>
       );
+    }
     case "choice":
       return (
         <Field label={label}>

@@ -79,7 +79,7 @@ const FIELD_COPY_EN: Record<string, string> = {
   time: "Time",
   label: "What",
   coverVideo: "Envelope video (silent, max 90 s)",
-  coverSound: "Sound on opening",
+  transparent: "Transparent",
   occasion: "Subtitle",
   couplePhoto: "Main photo",
   heading: "Title",
