@@ -169,7 +169,7 @@ export function renderInvitePage(input: PageInput): string {
 ${fonts ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n${fonts}` : ""}
 ${fontLink}
 <style>
-${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : DRAWN_ENVELOPE_CSS}${m.backgroundVideo ? BGVIDEO_CSS : ""}${input.builder ? "" : SCROLL_CSS}${MOBILE_CSS}
+${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : DRAWN_ENVELOPE_CSS}${m.backgroundVideo ? BGVIDEO_CSS : ""}${input.builder ? "" : SCROLL_CSS}${SCROLL_CUE_CSS}${MOBILE_CSS}
 </style>
 </head>
 <body class="theme-${escapeHtml(m.id)}">
@@ -344,6 +344,12 @@ const MOBILE_CSS = `@media (max-width:600px){
 // Scorrimento morbido per tutti gli stili. Il builder non lo usa: il suo scorrimento è sincronizzato dal codice. «Riduci movimento» lo spegne.
 const SCROLL_CSS = `html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}`;
+
+// Invito a scorrere: testo e freccia oscillano piano, insieme. Si usa la proprietà `translate`, così la rotazione della freccia dello stile resta.
+const SCROLL_CUE_CSS = `@media (prefers-reduced-motion:no-preference){
+.scroll-cue span,.scroll-cue .arrow{animation:scroll-cue-bob 2.8s ease-in-out infinite}
+}
+@keyframes scroll-cue-bob{0%,100%{translate:0 0}50%{translate:0 8px}}`;
 
 // Busta disegnata a schermo intero: la busta esce dai bordi dello schermo e si vedono solo i lembi a V, come la busta-filmato.
 // Il lembo si apre al tocco e l'invito sfuma (vedi runtime). Vale per gli stili senza busta-filmato.

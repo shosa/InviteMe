@@ -265,6 +265,21 @@ Ciascuno dei due è facoltativo. Come funziona:
 
 Lo stile fa solo il CSS: il motore mette i contenitori e i video. Per l'intestazione con video, il blocco va reso solo testo sopra il video (le forme decorative, se ci sono, vanno nascoste con `display:none`).
 
+**Eccezione: la foto principale dell'intestazione.** Se il cliente carica una foto (`couplePhoto`), la foto è un elemento in primo piano, allo stesso livello dei testi, sopra il video. Il video resta. Quindi nel CSS dello stile:
+- `.h-vista` non va mai nascosto con `display:none` né portato a tutta larghezza: è la foto del cliente.
+- Esempio di posizionamento (già usato in `acquarello-blu`, `glicine-ricamato`, `prato-di-pesca`):
+
+```css
+.h-vista { display:block; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:56%; aspect-ratio:4/5; object-fit:cover; z-index:2; border-radius:50% 50% 6px 6px; border:5px solid <colore chiaro dello stile>; box-shadow:0 10px 30px <ombra dello stile> }
+```
+
+- Non serve una regola per il video: il motore lo lascia sempre. Non scrivere `.zone-hero:has(.h-vista) > .zone-video { display:none }`: fa sparire il video quando c'è la foto.
+- Il testo (`.h-text`) resta sopra la foto (`z-index` più alto o uguale e in ordine dopo). Controlla con una foto reale che il nome non si sovrapponga all'arco.
+
+**Scorrimento (`scroll-cue`).** Il rimbalzo lento di testo e freccia lo mette già il motore (`SCROLL_CUE_CSS` in `api/src/engine/page.ts`), usando la proprietà `translate`. Lo stile non deve animare `.scroll-cue` né il suo `span`/`.arrow` con `transform` né con altre animazioni: il `transform` della freccia è la sua rotazione.
+
+**File.** Ogni stile sta solo in `themes/<id>/`. Niente cartelle o file fuori (per esempio nella radice del repository), e niente file orfani dentro la cartella: solo `theme.json`, `theme.css`, `assets/` e, se servono, `blocks/`. Il validatore non segnala i file estranei alla cartella: li controlli tu prima di consegnare.
+
 ## Sostituzioni di blocco (`blocks/`)
 
 Quando uno stile vuole un markup diverso per un blocco, mette `themes/<id>/blocks/<tipo>.html`. Il file sostituisce il template di default **solo per quel tipo**. Regole:
@@ -313,6 +328,8 @@ Il validatore controlla, in ordine: il manifest (chiavi ammesse, tipi, `themeCol
 - [ ] la busta funziona con e senza filmato; con busta-video il filmato finisce su carta chiara e sfuma nell'invito
 - [ ] con busta-video: il poster (`envelope.poster`) è il primo fotogramma, la busta è ferma prima del tocco
 - [ ] con video di sfondo: l'intestazione è solo testo, i video sono in loop e fermi finché la busta non si apre
+- [ ] con video di sfondo e foto principale: la foto (`.h-vista`) è visibile sopra il video, allo stesso livello dei testi, e il video non sparisce (vedi l'eccezione)
+- [ ] nessun file o cartella fuori da `themes/<id>/`, nessun file orfano dentro la cartella
 - [ ] la demo in inglese (`?lang=en`) non mostra etichette italiane: i testi di `demo` non si usano in inglese, controlla le etichette di default e, se servono frasi proprie, `demoEn`
 - [ ] con busta-video: il blocco Busta non mostra campi nel builder
 - [ ] il popup RSVP si apre, valida i campi obbligatori e si chiude con Esc
@@ -331,4 +348,4 @@ Per uno stile semplice:
 
 Per uno stile complesso e animato:
 
-> Crea uno stile per InviteMe in `themes/<id>/` seguendo `docs/TEMI.md` e `docs/MOTORE.md`, in particolare la sezione «Sfondi animati» e il contratto delle classi. Atmosfera: [descrizione]. Obiettivi: (1) tutti i blocchi con una loro identità visiva, non un'unica griglia; (2) animazioni CSS decorative di ingresso con `data-anim` e `--d` per ritardi, senza alterare il testo; (3) sfondo animato `[tipo]` con colore `[#RRGGBB]`, con i pannelli semitrasparenti dove serve; (4) layout mobile first a 390 px senza scorrimento orizzontale, e movimento ridotto rispettato. Vincoli: nessun codice nuovo, nessun `<script>`, nessun gestore inline, nessun dato di persone. Se lo stile ha video di sfondo, l'intestazione resta solo testo e i video sono in loop (vedi «Video di sfondo per zona»). Non inventare classi o attributi del runtime che non sono in `docs/TEMI.md`. Valida con `npm run validate-theme -w @inviteme/api -- themes/<id>` e correggi finché non passa; poi elenca cosa hai fatto per ogni punto e le scelte che hai dovuto prendere.
+> Crea uno stile per InviteMe in `themes/<id>/` seguendo `docs/TEMI.md` e `docs/MOTORE.md`, in particolare la sezione «Sfondi animati» e il contratto delle classi. Atmosfera: [descrizione]. Obiettivi: (1) tutti i blocchi con una loro identità visiva, non un'unica griglia; (2) animazioni CSS decorative di ingresso con `data-anim` e `--d` per ritardi, senza alterare il testo; (3) sfondo animato `[tipo]` con colore `[#RRGGBB]`, con i pannelli semitrasparenti dove serve; (4) layout mobile first a 390 px senza scorrimento orizzontale, e movimento ridotto rispettato. Vincoli: nessun codice nuovo, nessun `<script>`, nessun gestore inline, nessun dato di persone. Se lo stile ha video di sfondo, l'intestazione resta solo testo e i video sono in loop (vedi «Video di sfondo per zona»), con l'eccezione della foto principale: `.h-vista` va posizionato sopra il video, senza nasconderlo né nascondere il video. Non animare `.scroll-cue`: il rimbalzo lo fa il motore. Non creare file o cartelle fuori da `themes/<id>/`. Non inventare classi o attributi del runtime che non sono in `docs/TEMI.md`. Valida con `npm run validate-theme -w @inviteme/api -- themes/<id>` e correggi finché non passa; poi elenca cosa hai fatto per ogni punto e le scelte che hai dovuto prendere.
