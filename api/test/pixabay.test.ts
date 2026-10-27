@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { parseStockFilters, searchStock, trustedHost, StockError } from "../src/pixabay";
+import { parseStockFilters, searchStock, setRetryDelaysForTests, trustedHost, StockError } from "../src/pixabay";
 
 describe("filtri di ricerca Pixabay", () => {
   it("usa i valori predefiniti quando non si chiede altro", () => {
@@ -69,5 +69,43 @@ describe("ricerca Pixabay senza chiave", () => {
 
   it("risponde 503 senza chiamare Pixabay", async () => {
     await assert.rejects(searchStock(parseStockFilters({ q: "fiori" })), (e: unknown) => e instanceof StockError && e.status === 503);
+  });
+});
+
+describe("cache e limiti Pixabay", () => {
+  const realFetch = globalThis.fetch;
+  const realKey = process.env.PIXABAY_API_KEY;
+  let calls = 0;
+
+  beforeEach(() => {
+    process.env.PIXABAY_API_KEY = "chiave-di-prova";
+    setRetryDelaysForTests([0, 0]);
+    calls = 0;
+  });
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+    if (realKey === undefined) delete process.env.PIXABAY_API_KEY;
+    else process.env.PIXABAY_API_KEY = realKey;
+    setRetryDelaysForTests([1000, 3000]);
+  });
+
+  it("la stessa ricerca entro 24 ore non chiama Pixabay due volte", async () => {
+    globalThis.fetch = (async () => {
+      calls++;
+      return new Response(JSON.stringify({ hits: [] }), { status: 200, headers: { "content-type": "application/json" } });
+    }) as typeof fetch;
+    const f = parseStockFilters({ q: "cache-una-volta" });
+    await searchStock(f);
+    await searchStock(f);
+    assert.equal(calls, 1);
+  });
+
+  it("sui 429 riprova e poi dice che Pixabay è saturo", async () => {
+    globalThis.fetch = (async () => {
+      calls++;
+      return new Response("Rate limit exceeded", { status: 429 });
+    }) as typeof fetch;
+    await assert.rejects(searchStock(parseStockFilters({ q: "limite-saturo" })), (e: unknown) => e instanceof StockError && e.status === 429);
+    assert.equal(calls, 3);
   });
 });

@@ -116,6 +116,12 @@ CREATE TABLE IF NOT EXISTS music_tracks (
   enabled boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE TABLE IF NOT EXISTS stock_imports (
+  pixabay_id integer PRIMARY KEY,
+  url text NOT NULL,
+  bytes integer NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 `;
 
 // Crea lo schema all'avvio. Il lock evita che due istanze lo eseguano insieme.

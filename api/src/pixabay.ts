@@ -1,8 +1,20 @@
 // Ricerca e importazione di foto da Pixabay. La chiave resta sul server: il browser chiede solo per testo o per id.
+import { pool } from "./db";
 import { INPUT_TYPES, MediaError, convertMedia } from "./media";
 
 const SEARCH_URL = "https://pixabay.com/api/";
 const MAX_DOWNLOAD_BYTES = 15 * 1024 * 1024;
+// Pixabay chiede di tenere in cache le risposte per 24 ore e di non riscaricare le stesse immagini.
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const CACHE_MAX_ENTRIES = 500;
+// Attese tra un tentativo e l'altro quando Pixabay risponde 429 (limite momentaneo).
+let retryDelaysMs = [1000, 3000];
+export function setRetryDelaysForTests(delays: number[]) {
+  retryDelaysMs = delays;
+}
+const SATURATED = "Pixabay è momentaneamente saturo, riprova tra un minuto";
+
+const searchCache = new Map<string, { at: number; photos: StockPhoto[] }>();
 
 export class StockError extends Error {
   constructor(message: string, readonly status: number) {
@@ -78,23 +90,45 @@ export function trustedHost(raw: string): boolean {
   return url.protocol === "https:" && (url.hostname === "pixabay.com" || url.hostname.endsWith(".pixabay.com"));
 }
 
+// Riprova solo sui 429, con attesa crescente. Se il limite persiste restituisce l'ultima risposta.
+async function fetchWithRetry(url: string | URL, timeoutMs: number): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    if (res.status !== 429 || attempt >= retryDelaysMs.length) return res;
+    await new Promise((resolve) => setTimeout(resolve, retryDelaysMs[attempt]));
+  }
+}
+
 async function callApi(params: Record<string, string>): Promise<Hit[]> {
   const url = new URL(SEARCH_URL);
   url.searchParams.set("key", apiKey());
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   let res: Response;
   try {
-    res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    res = await fetchWithRetry(url, 8000);
   } catch {
     // L'errore del fetch può contenere l'indirizzo con la chiave: non lo si inoltra.
     throw new StockError("Pixabay non risponde, riprova", 502);
   }
+  if (res.status === 429) throw new StockError(SATURATED, 429);
   if (!res.ok) throw new StockError("Pixabay ha rifiutato la richiesta", 502);
   const body = (await res.json().catch(() => null)) as { hits?: Hit[] } | null;
   return body?.hits ?? [];
 }
 
+// Stessa ricerca entro 24 ore: risposta dalla cache, nessuna chiamata a Pixabay.
 export async function searchStock(f: StockFilters): Promise<StockPhoto[]> {
+  const cacheKey = JSON.stringify(f);
+  const hit = searchCache.get(cacheKey);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.photos;
+  const photos = await searchRemote(f);
+  searchCache.delete(cacheKey);
+  searchCache.set(cacheKey, { at: Date.now(), photos });
+  if (searchCache.size > CACHE_MAX_ENTRIES) searchCache.delete(searchCache.keys().next().value as string);
+  return photos;
+}
+
+async function searchRemote(f: StockFilters): Promise<StockPhoto[]> {
   const params: Record<string, string> = {
     q: f.q,
     lang: f.lang,
@@ -117,10 +151,11 @@ async function download(raw: string): Promise<{ buffer: Buffer; mime: string }> 
   if (!trustedHost(raw)) throw new StockError("Immagine non ammessa", 502);
   let res: Response;
   try {
-    res = await fetch(raw, { signal: AbortSignal.timeout(15000) });
+    res = await fetchWithRetry(raw, 15000);
   } catch {
     throw new StockError("Download dell'immagine non riuscito", 502);
   }
+  if (res.status === 429) throw new StockError(SATURATED, 429);
   if (!res.ok || !trustedHost(res.url)) throw new StockError("Download dell'immagine non riuscito", 502);
   if (Number(res.headers.get("content-length") ?? 0) > MAX_DOWNLOAD_BYTES) throw new StockError("Immagine troppo grande", 413);
   const buffer = Buffer.from(await res.arrayBuffer());
@@ -129,7 +164,10 @@ async function download(raw: string): Promise<{ buffer: Buffer; mime: string }> 
 }
 
 // Scarica la foto scelta (dal suo id, non da un indirizzo del browser), la converte come un upload normale e la salva.
+// Una foto già importata non si riscarica: si riusa il file salvato sul nostro storage.
 export async function importStock(id: number): Promise<{ url: string; bytes: number }> {
+  const { rows } = await pool.query("SELECT url, bytes FROM stock_imports WHERE pixabay_id = $1", [id]);
+  if (rows[0]) return { url: rows[0].url, bytes: rows[0].bytes };
   const [hit] = await callApi({ id: String(id) });
   if (!hit?.largeImageURL) throw new StockError("Foto non trovata", 404);
   const { buffer, mime } = await download(hit.largeImageURL);
@@ -137,6 +175,10 @@ export async function importStock(id: number): Promise<{ url: string; bytes: num
   if (!ext) throw new StockError("Formato non supportato", 415);
   try {
     const saved = await convertMedia("photo", buffer, ext);
+    await pool.query(
+      "INSERT INTO stock_imports (pixabay_id, url, bytes) VALUES ($1, $2, $3) ON CONFLICT (pixabay_id) DO NOTHING",
+      [id, saved.url, saved.bytes],
+    );
     return { url: saved.url, bytes: saved.bytes };
   } catch (e) {
     if (e instanceof MediaError) throw new StockError(e.message, e.status);
