@@ -311,7 +311,10 @@ Per la maggior parte degli stili non serve: basta il CSS. Usa una sostituzione q
 npm run validate-theme -w @inviteme/api -- themes/<id>      # uno stile
 npm run validate-theme -w @inviteme/api                      # tutti
 npm run test -w @inviteme/api
+npm run preview-theme -w @inviteme/api -- --theme <id>       # anteprima con dati di esempio
 ```
+
+**Anteprima (`preview-theme`).** Avvia un server locale su `127.0.0.1` (porta 4100, `--port` per cambiarla) che mostra lo stile con dati di esempio. Senza `--theme` elenca gli stili e chiede quale aprire; `--lang en` mostra la versione inglese. Le pagine: `/` con la busta come la vede il cliente, `/?cover=0` la demo senza busta. Ogni ricaricamento genera un esempio diverso. Serve per vedere lo stile mentre lo scrivi, ma non sostituisce la prova sul telefono (passo 8 del flusso di lavoro): usa il server locale solo sulla tua macchina.
 
 Il validatore controlla, in ordine: il manifest (chiavi ammesse, tipi, `themeColor`, `fonts`, `background`, `envelope`, `demo`); la presenza di `theme.json` e `theme.css`; gli host citati nel CSS (ammessi: Google Fonts, Google Maps, w3.org); l'uso di `@import`, `expression(`, `<style>`, `<script>`; `url()` solo verso `assets/` o `data:image/`; le sostituzioni di blocco; i file citati e presenti; una prova di rendering della demo con tutti i blocchi, che non deve lasciare segnaposti senza dato.
 
@@ -324,7 +327,7 @@ Il validatore controlla, in ordine: il manifest (chiavi ammesse, tipi, `themeCol
 5. Sostituisci gli asset con quelli del nuovo stile, senza dati di persone.
 6. Valida: `npm run validate-theme -w @inviteme/api -- themes/<id>`. Correggi finché non passa, leggendo ogni errore.
 7. Test: `npm run test -w @inviteme/api`.
-8. Prova: crea un invito con lo stile, aggiungi i blocchi, apri l'anteprima su telefono (390 px) e su desktop. Verifica lo sfondo animato, se lo proponi, con movimento normale e con «riduci movimento».
+8. Prova: mentre scrivi lo stile, avvia `npm run preview-theme -w @inviteme/api -- --theme <id>` e guarda la pagina con la busta e con `?cover=0`. Poi crea un invito con lo stile, aggiungi i blocchi, apri l'anteprima su telefono (390 px) e su desktop. Verifica lo sfondo animato, se lo proponi, con movimento normale e con «riduci movimento».
 9. Rilascia: rebuild e riavvio dell'API.
 
 ## Checklist prima del rilascio
