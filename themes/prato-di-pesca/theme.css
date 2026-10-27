@@ -50,7 +50,9 @@ button,input,a { -webkit-tap-highlight-color:transparent }
 /* Intestazione: solo testo, nel cielo libero del prato ricamato animato. */
 .hero { max-width:none; overflow:clip }
 .hero-scene { position:relative; min-height:min(100svh,900px); margin:0; padding:0; background:none }
-.hero-scene::before,.hero-scene::after,.h-vista,.hero-fl { display:none }
+.hero-scene::before,.hero-scene::after,.hero-fl { display:none }
+.h-vista { display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1 }
+.zone-hero:has(.h-vista) > .zone-video { display:none }
 .h-text { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:10px; padding:24% 12% 0; text-align:center }
 .h-text > div { max-width:100%; text-shadow:0 0 18px #fdf8f2, 0 0 6px #fdf8f2 }
 .occasion { order:-1; margin:0 0 4px; font:italic 400 22px/1.2 var(--display); color:var(--accent); letter-spacing:.03em }

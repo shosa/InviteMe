@@ -214,7 +214,9 @@ button,input,a { -webkit-tap-highlight-color:transparent }
 /* Intestazione: solo testi bianchi sopra il video. Tre righe dall'alto: nomi, Save the date e famiglie, «Ci sposiamo». */
 .hero { max-width:none; overflow:clip }
 .hero-scene { position:relative; max-width:none; margin:0; min-height:min(100svh,900px); padding:0; background:none; box-shadow:none; border-radius:0 }
-.hero-scene::before,.hero-scene::after,.h-vista,.hero-fl { display:none }
+.hero-scene::before,.hero-scene::after,.hero-fl { display:none }
+.h-vista { display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1 }
+.zone-hero:has(.h-vista) > .zone-video { display:none }
 .h-text { position:absolute; inset:0; z-index:2; padding:0; background:none; border-radius:0 }
 .h-text > div { position:absolute; left:0; right:0; padding:0 8%; text-align:center; color:#fff; text-shadow:0 1px 12px #7a2e4a59 }
 .names { top:14%; font:500 clamp(40px,12vw,64px)/1.05 var(--display); text-wrap:balance }
@@ -402,7 +404,9 @@ button,input,a { -webkit-tap-highlight-color:transparent }
 /* Intestazione: solo testi sopra il video. Tre righe: occasione in alto, nomi più sotto, ospiti in basso. */
 .hero { max-width:none; overflow:clip }
 .hero-scene { position:relative; max-width:none; margin:0; min-height:min(100svh,900px); padding:0; background:none; box-shadow:none; border-radius:0 }
-.hero-scene::before,.hero-scene::after,.h-vista,.hero-fl { display:none }
+.hero-scene::before,.hero-scene::after,.hero-fl { display:none }
+.h-vista { display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1 }
+.zone-hero:has(.h-vista) > .zone-video { display:none }
 .h-text { position:absolute; inset:0; z-index:2; padding:0; background:none; border-radius:0 }
 .h-text > div { position:absolute; left:0; right:0; padding:0 8%; text-align:center; text-shadow:0 0 16px #ffffffd9 }
 .occasion { top:14%; margin:0; font:italic 30px/1.2 var(--display); color:var(--ink) }
