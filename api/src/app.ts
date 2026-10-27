@@ -585,13 +585,13 @@ export async function buildApp() {
     return reply.type("text/html; charset=utf-8").header("Cache-Control", "no-store").send(html);
   });
 
-  // Carica un file del cliente (foto, video, audio): ffmpeg lo converte prima di salvarlo. Solo su inviti non pagati.
+  // Carica un file del cliente (foto, video, audio): ffmpeg lo converte prima di salvarlo. Chiuso solo dopo la conferma della modifica.
   app.post<{ Params: { id: string }; Querystring: { kind?: string } }>("/api/invitations/:id/media", async (req, reply) => {
     const user = await requireUser(req, reply);
     if (!user) return;
     const inv = await ownedInvitation(req.params.id, user.id);
     if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
-    if (inv.status === "paid") return reply.code(409).send({ error: "Invito già pagato: non è più modificabile" });
+    if (editRules({ status: inv.status, edit_count: inv.edit_count }).readOnly) return reply.code(409).send({ error: "Modifica già confermata: l'invito non si modifica più" });
     const kind = String(req.query.kind ?? "");
     if (!isMediaKind(kind)) return reply.code(400).send({ error: "Tipo di file non valido" });
     const file = await req.file();
@@ -628,7 +628,7 @@ export async function buildApp() {
     if (!user) return;
     const inv = await ownedInvitation(req.params.id, user.id);
     if (!inv) return reply.code(404).send({ error: "Invito non trovato" });
-    if (inv.status === "paid") return reply.code(409).send({ error: "Invito già pagato: non è più modificabile" });
+    if (editRules({ status: inv.status, edit_count: inv.edit_count }).readOnly) return reply.code(409).send({ error: "Modifica già confermata: l'invito non si modifica più" });
     const id = Number(req.body?.id);
     if (!Number.isInteger(id) || id <= 0) return reply.code(400).send({ error: "Foto non valida" });
     try {
