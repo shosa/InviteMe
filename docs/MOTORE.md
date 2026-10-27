@@ -76,7 +76,7 @@ Il registro è in `shared/src/blocks.ts`. Ogni tipo ha un template di default in
 | `footer` | Firma | `signature` (testo) | unica |
 
 **Proprietà di aspetto** (aggiunte da sole, con il loro significato):
-- `lookBg`, `lookInk`, `lookCover` (colori): sfondo del blocco, colore del testo, colore della copertura del gratta. Il motore li scrive nello stile del blocco come `--bk-bg`, `--bk-ink`, `--bk-cover`.
+- `lookBg`, `lookInk`, `lookCover` (colori): sfondo del blocco, colore del testo, colore della copertura del gratta. Il motore li scrive nello stile del blocco come `--bk-bg`, `--bk-ink`, `--bk-cover`. Non esistono per la Busta, e ogni colore può essere `transparent`.
 - `photoShape` (arch, circle, oval, rounded, diamond, hexagon), `photoFit` (contain/cover), `photoFocus` (center/top/bottom/left/right): aspetto delle foto del blocco. Sono applicati dal motore al tag `<img>` (`fitPhoto`), qualunque sia il template.
 - `lookShape`, `cellShape`, `galleryStyle`: forma dei campi della data o della galleria. Il motore li scrive come attributi `data-shape`, `data-cell-shape`, `data-gallery` sul contenitore `.bk` del blocco.
 

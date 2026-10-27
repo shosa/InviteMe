@@ -16,7 +16,7 @@ Questa guida è il contratto per chi scrive uno stile, anche un agente. Il funzi
 8. **Cartella unica**: lo stile sta solo in `themes/<id>/`. Niente file o cartelle nella radice del repository, niente file orfani dentro la cartella (solo `theme.json`, `theme.css`, `assets/`, `blocks/`).
 9. **Foto dell'intestazione con video**: `.h-vista` va posizionato sopra il video, allo stesso livello dei testi. Non nasconderlo con `display:none`, non nascondere il video quando c'è la foto (vedi «Video di sfondo per zona», eccezione).
 10. **Scorrimento e rimbalzo dal motore**: il rimbalzo di «Scorri» e della scritta «Tocca per aprire» lo gestisce il motore, con le proprietà del cliente. Lo stile non anima `.scroll-cue`, `.arrow`, `[data-cover-tap]` né i loro figli con `transform`.
-11. **Proprietà della busta del cliente**: con il filmato del tema la busta mostra ancora scritte, rimbalzo, sfondo e suono scelti dal cliente. Non nascondere `[data-cover-tap]` né queste proprietà con CSS.
+11. **Proprietà della busta del cliente**: con il filmato del tema la busta mostra ancora il testo sopra, la scritta per aprire, il rimbalzo e lo sfondo dietro la scritta scelti dal cliente. Non nascondere `[data-cover-tap]` né queste proprietà con CSS.
 
 ## Struttura
 
@@ -178,7 +178,9 @@ Il runtime non è un tuo file: non lo modifichi. Se un comportamento non è in q
 
 ### Aspetto dei blocchi (proprietà del cliente)
 
-Quando il cliente sceglie colori o forme per un blocco, il motore aggiunge:
+Quando il cliente sceglie colori o forme per un blocco, il motore aggiunge. Il blocco Busta non ha questi campi: la copertura ha i suoi colori (busta e sigillo).
+
+I campi colore accettano anche il valore `transparent` (scelta «Trasparente» nel builder). Lo stile lo deve accettare come un colore CSS valido: non trattarlo come un colore del tema.
 - un contenitore `div.bk` con gli stili `--bk-bg` (sfondo), `--bk-ink` (testo), `--bk-cover` (copertura del gratta);
 - `data-shape` (`square`, `round`, `pill`): forma dei campi della data da grattare;
 - `data-photo-shape` (`arch`, `circle`, `oval`, `rounded`, `diamond`, `hexagon`): forma delle foto del blocco, applicata dal motore a `img` (il CSS di base già gestisce `arch` e `circle`);
@@ -223,7 +225,7 @@ Uno stile può aprire l'invito con un filmato invece che con la busta disegnata.
 ```
 
 Effetti:
-- Il blocco Busta **non ha proprietà modificabili**: il cliente non vede campi, il motore ignora i valori salvati (testo, sigillo, colori, filmato, suono). Il filmato è dello stile.
+- Con il filmato del tema (`envelope`), il blocco Busta mostra al cliente solo: testo sopra la busta, scritta per aprire (etichetta `tapLabel`), rimbalzo (`tapBounce`) e sfondo dietro la scritta (`tapBackground`). Colori della busta, sigillo e filmato non si vedono: li decide lo stile, e il motore ignora i valori salvati.
 - Il filmato parte al tocco, senza audio. A fine filmato l'invito sfuma dentro la pagina (circa 0,9 s): la dissolvenza la fa il motore, non il file.
 - Con «riduci movimento» il filmato è saltato e l'invito compare subito. Se il filmato non parte o si blocca, l'invito si apre lo stesso.
 - Il file deve esistere in `assets/`, con estensione `.mp4` o `.webm`; il validatore lo controlla.
@@ -336,7 +338,7 @@ Il validatore controlla, in ordine: il manifest (chiavi ammesse, tipi, `themeCol
 - [ ] con video di sfondo e foto principale: la foto (`.h-vista`) è visibile sopra il video, allo stesso livello dei testi, e il video non sparisce (vedi l'eccezione)
 - [ ] nessun file o cartella fuori da `themes/<id>/`, nessun file orfano dentro la cartella
 - [ ] la demo in inglese (`?lang=en`) non mostra etichette italiane: i testi di `demo` non si usano in inglese, controlla le etichette di default e, se servono frasi proprie, `demoEn`
-- [ ] con busta-video: il blocco Busta nel builder mostra solo testo sopra, scritta per aprire, rimbalzo, sfondo e suono (colori, sigillo e filmato non si vedono)
+- [ ] con busta-video: il blocco Busta nel builder mostra solo testo sopra, scritta per aprire, rimbalzo e sfondo (colori, sigillo e filmato non si vedono)
 - [ ] il popup RSVP si apre, valida i campi obbligatori e si chiude con Esc
 - [ ] il Dress code mostra i pallini e i nomi dei colori
 - [ ] 390 px senza scorrimento orizzontale; contrasto AA
