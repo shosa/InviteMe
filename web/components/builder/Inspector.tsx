@@ -36,6 +36,8 @@ function fieldTab(f: FieldDef): Exclude<TabKey, "all"> {
 }
 const TAB_ORDER: Exclude<TabKey, "all">[] = ["texts", "colors", "shapes", "media", "other"];
 const isTextField = (f: FieldDef) => f.type === "text" || f.type === "longtext";
+// Campi della busta che non servono quando il filmato è del tema.
+const VIDEO_BUSTA_HIDDEN = ["envelopeColor", "sealColor", "sealText", "coverVideo"];
 
 // Una riga del pannello: una proprietà del blocco, oppure un dato dell'evento (solo nell'Intestazione).
 type Item = { field: FieldDef; event: boolean };
@@ -159,6 +161,8 @@ export function Inspector(p: Props) {
     const subLabels: Record<TabKey, string> = { all: L.tabAll, texts: L.tabTexts, colors: L.tabColors, shapes: L.tabShapes, media: L.tabMedia, other: L.tabOther };
     const def = blockDef(p.block.type);
     if (!def) return null;
+    // Con il filmato del tema la busta non ha colori né sigillo né filmato propri: restano le scritte e il comportamento al tocco.
+    const fieldsDef = p.block.type === "cover" && p.videoEnvelope ? { ...def, fields: def.fields.filter((f) => !VIDEO_BUSTA_HIDDEN.includes(f.key)) } : def;
     return (
       <div className="bl-inspector">
         {p.onBack && (
@@ -188,9 +192,7 @@ export function Inspector(p: Props) {
             </button>
           </div>
         </header>
-        {p.block.type === "cover" && p.videoEnvelope ? (
-          <p className="hint">{L.envelopeHint}</p>
-        ) : def.fields.length === 0 && p.block.type !== "map" ? (
+        {fieldsDef.fields.length === 0 && p.block.type !== "map" ? (
           <p className="hint">{L.blockHint}</p>
         ) : (
           p.block.type === "music" ? (
@@ -203,7 +205,7 @@ export function Inspector(p: Props) {
               busy={!!p.busy}
             />
           ) : (
-            <BlockFields key={p.block.id} p={p} def={def} L={L} tab={subTab} setTab={(t) => setSub({ id: p.block!.id, tab: t })} />
+            <BlockFields key={p.block.id} p={p} def={fieldsDef} L={L} tab={subTab} setTab={(t) => setSub({ id: p.block!.id, tab: t })} />
           )
         )}
         {p.block.type === "map" && (

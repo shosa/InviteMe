@@ -331,7 +331,7 @@ Il validatore controlla, in ordine: il manifest (chiavi ammesse, tipi, `themeCol
 - [ ] con video di sfondo e foto principale: la foto (`.h-vista`) è visibile sopra il video, allo stesso livello dei testi, e il video non sparisce (vedi l'eccezione)
 - [ ] nessun file o cartella fuori da `themes/<id>/`, nessun file orfano dentro la cartella
 - [ ] la demo in inglese (`?lang=en`) non mostra etichette italiane: i testi di `demo` non si usano in inglese, controlla le etichette di default e, se servono frasi proprie, `demoEn`
-- [ ] con busta-video: il blocco Busta non mostra campi nel builder
+- [ ] con busta-video: il blocco Busta nel builder mostra solo testo sopra, scritta per aprire, rimbalzo, sfondo e suono (colori, sigillo e filmato non si vedono)
 - [ ] il popup RSVP si apre, valida i campi obbligatori e si chiude con Esc
 - [ ] il Dress code mostra i pallini e i nomi dei colori
 - [ ] 390 px senza scorrimento orizzontale; contrasto AA
