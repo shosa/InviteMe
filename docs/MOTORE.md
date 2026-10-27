@@ -132,7 +132,7 @@ Un livello di movimento dietro tutto il contenuto della pagina. Tipi (in `shared
 
 ## Media
 
-**Busta-video.** Se il manifest dello stile dichiara `envelope`, la busta è il filmato dello stile (`envelope.video`): `page.ts` sostituisce le proprietà del blocco Busta con quel solo file, e il builder mostra un avviso al posto dei campi. Il filmato parte al tocco, senza audio; a fine filmato il runtime sfuma l'invito (900 ms, sezione 2). Con «riduci movimento» il filmato è saltato. Regole per i filmati in `docs/TEMI.md`, sezione «Busta-video».
+**Busta-video.** Se il manifest dello stile dichiara `envelope`, la busta è il filmato dello stile (`envelope.video`): `page.ts` imposta quel solo file come filmato della busta, e il builder nasconde colori, sigillo e filmato; restano testo sopra, scritta per aprire, rimbalzo e sfondo, scelti dal cliente. Il filmato parte al tocco, senza audio; a fine filmato il runtime sfuma l'invito (900 ms, sezione 2). Con «riduci movimento» il filmato è saltato. Regole per i filmati in `docs/TEMI.md`, sezione «Busta-video».
 
 Foto, video e audio caricati dal cliente passano da ffmpeg (`api/src/media.ts`): video H.264 senza audio, massimo 90 secondi e 15 MB; audio MP3 128 kbps. Le foto hanno il lato lungo massimo 2200 px; le PNG e le WebP restano PNG per conservare la trasparenza (massimo 8 MB in uscita), le altre diventano JPEG. Le conversioni sono in coda, una alla volta.
 
