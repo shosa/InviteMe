@@ -87,7 +87,8 @@ export function renderInvitePage(input: PageInput): string {
   for (const instance of config.blocks) {
     if (instance.hidden || !blockDef(instance.type)) continue;
     // Busta-video del tema: il filmato è dello stile, il blocco Busta non ha proprietà modificabili.
-    const block = instance.type === "cover" && m.envelope ? { ...instance, props: { coverVideo: m.envelope.video, ...(m.envelope.poster ? { coverPoster: m.envelope.poster } : {}) } } : instance;
+    // Le proprietà della busta scelte dal cliente (scritte, rimbalzo, sfondo) restano; il filmato lo mette lo stile.
+    const block = instance.type === "cover" && m.envelope ? { ...instance, props: { ...instance.props, coverVideo: m.envelope.video, ...(m.envelope.poster ? { coverPoster: m.envelope.poster } : {}) } } : instance;
     const template = partials.get(block.type as BlockType);
     if (!template) continue;
     // Un campo vuoto non cancella il valore dell'evento quando la proprietà esiste anche tra i dati dell'evento (nomi, riga sotto i nomi).
@@ -169,7 +170,7 @@ export function renderInvitePage(input: PageInput): string {
 ${fonts ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n${fonts}` : ""}
 ${fontLink}
 <style>
-${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : DRAWN_ENVELOPE_CSS}${m.backgroundVideo ? BGVIDEO_CSS : ""}${input.builder ? "" : SCROLL_CSS}${SCROLL_CUE_CSS}${MOBILE_CSS}
+${css}${bgCss}${REVEAL_CSS}${m.envelope ? ENVELOPE_CSS : DRAWN_ENVELOPE_CSS}${m.backgroundVideo ? BGVIDEO_CSS : ""}${input.builder ? "" : SCROLL_CSS}${SCROLL_CUE_CSS}${TAP_CSS}${MOBILE_CSS}
 </style>
 </head>
 <body class="theme-${escapeHtml(m.id)}">
@@ -350,6 +351,14 @@ const SCROLL_CUE_CSS = `@media (prefers-reduced-motion:no-preference){
 .scroll-cue span,.scroll-cue .arrow{animation:scroll-cue-bob 2.8s ease-in-out infinite}
 }
 @keyframes scroll-cue-bob{0%,100%{translate:0 0}50%{translate:0 8px}}`;
+
+// «Tocca per aprire» della busta: rimbalza se lo sceglie il cliente (data-tap-bounce), senza sfondo se lo sceglie (data-tap-plain).
+// Il rimbalzo usa `translate`, così il centraggio dello stile resta.
+const TAP_CSS = `@media (prefers-reduced-motion:no-preference){
+[data-cover] [data-cover-tap][data-tap-bounce]{animation:tap-bob 2.4s ease-in-out infinite}
+}
+@keyframes tap-bob{0%,100%{translate:0 0}50%{translate:0 -10px}}
+[data-cover] [data-cover-tap][data-tap-plain]{background:none;box-shadow:none;border:0}`;
 
 // Busta disegnata a schermo intero: la busta esce dai bordi dello schermo e si vedono solo i lembi a V, come la busta-filmato.
 // Il lembo si apre al tocco e l'invito sfuma (vedi runtime). Vale per gli stili senza busta-filmato.

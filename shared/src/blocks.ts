@@ -82,8 +82,11 @@ export const BLOCKS: BlockDef[] = [
       { key: "sealColor", label: "Colore del sigillo", type: "color", group: "Busta" },
       { key: "coverVideo", label: "Filmato della busta (muto, max 90 s)", type: "video", group: "Busta" },
       { key: "coverSound", label: "Suono all'apertura", type: "audio", group: "Busta" },
+      { key: "tapText", label: "Scritta per aprire", type: "text", group: "Busta", max: 40 },
+      { key: "tapBounce", label: "La scritta rimbalza", type: "toggle", group: "Busta", default: true },
+      { key: "tapBackground", label: "Sfondo dietro la scritta", type: "toggle", group: "Busta", default: true },
     ],
-    defaults: { topText: "", sealText: "", coverVideo: "", coverSound: "" },
+    defaults: { topText: "", sealText: "", coverVideo: "", coverSound: "", tapText: "", tapBounce: true, tapBackground: true },
     defaultsEn: {},
   },
   {
